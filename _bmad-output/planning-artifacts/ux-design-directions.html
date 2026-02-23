@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>bmad-todo-app — UX Design Directions</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Courier New', Courier, monospace;
+    background: #111;
+    color: #f0f0f0;
+    padding: 32px 16px;
+  }
+
+  h1.page-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 13px;
+    color: #00ff88;
+    text-align: center;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+  }
+  .page-subtitle {
+    text-align: center;
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 48px;
+  }
+
+  .direction-section {
+    max-width: 960px;
+    margin: 0 auto 72px auto;
+  }
+
+  .direction-label {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+    color: #ffcc00;
+    margin-bottom: 4px;
+    letter-spacing: 1px;
+  }
+  .direction-desc {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 16px;
+  }
+
+  /* ─────────────────────────────────────────
+     Common pixel-border utility
+  ───────────────────────────────────────── */
+  .px-border {
+    box-shadow:
+      0 -2px 0 0 currentColor,
+      0 2px 0 0 currentColor,
+      -2px 0 0 0 currentColor,
+      2px 0 0 0 currentColor;
+  }
+
+  /* ═══════════════════════════════════════
+     DIRECTION 1 — Green accent, left sidebar
+  ═══════════════════════════════════════ */
+  .d1 {
+    background: #0f0f0f;
+    display: flex;
+    flex-direction: column;
+    height: 520px;
+    border: 2px solid #333;
+    overflow: hidden;
+  }
+  .d1-topbar {
+    background: #1a1a1a;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    border-bottom: 2px solid #00ff88;
+    flex-shrink: 0;
+  }
+  .d1-topbar .brand {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    color: #00ff88;
+  }
+  .d1-topbar .user {
+    margin-left: auto;
+    font-size: 11px;
+    color: #666;
+  }
+  .d1-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+  .d1-sidebar {
+    width: 180px;
+    background: #161616;
+    border-right: 2px solid #2a2a2a;
+    padding: 16px 12px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .d1-score-block .score-label {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 7px;
+    color: #555;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .d1-score-block .score-value {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 18px;
+    color: #00ff88;
+  }
+  .d1-score-block .score-unit {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 7px;
+    color: #555;
+    margin-top: 2px;
+    display: block;
+  }
+  .d1-nav { display: flex; flex-direction: column; gap: 4px; }
+  .d1-nav a {
+    font-size: 11px;
+    color: #555;
+    text-decoration: none;
+    padding: 4px 6px;
+    border-left: 2px solid transparent;
+  }
+  .d1-nav a.active { color: #f0f0f0; border-left-color: #00ff88; }
+  .d1-main {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .d1-input-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .d1-input-row input {
+    flex: 1;
+    background: #1a1a1a;
+    border: 2px solid #00ff88;
+    color: #f0f0f0;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    padding: 6px 10px;
+    outline: none;
+  }
+  .d1-input-row input::placeholder { color: #444; }
+  .d1-input-row .pts-input {
+    width: 60px;
+    background: #1a1a1a;
+    border: 2px solid #333;
+    color: #888;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    padding: 6px 8px;
+    outline: none;
+    text-align: center;
+  }
+  .d1-task {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 10px;
+    background: #1a1a1a;
+    border-left: 2px solid #2a2a2a;
+  }
+  .d1-task:hover { border-left-color: #00ff88; }
+  .d1-task.done { opacity: 0.4; }
+  .d1-task.done .task-title { text-decoration: line-through; color: #555; }
+  .d1-check {
+    width: 16px; height: 16px;
+    border: 2px solid #444;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; color: #00ff88;
+  }
+  .d1-check.checked { border-color: #00ff88; background: #001a0d; }
+  .task-title { font-size: 13px; color: #e0e0e0; flex: 1; }
+  .task-meta { display: flex; gap: 6px; }
+  .tag {
+    font-size: 10px;
+    padding: 1px 5px;
+    background: #222;
+    color: #888;
+    border: 1px solid #333;
+  }
+  .pts { font-size: 11px; color: #555; margin-left: auto; }
+
+  /* ═══════════════════════════════════════
+     DIRECTION 2 — Amber accent, top nav
+  ═══════════════════════════════════════ */
+  .d2 {
+    background: #0d0d0d;
+    display: flex;
+    flex-direction: column;
+    height: 520px;
+    border: 2px solid #333;
+    overflow: hidden;
+  }
+  .d2-topbar {
+    background: #141414;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    border-bottom: 2px solid #ffcc00;
+    gap: 24px;
+    flex-shrink: 0;
+  }
+  .d2-topbar .brand {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+    color: #ffcc00;
+  }
+  .d2-topbar .nav-links { display: flex; gap: 16px; }
+  .d2-topbar .nav-links a {
+    font-size: 11px; color: #555; text-decoration: none;
+  }
+  .d2-topbar .nav-links a.active { color: #ffcc00; }
+  .d2-score-pill {
+    margin-left: auto;
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+  }
+  .d2-score-pill .lbl {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 7px;
+    color: #555;
+  }
+  .d2-score-pill .val {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 13px;
+    color: #ffcc00;
+  }
+  .d2-main {
+    flex: 1;
+    max-width: 680px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 20px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .d2-section-label {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 7px;
+    color: #444;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+  }
+  .d2-input-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+    align-items: center;
+  }
+  .d2-input-row input.main {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid #ffcc00;
+    color: #f0f0f0;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    padding: 6px 4px;
+    outline: none;
+  }
+  .d2-input-row input.main::placeholder { color: #333; }
+  .d2-input-row .pts {
+    width: 48px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid #444;
+    color: #777;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    padding: 6px 4px;
+    outline: none;
+    text-align: center;
+  }
+  .d2-task {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 4px;
+    border-bottom: 1px solid #1f1f1f;
+  }
+  .d2-check {
+    width: 14px; height: 14px;
+    border: 2px solid #ffcc00;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; color: #ffcc00;
+  }
+  .d2-check.checked { background: #1a1500; }
+  .d2-task.done .task-title { text-decoration: line-through; color: #444; }
+  .d2-pts { font-size: 11px; color: #444; margin-left: auto; }
+
+  /* ═══════════════════════════════════════
+     DIRECTION 3 — Cyan accent, right sidebar
+  ═══════════════════════════════════════ */
+  .d3 {
+    background: #0a0a0f;
+    display: flex;
+    flex-direction: column;
+    height: 520px;
+    border: 2px solid #1e1e2e;
+    overflow: hidden;
+  }
+  .d3-topbar {
+    height: 44px;
+    background: #12121c;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    border-bottom: 1px solid #1e1e2e;
+    flex-shrink: 0;
+  }
+  .d3-brand {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+    color: #00e5ff;
+    letter-spacing: 2px;
+  }
+  .d3-body { display: flex; flex: 1; overflow: hidden; }
+  .d3-main {
+    flex: 1;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow-y: auto;
+  }
+  .d3-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #12121c;
+    border: 2px solid #1e1e2e;
+    margin-bottom: 12px;
+  }
+  .d3-input-wrap input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #e0e0f0;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    outline: none;
+  }
+  .d3-input-wrap input::placeholder { color: #2a2a3a; }
+  .d3-input-wrap .hint { font-size: 10px; color: #333; }
+  .d3-task {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 12px;
+    background: #12121c;
+    border: 1px solid #1a1a28;
+  }
+  .d3-task:hover { border-color: #2a2a4a; }
+  .d3-check {
+    width: 14px; height: 14px;
+    border: 2px solid #00e5ff;
+    flex-shrink: 0;
+    font-size: 9px;
+    color: #00e5ff;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .d3-task.done .task-title { text-decoration: line-through; color: #333; }
+  .d3-task.done .d3-check { border-color: #1a3a3a; color: #1a3a3a; }
+  .d3-sidebar {
+    width: 160px;
+    background: #0d0d18;
+    border-left: 1px solid #1e1e2e;
+    padding: 20px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    flex-shrink: 0;
+  }
+  .d3-score { text-align: center; }
+  .d3-score .lbl {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 6px;
+    color: #333;
+    display: block;
+    margin-bottom: 8px;
+  }
+  .d3-score .val {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 22px;
+    color: #00e5ff;
+    display: block;
+  }
+  .d3-score .unit {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 6px;
+    color: #333;
+    display: block;
+    margin-top: 4px;
+  }
+  .d3-divider { height: 1px; background: #1e1e2e; }
+  .d3-history { display: flex; flex-direction: column; gap: 5px; }
+  .d3-history .hist-label {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 6px;
+    color: #333;
+    margin-bottom: 4px;
+  }
+  .d3-history .day {
+    display: flex; justify-content: space-between;
+    font-size: 10px; color: #333;
+  }
+  .d3-history .day.today { color: #00e5ff; }
+
+  /* ═══════════════════════════════════════
+     DIRECTION 4 — Split header, purple accent
+  ═══════════════════════════════════════ */
+  .d4 {
+    background: #0f0f14;
+    display: flex;
+    flex-direction: column;
+    height: 520px;
+    border: 2px solid #222;
+    overflow: hidden;
+  }
+  .d4-header {
+    background: #161620;
+    padding: 12px 20px;
+    border-bottom: 2px solid #9945ff;
+    display: flex;
+    align-items: flex-end;
+    gap: 20px;
+    flex-shrink: 0;
+  }
+  .d4-header .brand {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    color: #9945ff;
+  }
+  .d4-header .score-inline {
+    margin-left: auto;
+    text-align: right;
+  }
+  .d4-header .score-inline .lbl {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 6px;
+    color: #444;
+    display: block;
+    margin-bottom: 2px;
+  }
+  .d4-header .score-inline .val {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 16px;
+    color: #9945ff;
+  }
+  .d4-toolbar {
+    background: #13131d;
+    padding: 8px 20px;
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid #222;
+    flex-shrink: 0;
+  }
+  .d4-filter-btn {
+    font-size: 10px;
+    padding: 3px 8px;
+    background: #1e1e2e;
+    color: #555;
+    border: 1px solid #2a2a3e;
+    cursor: pointer;
+  }
+  .d4-filter-btn.active { color: #9945ff; border-color: #9945ff; }
+  .d4-main {
+    flex: 1;
+    max-width: 700px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow-y: auto;
+  }
+  .d4-input-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+    align-items: center;
+  }
+  .d4-input-row input {
+    flex: 1;
+    background: #1c1c28;
+    border: 2px solid #9945ff;
+    color: #e0e0f8;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    padding: 7px 12px;
+    outline: none;
+  }
+  .d4-input-row input::placeholder { color: #33334a; }
+  .d4-task {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 10px;
+    background: #161620;
+    border: 1px solid #222;
+  }
+  .d4-check {
+    width: 16px; height: 16px;
+    border: 2px solid #9945ff;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; color: #9945ff;
+  }
+  .d4-check.checked { background: #1a0a2e; }
+  .d4-task.done .task-title { text-decoration: line-through; color: #333; }
+
+  /* ═══════════════════════════════════════
+     DIRECTION 5 — Minimal, red accent, wide
+  ═══════════════════════════════════════ */
+  .d5 {
+    background: #111;
+    display: flex;
+    flex-direction: column;
+    height: 520px;
+    border: 2px solid #222;
+    overflow: hidden;
+  }
+  .d5-topbar {
+    height: 48px;
+    background: #111;
+    border-bottom: 2px solid #ff4466;
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    flex-shrink: 0;
+  }
+  .d5-brand {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+    color: #ff4466;
+  }
+  .d5-score-block {
+    margin-left: auto;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+  .d5-score-block .lbl {
+    font-size: 10px;
+    color: #444;
+  }
+  .d5-score-block .val {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 12px;
+    color: #ff4466;
+  }
+  .d5-main {
+    flex: 1;
+    padding: 24px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow-y: auto;
+    max-width: 800px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  .d5-input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #ff4466;
+    color: #f0f0f0;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    padding: 8px 0;
+    outline: none;
+    margin-bottom: 16px;
+  }
+  .d5-input::placeholder { color: #2a2a2a; }
+  .d5-task {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid #1a1a1a;
+  }
+  .d5-check {
+    width: 12px; height: 12px;
+    border: 2px solid #ff4466;
+    flex-shrink: 0;
+  }
+  .d5-check.checked {
+    background: #ff4466;
+  }
+  .d5-task.done .task-title { text-decoration: line-through; color: #333; }
+  .d5-tag { font-size: 10px; color: #444; border: 1px solid #2a2a2a; padding: 1px 5px; }
+
+  /* ═══════════════════════════════════════
+     DIRECTION 6 — Card-based, green, centered
+  ═══════════════════════════════════════ */
+  .d6 {
+    background: #0a0a0a;
+    display: flex;
+    flex-direction: column;
+    height: 520px;
+    border: 2px solid #222;
+    overflow: hidden;
+  }
+  .d6-topbar {
+    height: 50px;
+    background: #0f0f0f;
+    border-bottom: 3px solid #00ff88;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 16px;
+    flex-shrink: 0;
+  }
+  .d6-brand {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+    color: #00ff88;
+  }
+  .d6-score-chip {
+    margin-left: auto;
+    background: #001a0d;
+    border: 2px solid #00ff88;
+    padding: 3px 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .d6-score-chip .lbl {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 6px;
+    color: #00883a;
+  }
+  .d6-score-chip .val {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 12px;
+    color: #00ff88;
+  }
+  .d6-main {
+    flex: 1;
+    max-width: 660px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 18px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    overflow-y: auto;
+  }
+  .d6-input-card {
+    background: #161616;
+    border: 2px solid #00ff88;
+    padding: 8px 12px;
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .d6-input-card input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #f0f0f0;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    outline: none;
+  }
+  .d6-input-card input::placeholder { color: #333; }
+  .d6-input-card .pts {
+    width: 48px;
+    background: transparent;
+    border: none;
+    border-left: 2px solid #1e1e1e;
+    color: #555;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    padding: 0 8px;
+    outline: none;
+    text-align: center;
+  }
+  .d6-task-card {
+    background: #141414;
+    border: 2px solid #202020;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .d6-task-card:hover { border-color: #2a2a2a; }
+  .d6-check {
+    width: 16px; height: 16px;
+    border: 2px solid #00ff88;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; color: #00ff88;
+  }
+  .d6-check.checked { background: #001a0d; }
+  .d6-task-card.done .task-title { text-decoration: line-through; color: #404040; }
+  .d6-subtasks { font-size: 10px; color: #444; margin-left: auto; white-space: nowrap; }
+
+  /* ─── Nav ── */
+  .nav {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    max-width: 960px;
+    margin: 0 auto 48px auto;
+  }
+  .nav a {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 7px;
+    color: #555;
+    text-decoration: none;
+    padding: 6px 10px;
+    border: 2px solid #222;
+  }
+  .nav a:hover { color: #00ff88; border-color: #00ff88; }
+
+  .section-divider {
+    max-width: 960px;
+    margin: 0 auto 16px auto;
+    height: 1px;
+    background: #222;
+  }
+</style>
+</head>
+<body>
+
+<h1 class="page-title">bmad-todo-app</h1>
+<p class="page-subtitle">UX Design Directions — 6 Explorations + Hybrid Selection · Dark Base · Compact Density · Pixel Art</p>
+
+<nav class="nav">
+  <a href="#hybrid" style="color:#00ff88;border-color:#00ff88;">★ HYBRID (Selected)</a>
+  <a href="#d1">D1 · Green / Left Sidebar</a>
+  <a href="#d2">D2 · Amber / Top Nav</a>
+  <a href="#d3">D3 · Cyan / Right Sidebar</a>
+  <a href="#d4">D4 · Purple / Filter Bar</a>
+  <a href="#d5">D5 · Red / Minimal</a>
+  <a href="#d6">D6 · Green / Card</a>
+</nav>
+
+<!-- ═══════════ HYBRID SELECTED ═══════════ -->
+<section class="direction-section" id="hybrid" style="border: 2px solid #00ff88; padding: 16px; margin-bottom: 72px; max-width: 960px; margin-left: auto; margin-right: auto;">
+  <div class="direction-label" style="color:#00ff88; font-size: 10px; margin-bottom: 4px;">★ HYBRID — SELECTED DIRECTION</div>
+  <div class="direction-desc" style="margin-bottom: 16px;">
+    D1 green palette + No sidebar + Score top-right under user/logout + D4 filter bar + Inline subtask expansion.
+    Single-column, max 860px, compact density.
+  </div>
+  <div style="
+    background: #0f0f0f;
+    display: flex;
+    flex-direction: column;
+    height: 580px;
+    border: 2px solid #1e1e1e;
+    overflow: hidden;
+    max-width: 860px;
+    margin: 0 auto;
+  ">
+    <!-- Top Bar: brand left | user + score top-right -->
+    <div style="
+      background: #1a1a1a;
+      border-bottom: 2px solid #00ff88;
+      display: flex;
+      align-items: stretch;
+      padding: 0 20px;
+      flex-shrink: 0;
+      height: 52px;
+    ">
+      <span style="font-family:'Press Start 2P',monospace;font-size:10px;color:#00ff88;align-self:center;">BMAD::TODO</span>
+      <!-- User + score stacked top-right -->
+      <div style="margin-left:auto;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;gap:2px;padding: 6px 0;">
+        <span style="font-size:11px;color:#555;">alessio &nbsp;<span style="color:#333;">|</span>&nbsp; <span style="color:#444;cursor:pointer;">logout</span></span>
+        <span style="font-family:'Press Start 2P',monospace;font-size:8px;color:#00ff88;">24 <span style="font-size:6px;color:#336644;">pts today</span></span>
+      </div>
+    </div>
+    <!-- Filter bar (D4-style) -->
+    <div style="
+      background: #141414;
+      padding: 6px 20px;
+      display: flex;
+      gap: 6px;
+      border-bottom: 1px solid #222;
+      flex-shrink: 0;
+      align-items: center;
+    ">
+      <button style="font-size:10px;padding:3px 8px;background:#0f0f0f;color:#00ff88;border:1px solid #00ff88;cursor:pointer;font-family:'Courier New',monospace;">All</button>
+      <button style="font-size:10px;padding:3px 8px;background:transparent;color:#444;border:1px solid #2a2a2a;cursor:pointer;font-family:'Courier New',monospace;">Active</button>
+      <button style="font-size:10px;padding:3px 8px;background:transparent;color:#444;border:1px solid #2a2a2a;cursor:pointer;font-family:'Courier New',monospace;">Done</button>
+      <button style="font-size:10px;padding:3px 8px;background:transparent;color:#444;border:1px solid #2a2a2a;cursor:pointer;font-family:'Courier New',monospace;">Backend</button>
+      <button style="font-size:10px;padding:3px 8px;background:transparent;color:#444;border:1px solid #2a2a2a;cursor:pointer;font-family:'Courier New',monospace;">Frontend</button>
+      <span style="margin-left:auto;font-size:10px;color:#333;font-family:'Courier New',monospace;">sort: default ▾</span>
+    </div>
+    <!-- Main content: single column, centered -->
+    <div style="
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-width: 800px;
+      margin: 0 auto;
+      width: 100%;
+    ">
+      <!-- Inline task input -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <input type="text" placeholder="What needs to get done today? Press Enter to add…" style="
+          flex:1;
+          background:#1a1a1a;
+          border:2px solid #00ff88;
+          color:#f0f0f0;
+          font-family:'Courier New',monospace;
+          font-size:13px;
+          padding:7px 12px;
+          outline:none;
+        " />
+      </div>
+
+      <!-- Task: normal, with subtask badge (collapsed) -->
+      <div style="
+        display:flex;align-items:center;gap:10px;
+        padding:8px 10px;background:#1a1a1a;
+        border-left:2px solid #00ff88;
+        position:relative;
+      ">
+        <div style="width:16px;height:16px;border:2px solid #444;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#00ff88;"></div>
+        <span style="font-size:13px;color:#e0e0e0;flex:1;">Refactor API error handling</span>
+        <span style="font-size:10px;color:#555;border:1px solid #2a2a2a;padding:1px 5px;">Backend</span>
+        <!-- Subtask badge -->
+        <span style="font-size:10px;color:#336644;border:1px solid #224433;padding:1px 6px;cursor:pointer;" title="Click to expand subtasks">2/3 ↓</span>
+        <span style="font-size:11px;color:#555;margin-left:4px;">5 pts</span>
+      </div>
+      <!-- Subtask expansion (shown inline — this task is hovered/expanded) -->
+      <div style="
+        background:#131313;border-left:2px solid #00aa55;
+        margin-left: 28px;
+        padding: 8px 10px;
+        display:flex;flex-direction:column;gap:5px;
+      ">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:11px;height:11px;border:1px solid #444;flex-shrink:0;"></div>
+          <span style="font-size:11px;color:#aaa;">Write tests for auth errors</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:11px;height:11px;border:1px solid #336644;background:#001a0d;flex-shrink:0;color:#00ff88;font-size:8px;display:flex;align-items:center;justify-content:center;">✓</div>
+          <span style="font-size:11px;color:#555;text-decoration:line-through;">Map error codes to messages</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:11px;height:11px;border:1px solid #336644;background:#001a0d;flex-shrink:0;color:#00ff88;font-size:8px;display:flex;align-items:center;justify-content:center;">✓</div>
+          <span style="font-size:11px;color:#555;text-decoration:line-through;">Update Postman collection</span>
+        </div>
+        <!-- Inline subtask add field -->
+        <div style="display:flex;align-items:center;gap:6px;margin-top:4px;padding-top:4px;border-top:1px solid #1e1e1e;">
+          <span style="font-size:10px;color:#336644;">+</span>
+          <input type="text" placeholder="Add subtask…" style="
+            flex:1;background:transparent;border:none;border-bottom:1px solid #2a2a2a;
+            color:#777;font-family:'Courier New',monospace;font-size:11px;
+            padding:2px 4px;outline:none;
+          " />
+        </div>
+      </div>
+
+      <!-- Task: normal, no subtasks -->
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:#1a1a1a;border-left:2px solid #2a2a2a;">
+        <div style="width:16px;height:16px;border:2px solid #444;flex-shrink:0;"></div>
+        <span style="font-size:13px;color:#e0e0e0;flex:1;">Review PR from teammate</span>
+        <span style="font-size:10px;color:#555;border:1px solid #2a2a2a;padding:1px 5px;">Review</span>
+        <span style="font-size:11px;color:#555;margin-left:auto;">2 pts</span>
+      </div>
+
+      <!-- Task: done -->
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:#141414;border-left:2px solid #222;opacity:0.5;">
+        <div style="width:16px;height:16px;border:2px solid #336644;background:#001a0d;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#00ff88;">✓</div>
+        <span style="font-size:13px;color:#555;text-decoration:line-through;flex:1;">Write unit tests for auth module</span>
+        <span style="font-size:10px;color:#333;border:1px solid #1a1a1a;padding:1px 5px;">Backend</span>
+        <span style="font-size:11px;color:#333;margin-left:auto;">3 pts</span>
+      </div>
+
+      <!-- Task: done -->
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:#141414;border-left:2px solid #222;opacity:0.5;">
+        <div style="width:16px;height:16px;border:2px solid #336644;background:#001a0d;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#00ff88;">✓</div>
+        <span style="font-size:13px;color:#555;text-decoration:line-through;flex:1;">Deploy API to staging</span>
+        <span style="font-size:11px;color:#333;margin-left:auto;">8 pts</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ═══════════ DIRECTION 1 ═══════════ -->
+<section class="direction-section" id="d1">
+  <div class="direction-label">D1 — Green Accent · Left Sidebar Score · Pixel Border Tasks</div>
+  <div class="direction-desc">Score lives in a fixed left sidebar. Task list is the dominant right panel. Strong green accent. Most developer-terminal-like layout.</div>
+  <div class="d1">
+    <div class="d1-topbar">
+      <span class="brand">BMAD::TODO</span>
+      <span class="user">alessio ▸ logout</span>
+    </div>
+    <div class="d1-body">
+      <div class="d1-sidebar">
+        <div class="d1-score-block">
+          <span class="score-label">TODAY'S SCORE</span>
+          <span class="score-value">24</span>
+          <span class="score-unit">pts</span>
+        </div>
+        <nav class="d1-nav">
+          <a href="#" class="active">▸ Tasks</a>
+          <a href="#">  History</a>
+        </nav>
+      </div>
+      <div class="d1-main">
+        <div class="d1-input-row">
+          <input type="text" placeholder="Add a task and press Enter…" />
+          <input type="text" class="pts-input" placeholder="pts" />
+        </div>
+        <div class="d1-task">
+          <div class="d1-check">✓</div>
+          <span class="task-title">Refactor API error handling</span>
+          <div class="task-meta">
+            <span class="tag">Backend</span>
+          </div>
+          <span class="pts">5 pts</span>
+        </div>
+        <div class="d1-task">
+          <div class="d1-check">✓</div>
+          <span class="task-title">Review PR from teammate</span>
+          <div class="task-meta">
+            <span class="tag">Review</span>
+          </div>
+          <span class="pts">2 pts</span>
+        </div>
+        <div class="d1-task done">
+          <div class="d1-check checked">✓</div>
+          <span class="task-title">Write unit tests for auth module</span>
+          <div class="task-meta">
+            <span class="tag">Backend</span>
+          </div>
+          <span class="pts">3 pts</span>
+        </div>
+        <div class="d1-task done">
+          <div class="d1-check checked">✓</div>
+          <span class="task-title">Fix login button CSS</span>
+          <div class="task-meta">
+            <span class="tag">Frontend</span>
+          </div>
+          <span class="pts">1 pt</span>
+        </div>
+        <div class="d1-task done">
+          <div class="d1-check checked">✓</div>
+          <span class="task-title">Deploy API to staging</span>
+          <span class="pts">8 pts</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ═══════════ DIRECTION 2 ═══════════ -->
+<section class="direction-section" id="d2">
+  <div class="direction-label">D2 — Amber Accent · Score in Top Bar · Underline Input · Centered Single Column</div>
+  <div class="direction-desc">Score sits in the top bar as a compact pill. No sidebar — full-width single column task list. Cleaner, more spacious feel. Amber is warmer than green.</div>
+  <div class="d2">
+    <div class="d2-topbar">
+      <span class="brand">BMAD::TODO</span>
+      <div class="nav-links">
+        <a href="#" class="active">Tasks</a>
+        <a href="#">History</a>
+      </div>
+      <div class="d2-score-pill">
+        <span class="lbl">SCORE</span>
+        <span class="val">24</span>
+      </div>
+    </div>
+    <div class="d2-main">
+      <div class="d2-section-label">TODAY — MON 23 FEB</div>
+      <div class="d2-input-row">
+        <input class="main" type="text" placeholder="What needs to get done today?" />
+        <input class="pts" type="text" placeholder="pts" />
+      </div>
+      <div class="d2-task">
+        <div class="d2-check"></div>
+        <span class="task-title">Refactor API error handling</span>
+        <span class="tag">Backend</span>
+        <span class="d2-pts">5 pts</span>
+      </div>
+      <div class="d2-task">
+        <div class="d2-check"></div>
+        <span class="task-title">Review PR from teammate</span>
+        <span class="tag">Review</span>
+        <span class="d2-pts">2 pts</span>
+      </div>
+      <div class="d2-task done">
+        <div class="d2-check checked">✓</div>
+        <span class="task-title">Write unit tests for auth module</span>
+        <span class="tag">Backend</span>
+        <span class="d2-pts">3 pts</span>
+      </div>
+      <div class="d2-task done">
+        <div class="d2-check checked">✓</div>
+        <span class="task-title">Fix login button CSS</span>
+        <span class="tag">Frontend</span>
+        <span class="d2-pts">1 pt</span>
+      </div>
+      <div class="d2-task done">
+        <div class="d2-check checked">✓</div>
+        <span class="task-title">Deploy API to staging</span>
+        <span class="d2-pts">8 pts</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ═══════════ DIRECTION 3 ═══════════ -->
+<section class="direction-section" id="d3">
+  <div class="direction-label">D3 — Cyan Accent · Right Sidebar with Score History · Deep Space bg</div>
+  <div class="direction-desc">Score AND history live in a right sidebar. Main area is uncluttered. Deep navy background. History is always glanceable without navigating away.</div>
+  <div class="d3">
+    <div class="d3-topbar">
+      <span class="d3-brand">BMAD::TODO</span>
+    </div>
+    <div class="d3-body">
+      <div class="d3-main">
+        <div class="d3-input-wrap">
+          <input type="text" placeholder="New task…" />
+          <span class="hint">↵ to add</span>
+        </div>
+        <div class="d3-task">
+          <div class="d3-check"></div>
+          <span class="task-title">Refactor API error handling</span>
+          <span class="tag" style="margin-left:auto;font-size:10px;color:#555;border:1px solid #1e1e2e;padding:1px 5px;">Backend</span>
+          <span class="pts" style="margin-left:8px;font-size:11px;color:#444;">5</span>
+        </div>
+        <div class="d3-task">
+          <div class="d3-check"></div>
+          <span class="task-title">Review PR from teammate</span>
+          <span class="pts" style="margin-left:auto;font-size:11px;color:#444;">2</span>
+        </div>
+        <div class="d3-task done">
+          <div class="d3-check checked" style="background:#001414;border-color:#003333;color:#003333;">✓</div>
+          <span class="task-title">Write unit tests for auth module</span>
+          <span class="pts" style="margin-left:auto;font-size:11px;color:#2a2a2a;">3</span>
+        </div>
+        <div class="d3-task done">
+          <div class="d3-check checked" style="background:#001414;border-color:#003333;color:#003333;">✓</div>
+          <span class="task-title">Fix login button CSS</span>
+          <span class="pts" style="margin-left:auto;font-size:11px;color:#2a2a2a;">1</span>
+        </div>
+        <div class="d3-task done">
+          <div class="d3-check checked" style="background:#001414;border-color:#003333;color:#003333;">✓</div>
+          <span class="task-title">Deploy API to staging</span>
+          <span class="pts" style="margin-left:auto;font-size:11px;color:#2a2a2a;">8</span>
+        </div>
+      </div>
+      <div class="d3-sidebar">
+        <div class="d3-score">
+          <span class="lbl">TODAY</span>
+          <span class="val">24</span>
+          <span class="unit">pts</span>
+        </div>
+        <div class="d3-divider"></div>
+        <div class="d3-history">
+          <div class="hist-label">HISTORY</div>
+          <div class="day today"><span>Mon</span><span>24</span></div>
+          <div class="day"><span>Sun</span><span>11</span></div>
+          <div class="day"><span>Sat</span><span>18</span></div>
+          <div class="day"><span>Fri</span><span>14</span></div>
+          <div class="day"><span>Thu</span><span>7</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ═══════════ DIRECTION 4 ═══════════ -->
+<section class="direction-section" id="d4">
+  <div class="direction-label">D4 — Purple Accent · Score in Header · Filter Toolbar · Full-width</div>
+  <div class="direction-desc">Score is inline in the header. A secondary toolbar provides filter/sort controls — always visible but subdued. Purple accent is more distinctive.</div>
+  <div class="d4">
+    <div class="d4-header">
+      <span class="brand">BMAD::TODO</span>
+      <div class="score-inline">
+        <span class="lbl">TODAY'S SCORE</span>
+        <span class="val">24 pts</span>
+      </div>
+    </div>
+    <div class="d4-toolbar">
+      <button class="d4-filter-btn active">All</button>
+      <button class="d4-filter-btn">Active</button>
+      <button class="d4-filter-btn">Done</button>
+      <button class="d4-filter-btn">Backend</button>
+      <button class="d4-filter-btn">Frontend</button>
+      <button class="d4-filter-btn" style="margin-left:auto;">Sort ↓</button>
+    </div>
+    <div class="d4-main">
+      <div class="d4-input-row">
+        <input type="text" placeholder="Add a task…" />
+      </div>
+      <div class="d4-task">
+        <div class="d4-check"></div>
+        <span class="task-title">Refactor API error handling</span>
+        <span class="tag" style="margin-left:8px;font-size:10px;color:#7733cc;border:1px solid #7733cc;padding:1px 5px;">Backend</span>
+        <span class="pts" style="margin-left:auto;font-size:11px;color:#444;">5 pts</span>
+      </div>
+      <div class="d4-task">
+        <div class="d4-check"></div>
+        <span class="task-title">Review PR from teammate</span>
+        <span class="pts" style="margin-left:auto;font-size:11px;color:#444;">2 pts</span>
+      </div>
+      <div class="d4-task done">
+        <div class="d4-check checked">✓</div>
+        <span class="task-title">Write unit tests for auth module</span>
+        <span class="pts" style="margin-left:auto;font-size:11px;color:#333;">3 pts</span>
+      </div>
+      <div class="d4-task done">
+        <div class="d4-check checked">✓</div>
+        <span class="task-title">Fix login button CSS</span>
+        <span class="pts" style="margin-left:auto;font-size:11px;color:#333;">1 pt</span>
+      </div>
+      <div class="d4-task done">
+        <div class="d4-check checked">✓</div>
+        <span class="task-title">Deploy API to staging</span>
+        <span class="pts" style="margin-left:auto;font-size:11px;color:#333;">8 pts</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ═══════════ DIRECTION 5 ═══════════ -->
+<section class="direction-section" id="d5">
+  <div class="direction-label">D5 — Red Accent · Ultra-minimal · No Cards · Score Inline Top Bar</div>
+  <div class="direction-desc">Strips every container away. Task list is pure text with a thin bottom border. Red accent is sharp and confident. Maximum focus on content with zero chrome.</div>
+  <div class="d5">
+    <div class="d5-topbar">
+      <span class="d5-brand">BMAD::TODO</span>
+      <div class="d5-score-block">
+        <span class="lbl">score</span>
+        <span class="val">24 pts</span>
+      </div>
+    </div>
+    <div class="d5-main">
+      <input class="d5-input" type="text" placeholder="Add a task and hit Enter…" />
+      <div class="d5-task">
+        <div class="d5-check"></div>
+        <span class="task-title">Refactor API error handling</span>
+        <span class="d5-tag">Backend</span>
+        <span class="pts" style="margin-left:auto;font-size:11px;color:#444;">5 pts</span>
+      </div>
+      <div class="d5-task">
+        <div class="d5-check"></div>
+        <span class="task-title">Review PR from teammate</span>
+        <span class="pts" style="margin-left:auto;font-size:11px;color:#444;">2 pts</span>
+      </div>
+      <div class="d5-task done">
+        <div class="d5-check checked"></div>
+        <span class="task-title">Write unit tests for auth module</span>
+        <span class="d5-tag">Backend</span>
+        <span class="pts" style="margin-left:auto;font-size:11px;color:#2a2a2a;">3 pts</span>
+      </div>
+      <div class="d5-task done">
+        <div class="d5-check checked"></div>
+        <span class="task-title">Fix login button CSS</span>
+        <span class="pts" style="margin-left:auto;font-size:11px;color:#2a2a2a;">1 pt</span>
+      </div>
+      <div class="d5-task done">
+        <div class="d5-check checked"></div>
+        <span class="task-title">Deploy API to staging</span>
+        <span class="pts" style="margin-left:auto;font-size:11px;color:#2a2a2a;">8 pts</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ═══════════ DIRECTION 6 ═══════════ -->
+<section class="direction-section" id="d6">
+  <div class="direction-label">D6 — Green Accent · Pixel Card Border · Score Chip in Top Bar · Subtask Count</div>
+  <div class="direction-desc">Each task is a distinct pixel-bordered card. Score sits in a compact labeled chip in the top bar. Strong card identity reinforces the 8bitcn-ui aesthetic most directly.</div>
+  <div class="d6">
+    <div class="d6-topbar">
+      <span class="d6-brand">BMAD::TODO</span>
+      <div class="d6-score-chip">
+        <span class="lbl">SCORE</span>
+        <span class="val">24 pts</span>
+      </div>
+    </div>
+    <div class="d6-main">
+      <div class="d6-input-card">
+        <input type="text" placeholder="New task…" />
+        <input class="pts" type="text" placeholder="pts" />
+      </div>
+      <div class="d6-task-card">
+        <div class="d6-check"></div>
+        <span class="task-title">Refactor API error handling</span>
+        <span class="tag" style="font-size:10px;color:#555;border:1px solid #2a2a2a;padding:1px 5px;">Backend</span>
+        <span class="d6-subtasks">2/3 subtasks</span>
+        <span class="pts" style="margin-left:8px;font-size:11px;color:#444;">5 pts</span>
+      </div>
+      <div class="d6-task-card">
+        <div class="d6-check"></div>
+        <span class="task-title">Review PR from teammate</span>
+        <span class="tag" style="font-size:10px;color:#555;border:1px solid #2a2a2a;padding:1px 5px;">Review</span>
+        <span class="pts" style="margin-left:auto;font-size:11px;color:#444;">2 pts</span>
+      </div>
+      <div class="d6-task-card done">
+        <div class="d6-check checked">✓</div>
+        <span class="task-title">Write unit tests for auth module</span>
+        <span class="pts" style="margin-left:auto;font-size:11px;color:#2a2a2a;">3 pts</span>
+      </div>
+      <div class="d6-task-card done">
+        <div class="d6-check checked">✓</div>
+        <span class="task-title">Fix login button CSS</span>
+        <span class="pts" style="margin-left:auto;font-size:11px;color:#2a2a2a;">1 pt</span>
+      </div>
+      <div class="d6-task-card done">
+        <div class="d6-check checked">✓</div>
+        <span class="task-title">Deploy API to staging</span>
+        <span class="pts" style="margin-left:auto;font-size:11px;color:#2a2a2a;">8 pts</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<p style="text-align:center;font-family:'Press Start 2P',monospace;font-size:7px;color:#333;padding-bottom:40px;">
+  bmad-todo-app · UX Design Directions · 2026-02-23
+</p>
+
+</body>
+</html>
