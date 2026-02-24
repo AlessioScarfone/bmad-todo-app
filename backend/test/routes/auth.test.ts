@@ -331,8 +331,11 @@ describe('POST /api/auth/logout', () => {
     expect(logoutRes.json()).toMatchObject({ message: 'Logged out' })
 
     // Cookie must be cleared (Max-Age=0 or past Expires)
-    const responseCookie = logoutRes.headers['set-cookie'] as string
-    expect(responseCookie).toMatch(/Max-Age=0|expires=.*1970/i)
+    const responseCookie = logoutRes.headers['set-cookie'] as string | string[]
+    const responseCookieStr = Array.isArray(responseCookie)
+      ? responseCookie.join('; ')
+      : responseCookie
+    expect(responseCookieStr).toMatch(/Max-Age=0|expires=.*1970/i)
   })
 
   it('returns 200 with no cookie present (idempotent)', async () => {

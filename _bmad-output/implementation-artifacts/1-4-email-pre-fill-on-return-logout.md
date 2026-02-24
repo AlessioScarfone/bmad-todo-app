@@ -1,6 +1,6 @@
 # Story 1.4: Email Pre-fill on Return & Logout
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -448,10 +448,11 @@ _No blockers encountered. All tasks implemented per specification._
 
 - **Task 1** — Added `POST /auth/logout` to `backend/src/routes/auth.ts` inside the existing `authRoutes` fp plugin. No `preHandler` authenticate guard (idempotent per AC4). `clearCookie('token', { path: '/' })` uses the same path as `setCookie` in login.
 - **Task 2** — Extended `backend/test/routes/auth.test.ts` with 3 new logout test cases in a dedicated `describe('POST /api/auth/logout')` block: valid session cookie (200 + cookie cleared via Max-Age=0), no cookie (200 idempotent), tampered JWT cookie (200 idempotent). All 23 backend tests pass.
-- **Task 3** — Updated `LoginPage.tsx`: imported `getSavedEmail`/`saveEmail` from `../lib/auth`; initialised email state with lazy `useState(() => getSavedEmail() ?? '')` (AC2 — no flash); added `passwordRef` + `useEffect` to focus password field on mount (AC2); called `saveEmail(email.trim())` on successful login only, before `navigate('/')` (AC1).
-- **Task 4** — Created `frontend/src/components/AppHeader.tsx` with best-effort logout pattern: `api.post('/auth/logout', {})` in try/catch, `clearSavedEmail()` + `queryClient.clear()` + `navigate('/login', { replace: true })` always execute in `finally`. Story 2.3 placeholder comment left in JSX for `<TaskCountDisplay />`.
+- **Task 3** — Updated `LoginPage.tsx`: imported `getSavedEmail`/`saveEmail` from `../lib/auth`; initialised email state with lazy `useState(() => getSavedEmail() ?? '')` (AC2 — no flash); added conditional focus logic so password is focused when email is pre-filled and email remains focused when no saved email exists; called `saveEmail(email.trim())` on successful login only, before `navigate('/')` (AC1).
+- **Task 4** — Created `frontend/src/components/AppHeader.tsx` with best-effort logout pattern: `api.post('/auth/logout')` in try/catch, `clearSavedEmail()` + `queryClient.clear()` + `navigate('/login', { replace: true })` always execute in `finally`. Story 2.3 placeholder comment left in JSX for `<TaskCountDisplay />`.
 - **Task 5** — Replaced `TaskListPage.tsx` placeholder with `<AppHeader userEmail={user?.email} />` integration using `useAuth()` hook. Shell structure ready for Epic 2 task list implementation.
-- **Verifications** — Backend `npx tsc --noEmit`: clean. Frontend `npx tsc --noEmit`: clean. All 23 backend tests pass (no regressions).
+- **Review Fixes (Code Review)** — Addressed HIGH/MEDIUM findings by (1) aligning login focus behavior with task claim and AC intent, (2) making logout request body optional and using no-body contract call, (3) resetting logout pending state defensively, and (4) hardening logout `set-cookie` assertion for `string | string[]` headers.
+- **Verifications** — Frontend `npx tsc --noEmit`: clean. Backend targeted tests `npm test -- test/routes/auth.test.ts`: 17/17 passing.
 
 ### File List
 
@@ -460,3 +461,26 @@ _No blockers encountered. All tasks implemented per specification._
 - `frontend/src/pages/LoginPage.tsx` — MODIFIED (email pre-fill, saveEmail on success, password focus)
 - `frontend/src/components/AppHeader.tsx` — CREATED (logout button, userEmail display, best-effort logout)
 - `frontend/src/pages/TaskListPage.tsx` — MODIFIED (integrated AppHeader, useAuth hook)
+- `frontend/src/lib/api.ts` — MODIFIED (optional POST body support for no-body logout contract)
+
+## Senior Developer Review (AI)
+
+### Reviewer
+
+GPT-5.3-Codex (GitHub Copilot)
+
+### Outcome
+
+Approved after fixes.
+
+### Findings Addressed
+
+- HIGH — Story/task claim mismatch on login focus behavior resolved by implementing conditional mount focus (email when no saved email, password when pre-filled).
+- HIGH — Story/File List vs git traceability concern resolved for current review pass by applying and documenting concrete code/test changes in this story record.
+- MEDIUM — Logout request now follows no-body API contract (`POST /auth/logout` without JSON payload).
+- MEDIUM — Logout pending state now resets defensively before navigation.
+- LOW — Logout integration test now robustly handles `set-cookie` as `string | string[]`.
+
+## Change Log
+
+- 2026-02-24 — AI code review fixes applied; story status moved to `done`; documentation and file list updated; sprint status synced.

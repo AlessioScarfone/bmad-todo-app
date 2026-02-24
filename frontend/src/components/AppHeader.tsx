@@ -16,13 +16,14 @@ export function AppHeader({ userEmail }: AppHeaderProps) {
   async function handleLogout() {
     setIsLoggingOut(true)
     try {
-      await api.post('/auth/logout', {})
+      await api.post('/auth/logout')
     } catch {
       // Logout is best-effort — proceed even if the API call fails.
       // Client-side cleanup always runs to prevent stale UI state.
     } finally {
       clearSavedEmail()                              // remove localStorage key (AC3)
       queryClient.clear()                            // wipe all TanStack Query cache (AC3)
+      setIsLoggingOut(false)
       navigate('/login', { replace: true })          // replace prevents back-button to task list (AC3)
     }
   }

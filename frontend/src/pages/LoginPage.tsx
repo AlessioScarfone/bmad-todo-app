@@ -19,10 +19,16 @@ export default function LoginPage() {
   const [email, setEmail] = useState(() => getSavedEmail() ?? '')
   const [password, setPassword] = useState('')
 
-  // Focus password field on mount even when email is pre-filled (AC2)
+  // Focus password when email is pre-filled; otherwise keep normal email-first focus.
+  const emailRef = useRef<HTMLInputElement>(null)
   const passwordRef = useRef<HTMLInputElement>(null)
   useEffect(() => {
-    passwordRef.current?.focus()
+    if (email) {
+      passwordRef.current?.focus()
+      return
+    }
+
+    emailRef.current?.focus()
   }, [])
   const [emailError, setEmailError] = useState<string | null>(null)
   const [passwordError, setPasswordError] = useState<string | null>(null)
@@ -109,6 +115,7 @@ export default function LoginPage() {
               autoComplete="email"
               value={email}
               onChange={event => setEmail(event.target.value)}
+              ref={emailRef}
               className="w-full bg-[#0f0f0f] border-2 border-[#e0e0e0] px-3 py-2 font-mono text-[13px] text-[#f0f0f0] outline-none focus:border-[#00ff88] rounded-none"
               aria-invalid={Boolean(emailError)}
               aria-describedby={emailError ? 'email-error' : undefined}
