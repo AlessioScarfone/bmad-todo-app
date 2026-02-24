@@ -1,0 +1,17 @@
+import { defineConfig } from 'vitest/config'
+
+export default defineConfig({
+  test: {
+    globals: true,
+    environment: 'node',
+    testTimeout: 60000, // Testcontainers can be slow to start
+    hookTimeout: 60000,
+    include: ['test/**/*.test.ts'],
+    reporter: 'verbose',
+  },
+  resolve: {
+    alias: {
+      'shared/types': '../shared/types/index.ts',
+    },
+  },
+})
