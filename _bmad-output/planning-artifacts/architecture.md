@@ -3,6 +3,8 @@ stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8]
 lastStep: 8
 status: 'complete'
 completedAt: '2026-02-23'
+lastRevised: '2026-02-24'
+revisionSummary: 'Removed scoring/gamification: points column, is_system column, seed task, /api/scores/* routes, ScoreHistoryPage, useScores hook. Replaced score aggregation query with task count query (FR21). Reduced schema to 4 tables. Removed /history route.'
 inputDocuments:
   - '_bmad-output/planning-artifacts/prd.md'
   - '_bmad-output/planning-artifacts/ux-design-specification.md'
@@ -25,15 +27,13 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 
 **Functional Requirements (36 total):**
 - **Authentication & Session Management (FR1–5):** Email/password registration and login, long-lived JWT sessions persisted across browser restarts, email pre-fill on return, logout.
-- **Task Management (FR6–13):** Full CRUD (create, read, complete/un-complete, delete, edit title); user-assigned point values on creation and edit.
-- **Task Enrichment (FR14–22):** Free-form labels (add/remove), optional deadline date (add/remove), flat one-level subtasks (add, complete independently, delete). Subtask completion does not auto-complete parent. Points awarded on parent completion only.
-- **Gamification & Scoring (FR23–27):** Persistent daily score in the UI (updates on each state change), per-day score records, score history view (up to 30 previous days).
-- **Organisation & Discovery (FR28–31):** Filter by label, by completion status, by deadline; sort by label, deadline, or completion status. Filters are session-only, non-persistent.
-- **User Experience & Feedback (FR32–35):** Inline error feedback with retry, sub-1-second UI reflection of state changes, full keyboard navigation.
-- **System Automation (FR36):** Daily seed task auto-created per user per calendar day (idempotent, `is_system` flag, 1 point, deletable/completable by user).
+- **Task Management (FR6–11):** Full CRUD (create, read, complete/un-complete, delete, edit title).
+- **Task Enrichment (FR12–21):** Free-form labels (add/remove), optional deadline date (add/remove), flat one-level subtasks (add, complete independently, delete). Subtask completion does not auto-complete parent. Task count display (completed/total, e.g. `3/5`) shown persistently in the header (FR21).
+- **Organisation & Discovery (FR22–25):** Filter by label, by completion status, by deadline; sort by label, deadline, or completion status. Filters are session-only, non-persistent.
+- **User Experience & Feedback (FR26–29):** Inline error feedback with retry, sub-1-second UI reflection of state changes, full keyboard navigation.
 
 **Non-Functional Requirements:**
-- **Performance:** Task actions < 1s, initial page load < 3s, score update < 500ms.
+- **Performance:** Task actions < 1s, initial page load < 3s.
 - **Security:** HTTPS only, bcrypt password hashing, JWT server-side validation on every authenticated request, strict per-user data isolation, no sensitive data logged.
 - **Accessibility:** WCAG 2.1 AA — zero critical violations, keyboard navigation for all interactive elements, ARIA attributes, visible focus rings, color contrast ratios met, `prefers-reduced-motion` support.
 - **Reliability:** Durable persistence (no data loss on refresh/restart), graceful network failure UX, `docker-compose up` clean-start deployment.
@@ -41,28 +41,27 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 
 **Scale & Complexity:**
 - Primary domain: Full-stack web application
-- Complexity level: Low — CRUD, auth, passive gamification, no real-time collaboration, no multi-tenancy beyond per-user isolation
-- Estimated architectural components: ~5 (Auth, Tasks, Subtasks, Score/History, Daily Seed)
+- Complexity level: Low — CRUD, auth, task count display, no real-time collaboration, no multi-tenancy beyond per-user isolation
+- Estimated architectural components: ~4 (Auth, Tasks, Subtasks, Labels)
 - Solo developer constraint: Monolithic backend required — no microservices
 
 ### Technical Constraints & Dependencies
 
 - SPA frontend communicates with backend exclusively via REST API (JSON) — no SSR
-- Score updates are fetch-driven — no WebSocket or SSE required
+- Task count is derived client-side from the task list response — no separate endpoint needed
 - No SEO requirements — all content is authentication-gated
 - Docker Compose is the sole deployment mechanism — no external infrastructure
 - Frontend design system: 8bitcn-ui (shadcn/ui architecture, Tailwind CSS, Radix UI primitives)
 - React SPA with client-side routing
-- No dedicated background worker process — seed task creation triggered on-login (idempotent check)
+- No dedicated background worker process required
 
 ### Cross-Cutting Concerns Identified
 
 1. **JWT authentication middleware** — applied to all authenticated API routes; token validation, user extraction from claims
 2. **Per-user data isolation** — enforced at every query level; application-level `WHERE user_id = $userId` on all reads/writes
 3. **Optimistic UI + error recovery** — React state updates before server confirmation; rollback on error with inline retry affordance
-4. **Daily score aggregation** — maintained as a `DailyScore(user_id, date, total)` aggregate record; kept consistent across task complete/un-complete actions
-5. **Daily seed task idempotency** — on each authenticated session start, check if today's seed task exists; single SQL upsert if not
-6. **WCAG 2.1 AA compliance** — ARIA attributes, focus management, color contrast, keyboard navigation required across all components
+4. **Task count derivation** — computed client-side from the already-fetched task list (`completed / total`); no separate API call needed
+5. **WCAG 2.1 AA compliance** — ARIA attributes, focus management, color contrast, keyboard navigation required across all components
 
 ---
 
@@ -94,7 +93,7 @@ npm install -D typescript @types/node vitest @testcontainers/postgresql
 - The PRD specifies a SPA with client-side routing and no SEO requirements — Next.js/Remix server runtimes add unnecessary complexity
 - Vite produces a pure static bundle served by nginx — a 3-line multi-stage Dockerfile, no Node runtime in production
 - 8bitcn-ui is built on shadcn/ui + Tailwind CSS + Radix UI, a native fit for this Vite + React setup
-- **React Router v7** (client-side mode) handles the `/history` route and auth redirects declaratively
+- **React Router v7** (client-side mode) handles auth redirects and page routing declaratively
 - **TanStack Query** manages server state: optimistic mutations, background refetch, and error retry are first-class — all required by the UX spec
 
 **Architectural decisions established:**
@@ -131,9 +130,8 @@ npm install -D typescript @types/node vitest @testcontainers/postgresql
 **Decision:** PostgreSQL 16 (`postgres:16-alpine`)
 
 **Rationale:**
-- Production-grade relational database with full MVCC, proper `DATE` type, `UNIQUE` constraints, and window functions required for score history queries
-- `UNIQUE(user_id, date)` on `daily_scores` enforces idempotency for the seed task / score upsert pattern
-- `(user_id, created_date)` composite index is standard Postgres tooling
+- Production-grade relational database with full MVCC, proper `DATE` type, `UNIQUE` constraints — correct fit for the task and label data model
+- `(user_id, created_at)` composite index is standard Postgres tooling
 - `postgres:16-alpine` image is lean (~80MB); named Docker volume persists data across restarts
 - Health check: `pg_isready`; API container uses `depends_on: db: condition: service_healthy` to avoid startup race conditions
 
@@ -171,12 +169,12 @@ backend/src/db/
   client.ts          ← opens postgres connection, exports `sql`
   schema.sql         ← CREATE TABLE statements (source of truth)
   migrate.ts         ← 30-line runner: reads migrations/*.sql, tracks in _migrations table
-  migrations/        ← versioned SQL files (001_init.sql, 002_add_is_system.sql …)
+  migrations/        ← versioned SQL files (001_init.sql, 002_add_deadline_index.sql …)
   queries/
     tasks.ts         ← getTasks, createTask, completeTask, deleteTask …
-    scores.ts        ← getDailyScore, getScoreHistory, upsertDailyScore …
     auth.ts          ← getUserByEmail, createUser …
     subtasks.ts      ← getSubtasks, createSubtask, completeSubtask, deleteSubtask …
+    labels.ts        ← getLabels, addLabelToTask, removeLabelFromTask …
 ```
 
 **Example pattern:**
@@ -219,7 +217,7 @@ export async function createTestDb() {
 }
 ```
 
-**Coverage target:** ≥70% meaningful coverage (PRD NFR) — query functions, auth middleware, score aggregation logic, and seed task idempotency are primary targets.
+**Coverage target:** ≥70% meaningful coverage (PRD NFR) — query functions and auth middleware are primary targets.
 
 ---
 
@@ -266,7 +264,7 @@ api (Fastify :3001) → db (PostgreSQL :5432)
 ### Decision Priority Analysis
 
 **Critical Decisions (block implementation):**
-- Data model finalised (5 tables — no `daily_scores`; runtime score aggregation)
+- Data model finalised (4 tables — no score or seed task tables; task count derived client-side)
 - JWT auth via httpOnly cookie confirmed
 - API route surface defined
 - Frontend state management split confirmed (TanStack Query = server state, React local state = UI state)
@@ -280,7 +278,7 @@ api (Fastify :3001) → db (PostgreSQL :5432)
 
 ### Data Architecture
 
-#### Schema (5 tables)
+#### Schema (4 tables)
 
 ```sql
 -- users
@@ -296,11 +294,9 @@ CREATE TABLE tasks (
   id           SERIAL PRIMARY KEY,
   user_id      INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   title        TEXT NOT NULL,
-  points       INTEGER NOT NULL DEFAULT 1,
   is_completed BOOLEAN NOT NULL DEFAULT FALSE,
-  is_system    BOOLEAN NOT NULL DEFAULT FALSE,  -- TRUE for FR36 daily seed tasks
   deadline     DATE,
-  completed_at TIMESTAMPTZ,                     -- drives all score aggregation
+  completed_at TIMESTAMPTZ,
   created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -320,7 +316,7 @@ CREATE TABLE task_labels (
   PRIMARY KEY (task_id, label_id)
 );
 
--- subtasks (flat, one level only per FR21)
+-- subtasks (flat, one level only)
 CREATE TABLE subtasks (
   id           SERIAL PRIMARY KEY,
   task_id      INTEGER NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
@@ -330,59 +326,30 @@ CREATE TABLE subtasks (
 );
 ```
 
-#### Score Aggregation (runtime, no separate table)
+#### Task Count Derivation (client-side, no separate query)
 
-`daily_scores` table eliminated. All scoring is computed at query time from `tasks.completed_at` and `tasks.points`.
+The completed/total count (e.g. `3/5`) displayed in the header is derived directly from the already-fetched task list on the client:
 
-```sql
--- Today's score
-SELECT COALESCE(SUM(points), 0) AS total
-FROM tasks
-WHERE user_id = $1
-  AND is_completed = true
-  AND completed_at::date = CURRENT_DATE;
-
--- 30-day score history (FR27)
-SELECT completed_at::date AS score_date,
-       SUM(points)        AS total_points
-FROM tasks
-WHERE user_id = $1
-  AND is_completed = true
-  AND completed_at >= CURRENT_DATE - INTERVAL '30 days'
-GROUP BY score_date
-ORDER BY score_date DESC;
+```typescript
+// Computed from TanStack Query cache — no extra API call
+const completed = tasks.filter(t => t.is_completed).length;
+const total = tasks.length;
+// Display: `${completed}/${total} tasks`
 ```
 
-**Advantages:** Un-completing a task automatically corrects the score with no compensating writes; score history is always derived from ground truth.
+**Advantages:** Zero additional API round-trips; count is always in sync with the rendered list; toggling a task updates both the list and the count atomically via the optimistic UI pattern.
 
 #### Recommended Indexes
 
 ```sql
 CREATE INDEX idx_tasks_user_id ON tasks(user_id);
-CREATE INDEX idx_tasks_completed_at ON tasks(user_id, completed_at) WHERE is_completed = true;
-CREATE INDEX idx_tasks_system ON tasks(user_id, created_at) WHERE is_system = true;
+CREATE INDEX idx_tasks_completed ON tasks(user_id, is_completed);
+CREATE INDEX idx_tasks_deadline ON tasks(user_id, deadline) WHERE deadline IS NOT NULL;
 ```
 
 #### Migration Approach
 
 Versioned `.sql` files in `backend/src/db/migrations/` (e.g. `001_init.sql`, `002_add_deadline_index.sql`). A lightweight `migrate.ts` runner (~30 lines) reads files in order, tracking applied migrations in a `_migrations` table. No ORM migration engine dependency.
-
-#### Seed Task Idempotency (FR36)
-
-On every authenticated request, a Fastify `onRequest` hook runs:
-
-```sql
-INSERT INTO tasks (user_id, title, points, is_system)
-SELECT $1, 'Record your first task for today', 1, true
-WHERE NOT EXISTS (
-  SELECT 1 FROM tasks
-  WHERE user_id = $1
-    AND is_system = true
-    AND created_at::date = CURRENT_DATE
-);
-```
-
-Single idempotent query — no application-level check needed.
 
 ---
 
@@ -426,9 +393,6 @@ DELETE /api/tasks/:id/subtasks/:subId
 GET    /api/labels
 DELETE /api/labels/:id
 
-GET    /api/scores/today
-GET    /api/scores/history     ?days=30
-
 GET    /health
 ```
 
@@ -448,7 +412,7 @@ Standard HTTP status codes: 200/201 success · 400 validation error · 401 unaut
 
 | State type | Owner | Examples |
 |---|---|---|
-| Server state | TanStack Query | Task list, score, labels, history |
+| Server state | TanStack Query | Task list, labels |
 | UI state | React `useState` / `useReducer` | Expanded subtask panel, active filter, inline editor open |
 
 No global state library (Zustand/Redux). TanStack Query's cache is the single source of truth for all server data.
@@ -480,17 +444,15 @@ frontend/src/
     TaskRow.tsx + TaskRow.test.tsx
     SubtaskPanel.tsx + SubtaskPanel.test.tsx
     FilterBar.tsx + FilterBar.test.tsx
-    ScoreDisplay.tsx
+    TaskCountDisplay.tsx
     EmptyState.tsx
     InlineTaskError.tsx
   pages/
     TaskListPage.tsx
-    ScoreHistoryPage.tsx
     LoginPage.tsx
     RegisterPage.tsx
   hooks/
     useTasks.ts
-    useScores.ts
     useAuth.ts
   lib/
     api.ts          ← typed fetch wrapper (all requests go through here)
@@ -552,19 +514,19 @@ location / {
 | Element | Convention | Example |
 |---|---|---|
 | Tables | lowercase plural | `tasks`, `users`, `labels`, `subtasks`, `task_labels` |
-| Columns | `snake_case` | `user_id`, `is_completed`, `completed_at`, `is_system` |
+| Columns | `snake_case` | `user_id`, `is_completed`, `completed_at`, `deadline` |
 | Foreign keys | `{singular_table}_id` | `user_id`, `task_id`, `label_id` |
-| Indexes | `idx_{table}_{column(s)}` | `idx_tasks_user_id`, `idx_tasks_completed_at` |
+| Indexes | `idx_{table}_{column(s)}` | `idx_tasks_user_id`, `idx_tasks_completed` |
 | Migrations | zero-padded sequence | `001_init.sql`, `002_add_deadline_index.sql` |
 
 #### API — REST conventions
 
 | Element | Convention | Example |
 |---|---|---|
-| Endpoints | plural nouns | `/api/tasks`, `/api/labels`, `/api/scores` |
+| Endpoints | plural nouns | `/api/tasks`, `/api/labels` |
 | Route params | `:name` style | `:id`, `:subId` |
-| Query params | `camelCase` | `?days=30`, `?status=active` |
-| JSON body fields | `camelCase` | `isCompleted`, `completedAt`, `isSystem` |
+| Query params | `camelCase` | `?status=active`, `?label=backend` |
+| JSON body fields | `camelCase` | `isCompleted`, `completedAt` |
 
 #### TypeScript code
 
@@ -573,8 +535,8 @@ location / {
 | React component files | `PascalCase.tsx` | `TaskRow.tsx`, `AppHeader.tsx` |
 | Hook / util files | `camelCase.ts` | `useTasks.ts`, `api.ts`, `auth.ts` |
 | React components | `PascalCase` | `TaskRow`, `SubtaskPanel`, `FilterBar` |
-| Hooks | `use` prefix + `camelCase` | `useTasks`, `useAuth`, `useScores` |
-| Functions | `camelCase` | `getTasksByUser`, `completeTask`, `getDailyScore` |
+| Hooks | `use` prefix + `camelCase` | `useTasks`, `useAuth` |
+| Functions | `camelCase` | `getTasksByUser`, `completeTask`, `createLabel` |
 | Constants | `SCREAMING_SNAKE_CASE` | `JWT_COOKIE_NAME`, `MAX_LABEL_LENGTH` |
 | TypeBox schemas | `PascalCase` + `Schema` suffix | `TaskSchema`, `CreateTaskBodySchema` |
 | TypeBox types | `PascalCase` (via `Static<>`) | `type Task = Static<typeof TaskSchema>` |
@@ -598,11 +560,11 @@ Vitest config: `include: ['test/**/*.test.ts']` (backend) and `include: ['test/*
 
 #### Backend query organisation
 
-One file per domain in `db/queries/` — `tasks.ts`, `auth.ts`, `scores.ts`, `subtasks.ts`. Each exports named async functions only. No classes, no default exports.
+One file per domain in `db/queries/` — `tasks.ts`, `auth.ts`, `labels.ts`, `subtasks.ts`. Each exports named async functions only. No classes, no default exports.
 
 #### Fastify route organisation
 
-One file per resource in `routes/` — `tasks.ts`, `auth.ts`, `scores.ts`. Each file exports a Fastify plugin using `fastify-plugin` (`fp`) wrapping its routes.
+One file per resource in `routes/` — `tasks.ts`, `auth.ts`, `labels.ts`. Each file exports a Fastify plugin using `fastify-plugin` (`fp`) wrapping its routes.
 
 #### Shared types
 
@@ -616,7 +578,7 @@ TypeBox `Static<>` types defined once in `shared/types/` at the repo root. Both 
 
 **Success — single resource:** Return the resource object directly (no wrapper):
 ```json
-{ "id": 1, "title": "Write tests", "points": 3, "isCompleted": false }
+{ "id": 1, "title": "Write tests", "isCompleted": false }
 ```
 
 **Success — collection:** Return an array directly:
@@ -656,7 +618,6 @@ TanStack Query `onError` handles mutation failures: rollback optimistic state, s
 | Task list initial load | 4 skeleton rows (same height as `TaskRow`) |
 | Task create / complete / delete | Optimistic UI — no spinner |
 | Auth form submit | Button disabled + pixel spinner during request |
-| Score history load | Skeleton rows per day entry |
 
 #### Auth flow
 
@@ -664,10 +625,6 @@ TanStack Query `onError` handles mutation failures: rollback optimistic state, s
 2. Valid → render app; Invalid/expired → redirect to `/login`
 3. Login success → server sets `httpOnly` cookie; client saves email to `localStorage` key `bmad_todo_email`
 4. Logout → `POST /api/auth/logout` clears cookie server-side; client clears `localStorage` email; redirects to `/login`
-
-#### Seed task check (FR36)
-
-Fastify `onRequest` hook on all authenticated routes. Runs idempotent `INSERT ... WHERE NOT EXISTS` SQL. Never throws — seed task failure is logged at `warn` level and ignored (non-critical path).
 
 #### Filter / sort (MVP)
 
@@ -715,8 +672,7 @@ bmad-todo-app/
 │       ├── task.ts               ← Task, CreateTaskBody, UpdateTaskBody
 │       ├── subtask.ts
 │       ├── label.ts
-│       ├── auth.ts               ← LoginBody, RegisterBody, AuthUser
-│       └── score.ts              ← DailyScore, ScoreHistory
+│       └── auth.ts               ← LoginBody, RegisterBody, AuthUser
 │
 ├── frontend/
 │   ├── Dockerfile
@@ -735,17 +691,15 @@ bmad-todo-app/
 │   │   │   ├── TaskRow.tsx
 │   │   │   ├── SubtaskPanel.tsx
 │   │   │   ├── FilterBar.tsx
-│   │   │   ├── ScoreDisplay.tsx
+│   │   │   ├── TaskCountDisplay.tsx
 │   │   │   ├── EmptyState.tsx
 │   │   │   └── InlineTaskError.tsx
 │   │   ├── pages/
 │   │   │   ├── TaskListPage.tsx
-│   │   │   ├── ScoreHistoryPage.tsx
 │   │   │   ├── LoginPage.tsx
 │   │   │   └── RegisterPage.tsx
 │   │   ├── hooks/
 │   │   │   ├── useTasks.ts
-│   │   │   ├── useScores.ts
 │   │   │   └── useAuth.ts
 │   │   └── lib/
 │   │       ├── api.ts            ← typed fetch wrapper; all requests go through here
@@ -787,10 +741,7 @@ bmad-todo-app/
 │   │   │   ├── tasks.ts          ← GET|POST /api/tasks, PATCH|DELETE /api/tasks/:id, PATCH .../complete|uncomplete
 │   │   │   ├── subtasks.ts       ← GET|POST|PATCH|DELETE /api/tasks/:id/subtasks/:subId
 │   │   │   ├── labels.ts         ← GET /api/labels, DELETE /api/labels/:id
-│   │   │   ├── scores.ts         ← GET /api/scores/today, GET /api/scores/history
 │   │   │   └── health.ts         ← GET /health
-│   │   ├── hooks/
-│   │   │   └── seedTask.ts       ← onRequest: idempotent daily seed task insert
 │   │   ├── middleware/
 │   │   │   └── authenticate.ts   ← JWT cookie validation, attaches user to request
 │   │   └── plugins/
@@ -804,13 +755,12 @@ bmad-todo-app/
 │       │   └── queries/
 │       │       ├── tasks.test.ts
 │       │       ├── subtasks.test.ts
-│       │       ├── scores.test.ts
 │       │       └── auth.test.ts
 │       └── routes/
 │           ├── auth.test.ts
 │           ├── tasks.test.ts
 │           ├── subtasks.test.ts
-│           └── scores.test.ts
+│           └── labels.test.ts
 │
 └── e2e/                          ← Playwright E2E tests (against full Docker Compose stack)
     ├── playwright.config.ts      ← baseURL: http://localhost:3000
@@ -819,7 +769,7 @@ bmad-todo-app/
         ├── tasks.spec.ts         ← create, complete, delete, edit
         ├── subtasks.spec.ts      ← add, complete, expand/collapse
         ├── filters.spec.ts       ← filter by label / status / deadline
-        └── scores.spec.ts        ← daily score update, history view
+        └── count.spec.ts         ← task count display (3/5) on completion and creation
 ```
 
 ---
@@ -852,12 +802,10 @@ bmad-todo-app/
 | FR Category | Primary Files |
 |---|---|
 | Auth & Session (FR1–5) | `backend/src/routes/auth.ts`, `backend/src/middleware/authenticate.ts`, `frontend/src/pages/LoginPage.tsx`, `frontend/src/lib/auth.ts` |
-| Task CRUD (FR6–13) | `backend/src/routes/tasks.ts`, `backend/src/db/queries/tasks.ts`, `frontend/src/pages/TaskListPage.tsx`, `frontend/src/components/TaskRow.tsx` |
-| Task Enrichment (FR14–22) | `backend/src/routes/subtasks.ts` + `labels.ts`, `backend/src/db/queries/subtasks.ts` + `labels.ts`, `frontend/src/components/SubtaskPanel.tsx` |
-| Gamification & Scoring (FR23–27) | `backend/src/routes/scores.ts`, `backend/src/db/queries/scores.ts`, `frontend/src/components/ScoreDisplay.tsx`, `frontend/src/pages/ScoreHistoryPage.tsx` |
-| Organisation & Discovery (FR28–31) | `frontend/src/components/FilterBar.tsx`, `frontend/src/pages/TaskListPage.tsx` (client-side filter/sort) |
-| UX & Feedback (FR32–35) | `frontend/src/components/InlineTaskError.tsx`, TanStack Query optimistic mutation pattern in `frontend/src/hooks/useTasks.ts` |
-| System Automation (FR36) | `backend/src/hooks/seedTask.ts` |
+| Task CRUD (FR6–11) | `backend/src/routes/tasks.ts`, `backend/src/db/queries/tasks.ts`, `frontend/src/pages/TaskListPage.tsx`, `frontend/src/components/TaskRow.tsx` |
+| Task Enrichment & Count (FR12–21) | `backend/src/routes/subtasks.ts` + `labels.ts`, `backend/src/db/queries/subtasks.ts` + `labels.ts`, `frontend/src/components/SubtaskPanel.tsx`, `frontend/src/components/TaskCountDisplay.tsx` |
+| Organisation & Discovery (FR22–25) | `frontend/src/components/FilterBar.tsx`, `frontend/src/pages/TaskListPage.tsx` (client-side filter/sort) |
+| UX & Feedback (FR26–29) | `frontend/src/components/InlineTaskError.tsx`, TanStack Query optimistic mutation pattern in `frontend/src/hooks/useTasks.ts` |
 
 ---
 
@@ -870,7 +818,6 @@ User action
   → nginx /api/* proxy
   → Fastify route (TypeBox request validation)
   → authenticate.ts middleware (JWT cookie)
-  → seedTask onRequest hook (idempotent seed check)
   → db/queries/*.ts (raw SQL via `postgres` tagged templates)
   → PostgreSQL
   ← typed result row(s)
@@ -898,12 +845,10 @@ User action
 | FR Range | Coverage |
 |---|---|
 | FR1–5 — Auth & Session | `routes/auth.ts`, `middleware/authenticate.ts`, `httpOnly` cookie, `localStorage` email pre-fill |
-| FR6–13 — Task CRUD & Points | `routes/tasks.ts`, `db/queries/tasks.ts`, `TaskRow.tsx` |
-| FR14–22 — Labels, Deadlines, Subtasks | `routes/labels.ts` + `subtasks.ts`, `SubtaskPanel.tsx`; FR22 no-auto-complete enforced by pattern rule |
-| FR23–27 — Scoring & History | `routes/scores.ts`, runtime SQL aggregation on `completed_at`, `ScoreDisplay.tsx`, `ScoreHistoryPage.tsx` |
-| FR28–31 — Filter & Sort | `FilterBar.tsx`, client-side filter on TanStack Query cache |
-| FR32–35 — UX & Feedback | `InlineTaskError.tsx`, optimistic UI rollback, sub-1s target met by Fastify + direct SQL |
-| FR36 — Daily Seed Task | `hooks/seedTask.ts`, `is_system` flag in schema, idempotent upsert |
+| FR6–11 — Task CRUD | `routes/tasks.ts`, `db/queries/tasks.ts`, `TaskRow.tsx` |
+| FR12–21 — Labels, Deadlines, Subtasks, Count | `routes/labels.ts` + `subtasks.ts`, `SubtaskPanel.tsx`, `TaskCountDisplay.tsx` (client-side derived count); FR no-auto-complete enforced by pattern rule |
+| FR22–25 — Filter & Sort | `FilterBar.tsx`, client-side filter on TanStack Query cache |
+| FR26–29 — UX & Feedback | `InlineTaskError.tsx`, optimistic UI rollback, sub-1s target met by Fastify + direct SQL |
 
 **NFR coverage:**
 - **Performance** — Optimistic UI + direct SQL queries; no ORM overhead
@@ -934,12 +879,12 @@ User action
 - [x] Project context thoroughly analysed
 - [x] Scale and complexity assessed (low complexity, solo dev, monolith)
 - [x] Technical constraints identified (no SSR, no WebSockets, Docker Compose only)
-- [x] Cross-cutting concerns mapped (JWT auth, per-user isolation, optimistic UI, seed task, WCAG 2.1 AA)
+- [x] Cross-cutting concerns mapped (JWT auth, per-user isolation, optimistic UI, task count derivation, WCAG 2.1 AA)
 
 **✅ Architectural Decisions**
 - [x] Technology stack fully specified with rationale (6 ADRs)
 - [x] Integration patterns defined (nginx proxy, shared types, cookie auth)
-- [x] Database schema finalised (5 tables, runtime score aggregation)
+- [x] Database schema finalised (4 tables, task count derived client-side)
 - [x] Performance and security approaches addressed
 
 **✅ Implementation Patterns**
@@ -960,7 +905,7 @@ User action
 
 **Key strengths:**
 - Minimal surface area — every dependency earns its place
-- Runtime score aggregation (`completed_at`) eliminates aggregate sync risk entirely
+- Client-side task count derivation eliminates server-side aggregation complexity entirely
 - Shared TypeBox types prevent frontend/backend drift at compile time
 - Docker Compose topology with nginx proxy is clean, auditable, and zero-config
 - `test/` mirror structure enforces discipline without co-location noise

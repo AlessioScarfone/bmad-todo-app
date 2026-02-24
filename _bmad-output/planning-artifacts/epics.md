@@ -1,5 +1,7 @@
 ---
 stepsCompleted: [step-01-validate-prerequisites, step-02-design-epics, step-03-create-stories, step-04-final-validation]
+lastRevised: '2026-02-24'
+revisionSummary: 'Full regeneration from updated 29-FR PRD. Removed scoring/gamification (points, daily score, score history, seed task). Removed Epic 4 (Score History). Added task count display (FR21). Renumbered: old Epic 5→4, old Epic 6→5. Updated all stories and ARIA references.'
 inputDocuments:
   - '_bmad-output/planning-artifacts/prd.md'
   - '_bmad-output/planning-artifacts/architecture.md'
@@ -27,37 +29,30 @@ FR8: Authenticated users can mark a task as complete
 FR9: Authenticated users can un-complete a previously completed task
 FR10: Authenticated users can delete a task
 FR11: Authenticated users can edit an existing task's title
-FR12: Authenticated users can assign a point value to a task at creation time
-FR13: Authenticated users can update the point value of an existing task
-FR14: Authenticated users can attach one or more free-form labels to a task
-FR15: Authenticated users can remove a label from a task
-FR16: Authenticated users can set an optional deadline date on a task
-FR17: Authenticated users can remove the deadline from a task
-FR18: Authenticated users can add subtasks to a task
-FR19: Authenticated users can mark individual subtasks as complete independently
-FR20: Authenticated users can delete a subtask
-FR21: Subtasks are limited to one level of nesting (no nested subtasks)
-FR22: Completing all subtasks does not automatically complete the parent task
-FR23: The system displays the user's accumulated daily score persistently on every authenticated page
-FR24: The daily score increases when a task is marked complete, by that task's assigned point value
-FR25: The system records the user's total score for each calendar day (derived from tasks.completed_at — no separate score table)
-FR26: Authenticated users can view their score history across previous days
-FR27: Authenticated users can view a chronological list of daily scores for up to 30 previous calendar days
-FR28: Authenticated users can filter their task list by label
-FR29: Authenticated users can filter their task list by completion status
-FR30: Authenticated users can filter their task list by deadline
-FR31: Authenticated users can sort their task list by label, deadline, or completion status
-FR32: The system provides inline error feedback when a task action fails
-FR33: Users can retry a failed task action without re-entering data
-FR34: The system reflects task state changes within 1 second after each action without a full page reload
-FR35: All core flows are operable via keyboard navigation
-FR36: The system automatically creates a daily seed task — titled "Record your first task for today" (1 point, is_system=true) — for each user at the start of each calendar day via an idempotent server-side hook; the task appears at the top of the task list and can be completed or deleted by the user
+FR12: Authenticated users can attach one or more free-form labels to a task
+FR13: Authenticated users can remove a label from a task
+FR14: Authenticated users can set an optional deadline date on a task
+FR15: Authenticated users can remove the deadline from a task
+FR16: Authenticated users can add subtasks to a task
+FR17: Authenticated users can mark individual subtasks as complete independently
+FR18: Authenticated users can delete a subtask
+FR19: Subtasks are limited to one level of nesting (no nested subtasks)
+FR20: Completing all subtasks does not automatically complete the parent task
+FR21: The system displays the user's task completion count (completed/total tasks, e.g. `3/5`) persistently on every page of the authenticated app; the count updates within 1 second of any task state change
+FR22: Authenticated users can filter their task list by label
+FR23: Authenticated users can filter their task list by completion status
+FR24: Authenticated users can filter their task list by deadline
+FR25: Authenticated users can sort their task list by label, deadline, or completion status
+FR26: The system provides inline error feedback when a task action fails
+FR27: Users can retry a failed task action without re-entering data
+FR28: The system reflects task state changes within 1 second after each action without a full page reload
+FR29: All core flows are operable via keyboard navigation
 
 ### NonFunctional Requirements
 
 NFR1: All user-initiated task actions (create, complete, delete, edit) complete and reflect in the UI within 1 second under normal network conditions
 NFR2: Initial page load completes within 3 seconds on a standard broadband connection
-NFR3: The daily score updates and renders within 500ms of a task state change
+NFR3: The task completion count updates and renders within 500ms of a task state change
 NFR4: All API communication occurs over HTTPS
 NFR5: Passwords are stored hashed using bcrypt (12 rounds)
 NFR6: JWT tokens are validated server-side on every authenticated request via Fastify onRequest hook
@@ -79,12 +74,11 @@ NFR17: Minimum 5 passing Playwright E2E tests covering core user flows
 - No starter template — project scaffolded from purpose-chosen primitives: `npm create vite@latest frontend -- --template react-ts` (frontend) and manual Fastify backend setup
 - Three-service Docker Compose topology: `db` (postgres:16-alpine), `api` (Fastify :3001), `web` (nginx :3000 serving Vite static bundle + reverse proxy /api/*)
 - JWT stored exclusively in httpOnly, SameSite=Strict, Secure cookie — never in localStorage
-- Score aggregation computed at query time from tasks.completed_at and tasks.points — no separate daily_scores table
-- Seed task idempotency enforced via single SQL INSERT ... WHERE NOT EXISTS in a Fastify onRequest hook on all authenticated routes
-- Filter and sort applied client-side on TanStack Query cache in MVP (GET /api/tasks accepts query params for future use)
-- Database schema: 5 tables — users, tasks (with is_system flag), labels, task_labels, subtasks
-- Required indexes: idx_tasks_user_id, idx_tasks_completed_at (partial: WHERE is_completed = true), idx_tasks_system (partial: WHERE is_system = true)
+- Task count display derived client-side from TanStack Query cache: `completed = tasks.filter(t => t.is_completed).length; total = tasks.length` — no extra API call
+- Database schema: 4 tables — users, tasks, labels, task_labels, subtasks (tasks table has no `points` or `is_system` column)
+- Required indexes: idx_tasks_user_id, idx_tasks_completed (partial: WHERE is_completed = true), idx_tasks_deadline (partial: WHERE deadline IS NOT NULL)
 - Versioned SQL migrations in backend/src/db/migrations/ (001_init.sql, etc.) tracked in _migrations table
+- Filter and sort applied client-side on TanStack Query cache in MVP (GET /api/tasks accepts query params for future use)
 - Test files must reside in test/ directory mirroring src/ structure — never co-located with source files
 - Shared TypeBox Static<> types defined once in shared/types/ at repo root — imported by both frontend and backend
 - Environment variables documented in .env.example (committed); .env gitignored
@@ -92,13 +86,13 @@ NFR17: Minimum 5 passing Playwright E2E tests covering core user flows
 
 **From UX Design:**
 - Inline-always task creation — task input row permanently visible at top of list (no modal, no "+ New Task" button opening a form)
-- Keyboard-native primary path: Tab to point field, Enter to submit task; Space to toggle complete on focused row; Escape to cancel inline edit
-- Score display in header/top-right — static number update, no animation or transition on change; `aria-label="Today's score: N points"`
+- Keyboard-native primary path: Tab through fields, Enter to submit task; Space to toggle complete on focused row; Escape to cancel inline edit
+- Task count display `<TaskCountDisplay>` in header top-right — shows `completed/total` (e.g. `3/5`), static number update, no animation; `aria-label="Tasks completed: N of M"` with `aria-live="polite"`
 - `prefers-reduced-motion` respected — all transitions disabled for users who opt out
 - Filter bar always rendered at zero interaction cost (no click to reveal)
 - All errors shown inline (never in a modal or toast that auto-dismisses)
 - Pixel-art aesthetic via 8bitcn-ui (shadcn/ui + Radix UI + Tailwind CSS) — calm and composed, not celebratory
-- ARIA requirements: `role="alert"` on inline errors, `aria-live="polite"` on empty state region, `aria-pressed` on active filter buttons, `aria-expanded` on subtask panel trigger, checkbox `aria-label="Mark [task title] as done"`
+- ARIA requirements: `role="alert"` on inline errors, `aria-live="polite"` on empty state region, `aria-pressed` on active filter buttons, `aria-expanded` on subtask panel trigger, checkbox `aria-label="Mark [task title] as done"`, task count `aria-label="Tasks completed: N of M"` with `aria-live="polite"`
 
 ### FR Coverage Map
 
@@ -113,31 +107,24 @@ FR8 → Epic 2 – Mark task complete
 FR9 → Epic 2 – Un-complete task
 FR10 → Epic 2 – Delete task
 FR11 → Epic 2 – Edit task title
-FR12 → Epic 2 – Assign point value at creation
-FR13 → Epic 2 – Update task point value
-FR14 → Epic 3 – Attach labels to task
-FR15 → Epic 3 – Remove label from task
-FR16 → Epic 3 – Set deadline date on task
-FR17 → Epic 3 – Remove deadline from task
-FR18 → Epic 3 – Add subtasks to task
-FR19 → Epic 3 – Mark individual subtasks complete (independent)
-FR20 → Epic 3 – Delete subtask
-FR21 → Epic 3 – Subtasks limited to one level (no nesting)
-FR22 → Epic 3 – Completing all subtasks does not auto-complete parent
-FR23 → Epic 2 – Persistent daily score display on every authenticated page
-FR24 → Epic 2 – Daily score increments on task completion by task points
-FR25 → Epic 4 – Per-day score records (derived from tasks.completed_at at query time)
-FR26 → Epic 4 – View score history across previous days
-FR27 → Epic 4 – 30-day chronological score history list
-FR28 → Epic 5 – Filter by label
-FR29 → Epic 5 – Filter by completion status
-FR30 → Epic 5 – Filter by deadline
-FR31 → Epic 5 – Sort by label, deadline, or completion status
-FR32 → Epic 6 – Inline error feedback on failed task action
-FR33 → Epic 6 – Retry failed action without re-entering data
-FR34 → Epic 6 – Sub-1-second UI state reflection (no full page reload)
-FR35 → Epic 6 – Full keyboard navigation on all core flows
-FR36 → Epic 2 – Daily seed task (idempotent, is_system=true, 1pt, Fastify onRequest hook)
+FR21 → Epic 2 – Task count display (completed/total, client-side derived)
+FR12 → Epic 3 – Attach labels to task
+FR13 → Epic 3 – Remove label from task
+FR14 → Epic 3 – Set deadline date on task
+FR15 → Epic 3 – Remove deadline from task
+FR16 → Epic 3 – Add subtasks to task
+FR17 → Epic 3 – Mark individual subtasks complete (independent)
+FR18 → Epic 3 – Delete subtask
+FR19 → Epic 3 – Subtasks limited to one level (no nesting)
+FR20 → Epic 3 – Completing all subtasks does not auto-complete parent
+FR22 → Epic 4 – Filter by label
+FR23 → Epic 4 – Filter by completion status
+FR24 → Epic 4 – Filter by deadline
+FR25 → Epic 4 – Sort by label, deadline, or completion status
+FR26 → Epic 5 – Inline error feedback on failed task action
+FR27 → Epic 5 – Retry failed action without re-entering data
+FR28 → Epic 5 – Sub-1-second UI state reflection (no full page reload)
+FR29 → Epic 5 – Full keyboard navigation on all core flows
 
 ## Epic List
 
@@ -145,25 +132,21 @@ FR36 → Epic 2 – Daily seed task (idempotent, is_system=true, 1pt, Fastify on
 Users can register for an account, log in (with email pre-fill on return visits), maintain a long-lived session across browser restarts, and log out. This establishes the complete authenticated foundation — including full Docker Compose infrastructure, database schema, and migrations runner.
 **FRs covered:** FR1, FR2, FR3, FR4, FR5
 
-### Epic 2: Core Task Management & Daily Score
-Authenticated users can create tasks with point values, view their full task list, mark tasks complete (and un-complete), edit task titles and points, delete tasks, and always see their live daily score update in the header. The system automatically seeds a daily task at the top of the list each day.
-**FRs covered:** FR6, FR7, FR8, FR9, FR10, FR11, FR12, FR13, FR23, FR24, FR36
+### Epic 2: Core Task Management & Task Count Display
+Authenticated users can create tasks with a title, view their full task list, mark tasks complete (and un-complete), edit task titles, and delete tasks. The header persistently shows a live task count (`completed/total`) derived client-side with no extra API call.
+**FRs covered:** FR6, FR7, FR8, FR9, FR10, FR11, FR21
 
 ### Epic 3: Task Enrichment — Labels, Deadlines & Subtasks
-Authenticated users can enhance tasks with free-form labels, optional deadline dates, and flat one-level subtasks (each independently completable). Completing all subtasks never auto-completes the parent — points are awarded on explicit parent completion only.
-**FRs covered:** FR14, FR15, FR16, FR17, FR18, FR19, FR20, FR21, FR22
+Authenticated users can enhance tasks with free-form labels, optional deadline dates, and flat one-level subtasks (each independently completable). Completing all subtasks never auto-completes the parent task.
+**FRs covered:** FR12, FR13, FR14, FR15, FR16, FR17, FR18, FR19, FR20
 
-### Epic 4: Score History & Productivity Tracking
-Authenticated users can navigate to a score history view showing their accumulated daily scores across up to 30 previous calendar days — score always derived at query time from completed tasks, no separate table.
-**FRs covered:** FR25, FR26, FR27
-
-### Epic 5: Task Filtering & Sorting
+### Epic 4: Task Filtering & Sorting
 Authenticated users can filter their task list by label, completion status, or deadline and sort by label, deadline, or completion status. Filters are client-side, session-only, and non-destructive — clearing returns the full list instantly.
-**FRs covered:** FR28, FR29, FR30, FR31
+**FRs covered:** FR22, FR23, FR24, FR25
 
-### Epic 6: Resilience, Accessibility & Quality Assurance
+### Epic 5: Resilience, Accessibility & Quality Assurance
 Users receive inline error feedback with one-tap retry on any failed action; all state changes reflect within 1 second with no full page reload; every core flow is operable via keyboard alone. WCAG 2.1 AA compliance (zero critical violations), ≥70% meaningful test coverage, ≥5 passing Playwright E2E tests.
-**FRs covered:** FR32, FR33, FR34, FR35
+**FRs covered:** FR26, FR27, FR28, FR29
 **NFRs addressed:** NFR1–NFR17 (all performance, security, accessibility, reliability, and testing targets)
 ---
 
@@ -279,9 +262,9 @@ So that return visits require minimal friction and I can end my session when nee
 
 ---
 
-## Epic 2: Core Task Management & Daily Score
+## Epic 2: Core Task Management & Task Count Display
 
-Authenticated users can create tasks with point values, view their full task list, mark tasks complete (and un-complete), edit task titles and points, delete tasks, and always see their live daily score update in the header. The system automatically seeds a daily task at the top of the list each day.
+Authenticated users can create tasks with a title, view their full task list, mark tasks complete (and un-complete), edit task titles, and delete tasks. The header persistently shows a live task count (`completed/total`) derived client-side from the TanStack Query cache — no extra API call.
 
 ### Story 2.1: Task List View & Database Foundation
 
@@ -293,31 +276,35 @@ So that I can immediately start adding tasks without any extra navigation.
 
 **Given** I am authenticated and navigate to the task list
 **When** the page loads
-**Then** I see an inline task creation row permanently visible at the top of the list (no modal, no "+ New Task" button opening a form)
-**And** the `tasks` table exists in the database with all required columns including `is_system`
+**Then** I see an inline task creation row permanently visible at the top of the list (no modal, no "+ New Task" button opening a form)
+**And** the `tasks` table exists in the database without `points` or `is_system` columns
 
 **Given** I have no tasks yet
 **When** the task list loads
 **Then** I see an empty state with a prompt to add my first task
-**And** the score display area is visible in the header showing `0 pts`
+**And** the task count in the header shows `0/0`
 
 **Given** `GET /api/tasks` is called
 **When** the request is authenticated
 **Then** only tasks belonging to the authenticated user are returned (WHERE user_id = $userId)
 **And** the response is a direct array (never a `{ data: [...] }` wrapper)
 
-### Story 2.2: Create Task with Title and Points
+**Given** the `tasks` table exists in the database
+**When** the schema is inspected
+**Then** it has columns: `id`, `user_id`, `title`, `is_completed`, `completed_at`, `deadline`, `created_at`, `updated_at` (no `points` or `is_system` column)
+
+### Story 2.2: Create Task
 
 As an authenticated user,
-I want to create a task by typing a title and optionally assigning a point value, then pressing Enter,
-So that I can capture work items with their relative value in one fluid action.
+I want to create a task by typing a title and pressing Enter,
+So that I can capture work items in one fluid action.
 
 **Acceptance Criteria:**
 
 **Given** I am on the task list with the inline creation row focused
-**When** I type a task title and press Enter (or Tab to point field, set points, then Enter)
+**When** I type a task title and press Enter
 **Then** the task appears at the top of my task list immediately (optimistic UI — no spinner)
-**And** `POST /api/tasks` is called with the title and point value (default: 1 if not set)
+**And** `POST /api/tasks` is called with the title
 
 **Given** I submit a task with no title
 **When** validation runs
@@ -326,18 +313,22 @@ So that I can capture work items with their relative value in one fluid action.
 **Given** `POST /api/tasks` is called with a valid body
 **When** the task is created
 **Then** the response is the created task object (direct, no wrapper) with a 201 status
-**And** the task has `is_system: false`, `is_completed: false`, and `points` as specified
+**And** the task has `is_completed: false`
 
 **Given** the API request fails (network error)
 **When** the optimistic task is shown
 **Then** the task shows an inline error state with a retry affordance
 **And** the task is rolled back from the list if retry is abandoned
 
-### Story 2.3: Mark Task Complete & Un-complete with Live Score
+**Given** a task is created
+**When** the TanStack Query cache updates
+**Then** the task count in the header updates immediately (e.g., `0/1`) — no extra API call
+
+### Story 2.3: Mark Task Complete & Un-complete with Live Task Count
 
 As an authenticated user,
 I want to mark a task as complete (or un-complete it) with a single click,
-So that my daily score reflects my progress in real time.
+So that my task count reflects my progress in real time.
 
 **Acceptance Criteria:**
 
@@ -346,32 +337,32 @@ So that my daily score reflects my progress in real time.
 **Then** the task is visually marked as complete immediately (optimistic UI)
 **And** `PATCH /api/tasks/:id/complete` is called server-side
 
-**Given** a task is marked complete with a point value of N
+**Given** a task is marked complete
 **When** the completion is confirmed by the server
-**Then** the daily score display in the header increases by N points within 500ms
-**And** the score is computed server-side from `SUM(points) WHERE is_completed = true AND completed_at::date = CURRENT_DATE`
+**Then** the task count in the header updates within 500ms (e.g., `2/5` → `3/5`)
+**And** the count is derived client-side: `completed = tasks.filter(t => t.is_completed).length; total = tasks.length`
 
 **Given** I click the completion checkbox on an already-completed task
 **When** `PATCH /api/tasks/:id/uncomplete` is called
 **Then** the task reverts to incomplete state (optimistic UI)
-**And** the daily score decreases by the task's point value
+**And** the task count decreases accordingly (e.g., `3/5` → `2/5`)
 
 **Given** the complete/uncomplete API call fails
 **When** the server returns an error
 **Then** the optimistic state is rolled back
 **And** an inline error with retry is shown on the affected task row
 
-### Story 2.4: Edit Task Title and Points
+### Story 2.4: Edit Task Title
 
 As an authenticated user,
-I want to edit a task's title or point value after creation,
-So that I can correct mistakes or re-prioritize work.
+I want to edit a task's title after creation,
+So that I can correct mistakes or reword work items.
 
 **Acceptance Criteria:**
 
 **Given** I have a task in my list
 **When** I activate the edit action on a task row (click edit icon or press Enter on focused row)
-**Then** the task row enters an inline edit mode with the title and points fields editable
+**Then** the task row enters an inline edit mode with the title field editable
 **And** I can submit the edit with Enter or cancel with Escape
 
 **Given** I submit an edited title
@@ -379,14 +370,9 @@ So that I can correct mistakes or re-prioritize work.
 **Then** the task row updates immediately (optimistic) with the new title
 **And** the server persists the change and returns the updated task object
 
-**Given** I submit an updated point value on an already-completed task
-**When** the update is saved
-**Then** the daily score in the header recalculates to reflect the new point value
-**And** `GET /api/scores/today` is re-fetched to confirm accuracy
-
 **Given** I cancel the inline edit with Escape
 **When** edit mode is dismissed
-**Then** the original title and points are restored with no API call made
+**Then** the original title is restored with no API call made
 
 ### Story 2.5: Delete Task
 
@@ -404,7 +390,7 @@ So that my list stays clean and relevant.
 **Given** the delete is confirmed
 **When** `DELETE /api/tasks/:id` succeeds
 **Then** the task is removed from the list immediately (optimistic)
-**And** if the task was completed, the daily score decreases by that task's points
+**And** the task count in the header updates accordingly
 
 **Given** the delete API call fails
 **When** the server returns an error
@@ -415,33 +401,12 @@ So that my list stays clean and relevant.
 **When** `DELETE /api/tasks/:id` is called
 **Then** the server returns `403 Forbidden` with the standard error shape
 
-### Story 2.6: Daily Seed Task
-
-As an authenticated user,
-I want a daily "Record your first task for today" seed task to appear at the top of my list each day automatically,
-So that I always have a starting prompt on days I open the app.
-
-**Acceptance Criteria:**
-
-**Given** I have not yet been seeded a task for today
-**When** any authenticated API request is made (Fastify onRequest hook fires)
-**Then** a seed task is created: title "Record your first task for today", 1 point, `is_system: true`
-**And** the insertion is idempotent — if today's seed already exists, no duplicate is created (INSERT ... WHERE NOT EXISTS)
-
-**Given** the seed task is created
-**When** I view my task list
-**Then** the seed task appears at the top of the list
-**And** it is visually indistinguishable from user-created tasks (completable and deletable by me)
-
-**Given** the seed task creation fails silently
-**When** the hook encounters a DB error
-**Then** the error is logged at `warn` level and the request continues normally (non-critical path)
 
 ---
 
 ## Epic 3: Task Enrichment — Labels, Deadlines & Subtasks
 
-Authenticated users can enhance tasks with free-form labels, optional deadline dates, and flat one-level subtasks (each independently completable). Completing all subtasks never auto-completes the parent — points are awarded on explicit parent completion only.
+Authenticated users can enhance tasks with free-form labels, optional deadline dates, and flat one-level subtasks (each independently completable). Completing all subtasks never auto-completes the parent task.
 
 ### Story 3.1: Labels — Attach and Remove
 
@@ -518,8 +483,7 @@ So that I can track the steps needed to finish a larger piece of work.
 
 **Given** all subtasks of a task are marked complete
 **When** I view the parent task
-**Then** the parent task checkbox remains unchecked — no auto-completion (FR22 enforced)
-**And** parent task points are only awarded when I explicitly mark the parent complete
+**And** the parent task checkbox remains unchecked — no auto-completion (FR20 enforced)
 
 **Given** I delete a subtask
 **When** `DELETE /api/tasks/:id/subtasks/:subId` is called
@@ -533,74 +497,11 @@ So that I can track the steps needed to finish a larger piece of work.
 
 ---
 
-## Epic 4: Score History & Productivity Tracking
-
-Authenticated users can navigate to a dedicated score history page showing their accumulated daily scores across up to 30 previous calendar days. Score is always derived at query time from `tasks.completed_at` — no separate table.
-
-### Story 4.1: Today's Score API & Header Display Polish
-
-As an authenticated user,
-I want my daily score shown persistently in the header on every authenticated page,
-So that I always know my current day's accumulated points without any extra navigation.
-
-**Acceptance Criteria:**
-
-**Given** I am authenticated on any page of the app
-**When** the page renders
-**Then** the score display in the header shows my accumulated points for today (sum of `points` for completed tasks where `completed_at::date = CURRENT_DATE`)
-
-**Given** `GET /api/scores/today` is called
-**When** I have no completed tasks today
-**Then** the API returns `{ "total": 0 }` and the header shows `0 pts`
-
-**Given** the score is displayed
-**When** it renders
-**Then** the element has `aria-label="Today's score: N points"` for screen reader accessibility
-**And** the score value updates as a static number — no animation or transition
-
-**Given** `GET /api/scores/today` returns a value
-**When** it is displayed
-**Then** the response is a direct object `{ "total": N }` — no wrapper
-
-### Story 4.2: Score History Page
-
-As an authenticated user,
-I want to navigate to a score history page and see a chronological list of my daily scores for up to 30 previous days,
-So that I can review my productivity patterns and compare output across days.
-
-**Acceptance Criteria:**
-
-**Given** I am authenticated
-**When** I navigate to `/history`
-**Then** I see a `ScoreHistoryPage` with a chronological list of daily scores
-
-**Given** `GET /api/scores/history?days=30` is called
-**When** the request is authenticated
-**Then** the response is a direct array of `{ score_date: "YYYY-MM-DD", total_points: N }` objects ordered by `score_date DESC`
-**And** only days with at least one completed task appear (days with 0 completions are omitted)
-**And** only data belonging to the authenticated user is returned
-
-**Given** I view the history page
-**When** I have data for multiple days
-**Then** each entry shows the calendar date and the total points earned that day
-**And** the list covers up to 30 previous calendar days (not including today)
-
-**Given** I have no score history yet
-**When** the history page loads
-**Then** I see an empty state message (e.g., "No score history yet — complete tasks to start tracking your daily progress")
-
-**Given** I am on the task list page
-**When** I want to view my history
-**Then** there is a navigation link to `/history` accessible from the app header or sidebar
-**And** the link is keyboard navigable
-
----
-
-## Epic 5: Task Filtering & Sorting
+## Epic 4: Task Filtering & Sorting
 
 Authenticated users can filter their task list by label, completion status, or deadline and sort by label, deadline, or completion status. Filters are client-side, session-only, and non-destructive — clearing returns the full list instantly.
 
-### Story 5.1: Filter Task List by Label, Status, and Deadline
+### Story 4.1: Filter Task List by Label, Status, and Deadline
 
 As an authenticated user,
 I want to filter my task list by label, completion status, or deadline with a single click,
@@ -634,7 +535,7 @@ So that I can focus on a specific subset of tasks without losing my full list.
 **When** I refresh the page or navigate away and return
 **Then** all filters are cleared and the full task list is shown (filters are never persisted)
 
-### Story 5.2: Sort Task List
+### Story 4.2: Sort Task List
 
 As an authenticated user,
 I want to sort my task list by label, deadline, or completion status,
@@ -662,11 +563,11 @@ So that I can view my tasks in the order most useful for my current focus.
 
 ---
 
-## Epic 6: Resilience, Accessibility & Quality Assurance
+## Epic 5: Resilience, Accessibility & Quality Assurance
 
 Users receive inline error feedback with one-tap retry on any failed action; all state changes reflect within 1 second with no full page reload; every core flow is operable via keyboard alone. WCAG 2.1 AA compliance (zero critical violations), ≥70% meaningful test coverage, ≥5 passing Playwright E2E tests.
 
-### Story 6.1: Inline Error Feedback & Retry
+### Story 5.1: Inline Error Feedback & Retry
 
 As an authenticated user,
 I want to see an inline error message on any task that fails to save, with a one-click retry,
@@ -692,7 +593,7 @@ So that I can recover from network failures without re-entering my work.
 **When** it propagates to the React Error Boundary wrapping the app
 **Then** a full-page error state is shown (never a silent failure or blank screen)
 
-### Story 6.2: Performance & Sub-second State Reflection
+### Story 5.2: Performance & Sub-second State Reflection
 
 As an authenticated user,
 I want all task actions to reflect in the UI within 1 second and the page to load within 3 seconds,
@@ -705,9 +606,9 @@ So that the app feels instant and never makes me wait to see my work.
 **Then** the UI reflects the change immediately via optimistic update (no spinner, no delay)
 **And** the server round-trip completes and is confirmed within 1 second under normal network conditions (NFR1)
 
-**Given** the daily score changes due to a task completion or uncompletion
-**When** the score re-fetches
-**Then** the updated score is displayed within 500ms of the action (NFR3)
+**Given** a task completion or uncompletion occurs
+**When** the TanStack Query cache updates
+**Then** the task count display updates within 500ms (NFR3) — no extra API call required
 
 **Given** I navigate to the app for the first time (cold load)
 **When** the page begins loading
@@ -717,7 +618,7 @@ So that the app feels instant and never makes me wait to see my work.
 **When** TanStack Query is fetching
 **Then** 4 skeleton rows (same height as `TaskRow`) are shown — never a blank list or spinner overlay
 
-### Story 6.3: Full Keyboard Navigation
+### Story 5.3: Full Keyboard Navigation
 
 As an authenticated user who relies on keyboard navigation,
 I want to operate every core flow without a mouse,
@@ -727,7 +628,7 @@ So that the app is fully accessible and efficient for keyboard-first users.
 
 **Given** I land on the task list page
 **When** I press Tab
-**Then** focus moves through interactive elements in a logical order: header nav → score → filter bar → task creation row → task rows
+**Then** focus moves through interactive elements in a logical order: header nav → task count → filter bar → task creation row → task rows
 
 **Given** I have a task row focused
 **When** I press Space
@@ -745,7 +646,7 @@ So that the app is fully accessible and efficient for keyboard-first users.
 **When** it receives focus
 **Then** a visible focus ring is rendered that meets WCAG 2.1 AA contrast requirements
 
-### Story 6.4: WCAG 2.1 AA Compliance & `prefers-reduced-motion`
+### Story 5.4: WCAG 2.1 AA Compliance & `prefers-reduced-motion`
 
 As a user with accessibility needs,
 I want the application to meet WCAG 2.1 AA standards with no critical violations,
@@ -759,7 +660,7 @@ So that I can use the app regardless of how I interact with technology.
 
 **Given** all interactive elements are rendered
 **When** I inspect them
-**Then** checkboxes have `aria-label="Mark [task title] as done"`; subtask panel trigger has `aria-expanded`; filter buttons have `aria-pressed`; empty state region has `aria-live="polite"`; score display has `aria-label="Today's score: N points"`; inline errors have `role="alert"`
+**Then** checkboxes have `aria-label="Mark [task title] as done"`; subtask panel trigger has `aria-expanded`; filter buttons have `aria-pressed`; empty state region has `aria-live="polite"`; task count display has `aria-label="Tasks completed: N of M"` with `aria-live="polite"`; inline errors have `role="alert"`
 
 **Given** a user has `prefers-reduced-motion: reduce` enabled in their OS
 **When** the app renders
@@ -769,7 +670,7 @@ So that I can use the app regardless of how I interact with technology.
 **When** measured against WCAG AA thresholds
 **Then** all text and interactive element contrast ratios meet or exceed 4.5:1 (normal text) and 3:1 (large text / UI components)
 
-### Story 6.5: Test Coverage & Playwright E2E Suite
+### Story 5.5: Test Coverage & Playwright E2E Suite
 
 As a developer,
 I want ≥70% meaningful test coverage and ≥5 passing Playwright E2E tests,
@@ -779,7 +680,7 @@ So that the codebase meets quality standards and core user flows are regression-
 
 **Given** the Vitest test suite is run against the backend
 **When** coverage is measured
-**Then** meaningful coverage is ≥70% across: DB query functions (`tasks.ts`, `auth.ts`, `scores.ts`, `subtasks.ts`), auth middleware (JWT validation), score aggregation logic, and seed task idempotency
+**Then** meaningful coverage is ≥70% across: DB query functions (`tasks.ts`, `auth.ts`, `subtasks.ts`, `labels.ts`), auth middleware (JWT validation), and task count derivation logic
 
 **Given** backend integration tests run
 **When** Testcontainers spins up a real `postgres:16-alpine` instance
@@ -787,7 +688,7 @@ So that the codebase meets quality standards and core user flows are regression-
 
 **Given** the Playwright E2E suite runs against the full Docker Compose stack
 **When** all 5+ E2E tests execute
-**Then** they all pass; the tests cover at minimum: user registration, user login + session persistence, task creation, task completion with score update, and task deletion with confirmation
+**Then** they all pass; the tests cover at minimum: user registration, user login + session persistence, task creation, task completion with task count update, and task deletion with confirmation
 
 **Given** test files are created
 **When** placed in the repository

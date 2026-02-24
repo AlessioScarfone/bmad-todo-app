@@ -3,6 +3,8 @@ stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
 lastStep: 14
 workflowStatus: complete
 completedAt: 2026-02-23
+lastRevised: 2026-02-24
+revisionSummary: 'Removed scoring/gamification UX (score display, score history page, /history route). Replaced daily score with task count display (completed/total, e.g. 3/5). FR21 added. FR12, FR13, FR23-FR27, FR36 removed.'
 inputDocuments: ['_bmad-output/planning-artifacts/product-brief-bmad-todo-app-2026-02-23.md', '_bmad-output/planning-artifacts/prd.md']
 ---
 
@@ -19,7 +21,7 @@ inputDocuments: ['_bmad-output/planning-artifacts/product-brief-bmad-todo-app-20
 
 ### Project Vision
 
-bmad-todo-app is a lightweight, full-stack personal task management web app with a pixel-art-inspired retro UI. The core philosophy is radical simplicity — zero configuration, zero onboarding, instant usability. The task list is always the hero of the UI; every other element (score, filters, history) is supportive infrastructure that stays out of the way. It doubles as Alessio's daily professional ritual tool and a public portfolio artifact.
+bmad-todo-app is a lightweight, full-stack personal task management web app with a pixel-art-inspired retro UI. The core philosophy is radical simplicity — zero configuration, zero onboarding, instant usability. The task list is always the hero of the UI; every other element (task count, filters) is supportive infrastructure that stays out of the way. It doubles as Alessio’s daily professional ritual tool and a public portfolio artifact.
 
 ### Target Users
 
@@ -29,14 +31,14 @@ A single, well-defined primary user — the **Developer Planner**: a software de
 
 1. **Pixel-art aesthetic vs. accessibility** — The retro visual identity must coexist with WCAG 2.1 AA compliance. Color contrast, focus states, and interaction affordances need deliberate design rather than afterthoughts.
 2. **Task enrichment without friction** — Labels, deadlines, and subtasks are opt-in and must never feel like they're in the way. The design must make enrichment easy and feel invisible when not needed.
-3. **Score as background context, not focal point** — The daily score must always be visible on-page but must not draw the eye or compete for attention with the task list. It is a passive indicator — users notice it, they do not chase it. The design should resist any temptation to animate or emphasize score changes.
+3. **Task count as ambient progress indicator** — The completed/total task count (e.g. `3/5`) must always be visible on-page but must not draw the eye or compete for attention with the task list. It is a passive progress cue — users glance at it, they do not chase it. The display updates quietly; no animation or emphasis on change.
 4. **Filter/sort discoverability** — Filtering and sorting are MVP features but secondary workflows. They must be findable without cluttering the primary planning view.
 
 ### Design Opportunities
 
 1. **The ritual moment** — The app has a genuine opportunity to feel like a purposeful tool rather than a utility. Thoughtful micro-interactions and pixel-art personality on task completion can create a satisfying daily ritual without gamification theatrics.
 2. **Empty state as onboarding** — The first time a user arrives at an empty task list is the most powerful UX moment. A well-crafted empty state (with or without the seed task) communicates the app's personality and immediately invites action.
-3. **Calm information hierarchy** — Because the score is intentionally low-emphasis, the entire visual design can lean into calm clarity. The task list is always the hero; everything else (score, filters, history) is supportive infrastructure tucked neatly out of the main flow.
+3. **Calm information hierarchy** — Because the task count is intentionally low-emphasis, the entire visual design can lean into calm clarity. The task list is always the hero; everything else (count, filters) is supportive infrastructure tucked neatly out of the main flow.
 
 ## Core User Experience
 
@@ -44,7 +46,7 @@ A single, well-defined primary user — the **Developer Planner**: a software de
 
 The heart of bmad-todo-app is **task creation and completion** — the tight loop of writing down what you intend to do and crossing it off when done. Every design decision must protect and accelerate this loop. Authenticated users land directly on their task list with no intermediate screen; the app is always ready for input the moment it opens.
 
-Task creation is a single inline text field at the top of the task list. The user types a task title and presses Enter — the task appears immediately below with no modal, no required secondary fields, no confirmation step. Point value, labels, deadlines, and subtasks are available inline after creation, purely on demand.
+Task creation is a single inline text field at the top of the task list. The user types a task title and presses Enter — the task appears immediately below with no modal, no required secondary fields, no confirmation step. Labels, deadlines, and subtasks are available inline after creation, purely on demand.
 
 ### Platform Strategy
 
@@ -59,7 +61,7 @@ Task creation is a single inline text field at the top of the task list. The use
 The following interactions must require zero cognitive load — no decisions, no extra steps:
 
 - **Task creation** — one field, Enter to submit. The task list is the landing page; the field is always in focus.
-- **Task completion** — single click on a checkbox. Instant visual state change. Score updates quietly in the background.
+- **Task completion** — single click on a checkbox. Instant visual state change. Task count updates quietly in the header.
 - **Return visit login** — email pre-filled on the login page, one click to authenticate, immediately on the task list.
 - **Enrichment (labels, deadline, subtasks)** — accessible inline from the task card without navigating away; invisible if unused.
 
@@ -67,14 +69,14 @@ The following interactions must require zero cognitive load — no decisions, no
 
 1. **First task creation** — the user types and presses Enter; the task appears instantly. No spinner, no modal, no required fields. This moment establishes trust and speed.
 2. **First morning return** — the user opens the app, email is pre-filled, one click and they're on their list. This moment converts a first-time user into a daily habit.
-3. **Task completion** — checking off a task produces a clear visual state change (struck through, dimmed, or visually distinct). The daily score updates quietly in the corner. Satisfying without being theatrical.
+3. **Task completion** — checking off a task produces a clear visual state change (struck through, dimmed, or visually distinct). The task count updates quietly in the header (`3/5`). Satisfying without being theatrical.
 
 ### Experience Principles
 
 1. **The task list is always the destination** — authenticated users land here instantly, every time. No dashboards, no onboarding screens, no intermediary steps.
-2. **Task creation has no prerequisites** — a title and Enter is all that is ever required. Every additional field (points, labels, deadline, subtasks) is opt-in and accessed after creation, never before.
+2. **Task creation has no prerequisites** — a title and Enter is all that is ever required. Every additional field (labels, deadline, subtasks) is opt-in and accessed after creation, never before.
 3. **Enrichment is invisible until needed** — labels, deadlines, and subtasks must not visually complicate the task list for users who don't use them.
-4. **Score is ambient, not central** — always visible, never emphasized. The task list is the hero. The score is context.
+4. **Task count is ambient, not central** — always visible, never emphasized. The task list is the hero. The count (`completed/total`) is context.
 5. **Speed is a feature** — every interaction (create, complete, delete) must feel instant. Latency is a UX failure, not just a performance one.
 
 ## Desired Emotional Response
@@ -84,7 +86,7 @@ The following interactions must require zero cognitive load — no decisions, no
 - **Focused and in control** — the minimal interface removes noise; the task list feels like the user's own space, not a product's UI
 - **Calm and deliberate** — not exciting, not gamified, not urgent. A quiet professional ritual that fits naturally into a developer's day
 - **Efficient and capable** — every action works immediately; nothing fights back or demands more than the user intended to give
-- **Quietly satisfied** — task completion produces a subdued sense of progress, not celebration. The score updating in the corner is noticed, not cheered
+- **Quietly satisfied** — task completion produces a subdued sense of progress, not celebration. The count updating quietly in the header is noticed, not cheered
 
 ### Emotional Journey Mapping
 
@@ -93,9 +95,8 @@ The following interactions must require zero cognitive load — no decisions, no
 | First visit / registration | Pleasantly surprised — distinctive aesthetic, zero onboarding friction |
 | First task creation | Trust — it worked instantly, exactly as expected |
 | Daily return visit | Familiar and ready — email pre-filled, task list waiting, no ceremony |
-| Task completion | Quiet satisfaction — clear visual state change, score updates calmly |
+| Task completion | Quiet satisfaction — clear visual state change, task count updates calmly |
 | Network error / failure | Calm confidence — inline feedback, retry available, no alarm |
-| Score history view | Reflective — a moment of honest personal accounting, not a reward screen |
 
 ### Micro-Emotions
 
@@ -107,7 +108,7 @@ The following interactions must require zero cognitive load — no decisions, no
 ### Design Implications
 
 - **Focused and in control** → single-column task list, clear visual hierarchy, no competing panels or widgets
-- **Calm and deliberate** → restrained animation (none or minimal on score update), muted palette with pixel-art character rather than bright gamification colors
+- **Calm and deliberate** → restrained animation (none or minimal on count update), muted palette with pixel-art character rather than bright gamification colors
 - **Quiet satisfaction** → task completion uses a clear but understated visual change (strikethrough + dimming); no confetti, no pop-ups
 - **Calm confidence on errors** → inline error messages at task level, not modal interruptions; retry affordance immediately available
 - **Familiar on return** → email pre-fill, immediate task list, no re-onboarding
@@ -135,7 +136,7 @@ Developer-first launcher that demonstrates how a tool can feel like a superpower
 ### Transferable UX Patterns
 
 **Navigation Patterns:**
-- **Single-surface navigation** (Linear, Things 3) — authenticated users live on one primary view; secondary views (history, filters) are reachable without leaving home. Adapt: task list as the permanent home, score history and filters as lightweight overlays or secondary panels.
+- **Single-surface navigation** (Linear, Things 3) — authenticated users live on one primary view; filtering is reachable without leaving home. Adapt: task list as the permanent home, filters as lightweight in-view controls.
 - **No onboarding wizard** (Things 3, Raycast) — the empty state IS the onboarding. A well-crafted empty state teaches by invitation, not instruction.
 
 **Interaction Patterns:**
@@ -167,9 +168,9 @@ Developer-first launcher that demonstrates how a tool can feel like a superpower
 - Things 3's enrichment-on-demand → adapted to pixel-art inline affordances; labels/deadlines expand inline, never in a separate modal
 
 **Avoid:**
-- Any gamification animation on score update — keep score ambient and static
+- Any gamification animation on count update — keep count display ambient and static
 - Modal dialogs for task creation or enrichment
-- Navigation chrome beyond what’s necessary (top bar + score + task list)
+- Navigation chrome beyond what’s necessary (top bar + count + task list)
 
 ## Design System Foundation
 
@@ -196,9 +197,9 @@ Developer-first launcher that demonstrates how a tool can feel like a superpower
 ### Customization Strategy
 
 - **Typography** — use a pixel/monospace font (e.g., Press Start 2P or similar) for headings and UI chrome; fall back to a readable system font for task body text to preserve legibility at small sizes
-- **Color palette** — define a small, deliberate palette of 4–6 colors: background, surface, primary action, completed/muted state, error, and score indicator. All must pass AA contrast.
-- **Component overrides** — completed task state (strikethrough + muted), inline creation field, and score display will require custom Tailwind variants layered on 8bitcn-ui base components
-- **Animation** — disable or minimize any built-in transitions on score-adjacent components; keep completion feedback to a CSS class swap (no JavaScript animation libraries needed)
+- **Color palette** — define a small, deliberate palette of 4–6 colors: background, surface, primary action, completed/muted state, error, and count indicator. All must pass AA contrast.
+- **Component overrides** — completed task state (strikethrough + muted), inline creation field, and count display will require custom Tailwind variants layered on 8bitcn-ui base components
+- **Animation** — disable or minimize any built-in transitions on count-adjacent components; keep completion feedback to a CSS class swap (no JavaScript animation libraries needed)
 
 ## 2. Core User Experience
 
@@ -206,7 +207,7 @@ Developer-first launcher that demonstrates how a tool can feel like a superpower
 
 > "Type what you want to do today, press Enter — it's there. Check it off when done."
 
-The defining experience of bmad-todo-app is the **task creation and completion loop**: the tight, zero-friction cycle of committing to a task by writing it down and marking it done. Every other feature — labels, deadlines, subtasks, score, history — exists to support this loop without interrupting it.
+The defining experience of bmad-todo-app is the **task creation and completion loop**: the tight, zero-friction cycle of committing to a task by writing it down and marking it done. Every other feature — labels, deadlines, subtasks, task count — exists to support this loop without interrupting it.
 
 ### 2.2 User Mental Model
 
@@ -230,7 +231,7 @@ This is an **established UX pattern** — inline list creation and checkbox comp
 | Step | Detail |
 |---|---|
 | Initiation | Inline input field visible and focused at top of task list on every page load |
-| Interaction | User types title; optionally Tabs to point field; presses Enter to submit |
+| Interaction | User types title; presses Enter to submit |
 | Feedback | Task appears immediately (optimistic UI update); field clears and refocuses |
 | Completion | List reflects new task; user is ready to add the next without any additional gesture |
 
@@ -240,7 +241,7 @@ This is an **established UX pattern** — inline list creation and checkbox comp
 |---|---|
 | Initiation | User clicks checkbox on task card |
 | Interaction | Single click — no hold, drag, or double-click required |
-| Feedback | Task shifts to completed visual state (strikethrough + muted opacity); score updates passively in sidebar |
+| Feedback | Task shifts to completed visual state (strikethrough + muted opacity); task count in header updates passively (`3/5`) |
 | Completion | Task remains visible in completed state in the list; no automatic removal or navigation |
 
 ## Visual Design Foundation
@@ -258,7 +259,7 @@ This is an **established UX pattern** — inline list creation and checkbox comp
 | `color-border` | Pixel borders (8bitcn-ui) | Off-white `#e0e0e0` for contrast against dark bg |
 | `color-primary` | Primary action (buttons, checkbox active) | Retro accent — green `#00ff88` or amber `#ffcc00` |
 | `color-text` | Primary text | Near-white `#f0f0f0` |
-| `color-text-muted` | Secondary text (labels, metadata, score) | Medium gray `#888` |
+| `color-text-muted` | Secondary text (labels, metadata) | Medium gray `#888` |
 | `color-completed` | Completed task text | Muted/dimmed `#555` |
 | `color-error` | Inline error state | Retro red `#ff4444` |
 
@@ -266,7 +267,7 @@ All color pairs must pass WCAG 2.1 AA contrast ratio (≥4.5:1 for normal text, 
 
 ### Typography System
 
-**UI Chrome / Headings:** `Press Start 2P` (Google Fonts) — pixel font for app name, section labels, score display, and empty state headers. Used sparingly at large sizes only (≥14px rendered).
+**UI Chrome / Headings:** `Press Start 2P` (Google Fonts) — pixel font for app name, section labels, count display, and empty state headers. Used sparingly at large sizes only (≥14px rendered).
 
 **Task body text / metadata:** `ui-monospace` system stack (`JetBrains Mono`, `Fira Code`, `Consolas` fallback) — readable at compact sizes, developer-appropriate, zero additional font load.
 
@@ -275,11 +276,11 @@ All color pairs must pass WCAG 2.1 AA contrast ratio (≥4.5:1 for normal text, 
 | Level | Font | Size | Use |
 |---|---|---|---|
 | App title | Press Start 2P | 16px | Top bar brand mark |
-| Score display | Press Start 2P | 13px | Sidebar score value |
+| Count display | Press Start 2P | 13px | Top-right count value (e.g. `3/5`) |
 | Section label | Press Start 2P | 10px | Section headers |
 | Task title | ui-monospace | 14px | Task body text (active) |
 | Task title (done) | ui-monospace | 14px | Strikethrough + muted |
-| Metadata | ui-monospace | 12px | Labels, deadline, points |
+| Metadata | ui-monospace | 12px | Labels, deadline |
 | Error / hint | ui-monospace | 12px | Inline feedback |
 
 ### Spacing & Layout Foundation
@@ -296,8 +297,7 @@ All color pairs must pass WCAG 2.1 AA contrast ratio (≥4.5:1 for normal text, 
 
 **Page layout:**
 - Max content width: `860px` centered
-- Left sidebar (score + nav): `200px` fixed
-- Main task area: flexible, fills remaining width
+- Main task area: flexible, fills full width
 - Top bar height: `48px`
 - Task creation input: pinned top of list area, always visible
 
@@ -307,7 +307,7 @@ All color pairs must pass WCAG 2.1 AA contrast ratio (≥4.5:1 for normal text, 
 
 - All interactive elements (checkbox, task title edit, buttons, dropdowns) must have visible focus rings — styled with pixel-art border pattern (8bitcn-ui provides these)
 - Minimum touch/click target: `32px × 32px` even in compact layout
-- Score sidebar color must not rely on color alone to convey meaning — always accompanied by a numeric value
+- Task count display color must not rely on color alone to convey meaning — always accompanied by the numeric fraction (e.g. `3/5`)
 - Destructive action (delete task) requires explicit confirmation (two-step: reveal delete button on hover/focus, confirm on click)
 - Reduced motion: respect `prefers-reduced-motion` — no transitions for users who opt out
 
@@ -319,7 +319,7 @@ All color pairs must pass WCAG 2.1 AA contrast ratio (≥4.5:1 for normal text, 
 
 Six directions were mocked up across two color palettes (green, amber, cyan, purple, red) and four layout patterns (left sidebar, right sidebar, top bar, filter bar). All previewed in `_bmad-output/planning-artifacts/ux-design-directions.html`.
 
-| Direction | Accent | Layout | Score Placement |
+| Direction | Accent | Layout | Count Placement |
 |---|---|---|---|
 | D1 | Green `#00ff88` | Left sidebar | Sidebar block |
 | D2 | Amber `#ffcc00` | Single column | Top bar pill |
@@ -332,22 +332,22 @@ Six directions were mocked up across two color palettes (green, amber, cyan, pur
 
 **Palette:** D1 — green accent `#00ff88`, dark charcoal background `#0f0f0f` / `#1a1a1a`
 **Layout:** No sidebar — single column, max `860px` centered
-**Score/Points:** Top-right corner of top bar, stacked under `user | logout` — ambient and unobtrusive
+**Count display:** Top-right corner of top bar, stacked under `user | logout` — shows completed/total tasks (e.g. `3/5`), ambient and unobtrusive
 **Filter bar:** Horizontal filter row under the top bar (D4-style) — always visible, subdued
 **Subtask UX:** Inline card expansion — collapsed shows `2/3 ↓` badge; click/expand reveals subtask list + inline input field; no modal
 
 ### Design Rationale
 
-The hybrid removes the sidebar entirely, keeping the layout as focused as possible on the task list itself. Score visibility is preserved top-right (complies with FR on daily score display) but is deliberately small and subordinate to the task content. The D4 filter bar is retained because it surfaces filtering without requiring navigation or interaction cost. The green palette from D1 is the most aligned with the pixel-terminal aesthetic and the 8bitcn-ui library's default dark theme.
+The hybrid removes the sidebar entirely, keeping the layout as focused as possible on the task list itself. Task count visibility is preserved top-right (complies with FR21 on count display) but is deliberately small and subordinate to the task content. The D4 filter bar is retained because it surfaces filtering without requiring navigation or interaction cost. The green palette from D1 is the most aligned with the pixel-terminal aesthetic and the 8bitcn-ui library's default dark theme.
 
-The decision to remove the sidebar aligns with the core design principle: **task list is the hero.** Secondary information (score, filters) earns presence only when it does not take pixel real estate away from tasks.
+The decision to remove the sidebar aligns with the core design principle: **task list is the hero.** Secondary information (count display, filters) earns presence only when it does not take pixel real estate away from tasks.
 
 ### Implementation Notes (8bitcn-ui)
 
 - **Filter pills:** `<Button variant="outline">` — active state adds green border `border-color: #00ff88`
 - **Task input:** bare `<Input>` with green `2px` border, full width
 - **Task rows:** custom `div` with `border-left` accent for hover/active state (not a card component — avoids excess padding)
-- **Score display:** plain styled `span` elements in the top-right header zone — no special component needed
+- **Count display:** plain styled `span` elements in the top-right header zone — no special component needed
 - **Subtask area:** conditional render below parent task row when `expanded` flag is true; reuses same input component at smaller scale
 - **Checkbox:** 8bitcn-ui `<Checkbox>` component styled with green accent color
 
@@ -398,7 +398,7 @@ The flow Marco runs every single morning. Must be frictionless.
 ```mermaid
 flowchart TD
     A([User opens app URL]) --> B{Active JWT session?}
-    B -- Yes --> C[Task list loads\nToday's tasks shown\nScore in top-right]
+    B -- Yes --> C[Task list loads\nToday's tasks shown\nCount in top-right]
     B -- No --> D[Login form\nemail pre-filled]
     D --> E[Enter password → Submit]
     E --> C
@@ -410,14 +410,14 @@ flowchart TD
     H -- No --> I[User works…]
 
     I --> J[User clicks checkbox on task]
-    J --> K[Task visually dims\nStrikethrough applied\nScore counter in top-right\nupdates +N pts]
+    J --> K[Task visually dims\nStrikethrough applied\nCount in top-right\nupdates e.g. 3/5]
     K --> L{More tasks to complete?}
     L -- Yes --> J
-    L -- No --> M([Daily flow complete\nScore reflects the day])
+    L -- No --> M([Daily flow complete\nCount reflects the day])
 ```
 
 **Design decisions:**
-- Score updates inline in top-right — no animation flourish, just the number increments
+- Task count updates inline in top-right — no animation flourish, just the fraction updates (e.g. `2/5` → `3/5`)
 - Completed tasks stay in the list (dimmed), not hidden — user sees full day's work
 - Input always at top, always focused-ready — no scroll required to add
 
@@ -522,7 +522,7 @@ flowchart TD
 1. **Minimum clicks to value:** Registration → first task in under 5 interactions. Return visit → new task in 2 (click URL, type + Enter).
 2. **Keyboard-native primary path:** Task creation, completion toggle (Space on focused row), and filter switching all keyboard accessible.
 3. **Failure is cheap:** Error recovery = one tap. Accidental delete recovery = re-type in 5 seconds. App does not punish mistakes.
-4. **Score is a reward cue, not a primary nav target:** User never needs to navigate to see the score — it's always in the corner. Score history requires explicit navigation.
+4. **Count is ambient context:** User never needs to navigate to see the task count — it’s always in the header. No separate history page or navigation required.
 5. **Filters are free:** Filter bar always rendered, zero interaction cost to activate.
 
 ---
@@ -541,7 +541,7 @@ flowchart TD
 | `<Input>` | Task creation input (top of list), subtask inline input, label inline input |
 | `<Checkbox>` | Task completion toggle — styled with `#00ff88` accent |
 | `<Badge>` | Base for label badges, deadline badges, subtask count badges |
-| `<Tooltip>` | Point value on hover over task row (pts badge), icon button labels |
+| `<Tooltip>` | Icon button labels |
 | `<Separator>` | Section dividers in header zone |
 
 All 8bitcn-ui components use the copy-paste ownership model — tokens are overridden via Tailwind CSS variables at the project level; no upstream dependency to maintain.
@@ -552,11 +552,11 @@ All 8bitcn-ui components use the copy-paste ownership model — tokens are overr
 
 #### `<AppHeader>`
 
-**Purpose:** Top bar housing brand, navigation anchor, and user info + score.
-**Anatomy:** `[BMAD::TODO brand left] [user + logout | score stacked top-right]`
+**Purpose:** Top bar housing brand, navigation anchor, and user info + task count.
+**Anatomy:** `[BMAD::TODO brand left] [user + logout | task count stacked top-right]`
 **States:** Authenticated only (unauthenticated users see the login page, not the header)
-**Accessibility:** `<header>` landmark, brand is an `<h1>` or `<span role="heading">`, logout is a `<button>`, score is `aria-label="Today's score: N points"`
-**Key constraint:** Score must never shift layout when number of digits changes — use fixed-width monospace span
+**Accessibility:** `<header>` landmark, brand is an `<h1>` or `<span role="heading">`, logout is a `<button>`, task count is `aria-label="Tasks completed: N of M"`
+**Key constraint:** Count display must never shift layout when digit count changes — use fixed-width monospace span
 
 ---
 
@@ -616,17 +616,17 @@ All 8bitcn-ui components use the copy-paste ownership model — tokens are overr
 
 ---
 
-#### `<ScoreDisplay>`
+#### `<TaskCountDisplay>`
 
-**Purpose:** Renders the user's name, logout link, and today's score stacked in the top-right of `<AppHeader>`.
+**Purpose:** Renders the user's name, logout link, and today's task count stacked in the top-right of `<AppHeader>`.
 **Anatomy:**
 ```
 alessio | logout
-24 pts today
+3/5 tasks
 ```
-**States:** Score value updates on task completion — just the number, no transition/animation
-**Constraint:** Score display is `aria-live="polite"` so screen readers announce the new value on update
-**Width:** Fixed min-width so layout does not reflow as digits change (e.g., `9` → `10`)
+**States:** Count value (`completed/total`) updates on task completion or task creation — just the fraction, no transition/animation
+**Constraint:** `aria-live="polite"` so screen readers announce the new value when it changes
+**Width:** Fixed min-width so layout does not reflow as digits change (e.g., `9/9` → `10/10`)
 
 ---
 
@@ -669,7 +669,7 @@ No tasks match this filter.
 ### Implementation Roadmap
 
 **Phase 1 — Core (required for any usable session):**
-1. `<AppHeader>` + `<ScoreDisplay>` — always visible shell
+1. `<AppHeader>` + `<TaskCountDisplay>` — always visible shell
 2. `<TaskRow>` — base state (no subtasks, no enrichment yet)
 3. `<Input>` task creation (task list input — 8bitcn-ui, configured)
 4. `<EmptyState>` — first-use experience
@@ -709,7 +709,7 @@ Three levels of action priority, each with a distinct visual weight:
 | Situation | Pattern | Visual |
 |---|---|---|
 | Task saved successfully | **Implicit** — task appears in list | No toast, no alert — success is self-evident |
-| Task completion | **Implicit** — row dims + strikethrough + score ticks up | No celebratory animation |
+| Task completion | **Implicit** — row dims + strikethrough + count updates | No celebratory animation |
 | Save failed (network) | **Inline error on row** — `<InlineTaskError>` | Amber left-border, retry affordance |
 | Form validation error | **Inline below field** — red text under the offending input | Never global toast for local errors |
 | Loading state | **Skeleton rows** — same height as task rows, animated shimmer off by default (`prefers-reduced-motion`) | Full list replaced with 3–5 skeleton rows |
@@ -736,7 +736,6 @@ All forms in bmad-todo-app are **inline** — no dialog, no page navigation.
 
 **Validation rules:**
 - Task title: required, max 255 characters — validate on submit, not on keystroke
-- Points: optional, numeric 1–99, default empty; validate on submit
 - Label: optional, max 30 characters, free-form text; no autocomplete in MVP
 - Deadline: optional, date only (no time), must be today or future; validated by date picker constraint
 - Empty submit: no-op — input field shakes subtly (if `prefers-reduced-motion: no-preference`) or simply does nothing
@@ -750,12 +749,10 @@ bmad-todo-app has a **single primary view**: the task list. Navigation is minima
 | Destination | How to get there | How to return |
 |---|---|---|
 | Task list (primary) | Direct URL / app root | Always home |
-| Score history | Dedicated route `/history` — linked from score display | Browser back or dedicated back link |
 | Auth pages | Automatic redirect if no valid JWT | Automatic redirect after successful auth |
 
 **Rules:**
 - No sidebar navigation in MVP
-- Score display in top-right is a link to `/history` — discoverable but not prominent
 - Filter bar does not constitute navigation — it is part of the task list view
 - No breadcrumbs needed (single-level depth)
 
@@ -766,13 +763,12 @@ bmad-todo-app has a **single primary view**: the task list. Navigation is minima
 | Scenario | Message | Action |
 |---|---|---|
 | First use (no tasks ever) | "No tasks yet. Type above and press Enter." | None — focus is already on input |
-| All tasks completed | "All done for today. Score: N pts" | None — shows the score, lets it land |
+| All tasks completed | "All done for today. `N/N` complete!" | None — shows the count, lets it land |
 | Filter returns nothing | "No tasks match this filter." | `[Clear filters]` button |
-| Score history: no previous days | "No history yet. Come back tomorrow." | None |
 
 **Rules:**
 - Empty states are text-only in MVP (no heavy illustrations — keeps pixel aesthetic lean)
-- "All done" state is the only place a light celebration is permitted (the score number itself is the reward)
+- “All done” state is the only place a light celebration is permitted (the count itself is the reward)
 
 ---
 
@@ -783,7 +779,6 @@ bmad-todo-app has a **single primary view**: the task list. Navigation is minima
 | Task list loading on page open | 4 skeleton rows (same height as task rows), pulsing opacity if `prefers-reduced-motion: no-preference` |
 | Task creation (optimistic UI) | Task appears immediately — no loader. Error state appears if save fails. |
 | Checkbox toggle (optimistic UI) | State changes immediately — no loader. Error state if sync fails. |
-| Score history page loading | Skeleton rows for each day entry |
 | Auth submit | Submit button shows spinning pixel icon — input disabled during request |
 
 **Rules:**
@@ -815,7 +810,7 @@ bmad-todo-app is **desktop-primary, mobile-capable**. The core daily use case (m
 
 **Tablet (secondary):** Same single-column layout, column width fills available space with `16px` horizontal padding. Filter pills may wrap to two lines on narrow tablets — acceptable.
 
-**Mobile (tertiary):** Full-width column with `12px` horizontal padding. Filter bar scrolls horizontally (`overflow-x: auto`, no visible scrollbar) so pills don’t wrap. Score display in header collapses to score number only (username hidden on screens < 400px). Task row action icons (edit/delete) revealed by a dedicated `⋯` menu icon instead of hover.
+**Mobile (tertiary):** Full-width column with `12px` horizontal padding. Filter bar scrolls horizontally (`overflow-x: auto`, no visible scrollbar) so pills don’t wrap. Count display in header collapses to count only (username hidden on screens < 400px). Task row action icons (edit/delete) revealed by a dedicated `⋯` menu icon instead of hover.
 
 ---
 
@@ -826,7 +821,7 @@ Mobile-first CSS, with upward breakpoints:
 | Breakpoint | Width | Layout change |
 |---|---|---|
 | `sm` | `≥ 480px` | Input field gets slightly more padding |
-| `md` | `≥ 768px` | Header shows username alongside score |
+| `md` | `≥ 768px` | Header shows username alongside count |
 | `lg` | `≥ 1024px` | Content column capped at `860px`, centered with side gutter |
 
 No layout changes above `lg` — the app is deliberately narrow by design.
@@ -870,10 +865,10 @@ screens: {
 3. Task rows (each `<li tabindex="0">`)
 4. Checkbox within focused task row (`Space` toggles)
 5. Filter pills
-6. Score / logout
+6. Count display / logout
 
 **ARIA requirements:**
-- `aria-live="polite"` on score display — announces update after task completion
+- `aria-live="polite"` on count display — announces update after task creation or completion
 - `aria-live="polite"` on task list region — announces new task after creation
 - `role="alert"` on `<InlineTaskError>` — announced immediately
 - `aria-label` on all icon-only buttons (edit, delete, expand, collapse)

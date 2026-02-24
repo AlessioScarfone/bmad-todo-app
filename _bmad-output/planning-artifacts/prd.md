@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [step-01-init, step-02-discovery, step-02b-vision, step-02c-executive-summary, step-03-success, step-04-journeys, step-05-domain, step-06-innovation, step-07-project-type, step-08-scoping, step-09-functional, step-10-nonfunctional, step-11-polish]
+stepsCompleted: [step-01-init, step-02-discovery, step-02b-vision, step-02c-executive-summary, step-03-success, step-04-journeys, step-05-domain, step-06-innovation, step-07-project-type, step-08-scoping, step-09-functional, step-10-nonfunctional, step-11-polish, step-e-01-discovery, step-e-02-review, step-e-03-edit]
 inputDocuments: ['_bmad-output/planning-artifacts/product-brief-bmad-todo-app-2026-02-23.md']
 workflowType: 'prd'
 briefCount: 1
@@ -11,10 +11,12 @@ classification:
   domain: general
   complexity: low
   projectContext: greenfield
-lastEdited: '2026-02-23'
+lastEdited: '2026-02-24'
 editHistory:
   - date: '2026-02-23'
     changes: 'Removed duplicate sections (lines 300–619); added Journey 5 (Score History Review) and Journey 6 (Filtered Task View); added FR36 (Daily Seed Task with is_system flag); updated Journey Requirements Summary; fixed FR34 (measurability) and Accessibility NFR (confirmation affordance)'
+  - date: '2026-02-24'
+    changes: 'Removed scoring/gamification system (task points, daily score, score history, seed task). Replaced persistent score display with task completion count (completed/total). Removed FR12, FR13, FR23–FR27, FR36 and Journey 5. Renumbered FRs to FR1–FR29. Updated Executive Summary, User Journeys, MVP Scoping, and NFRs accordingly.'
 ---
 
 # Product Requirements Document - bmad-todo-app
@@ -24,14 +26,14 @@ editHistory:
 
 ## Executive Summary
 
-bmad-todo-app is a lightweight, full-stack personal task management web application built for developers who treat daily planning as a deliberate professional ritual. It covers the complete task lifecycle — create, view, complete, delete — with a pixel-art-inspired retro UI aesthetic that makes it immediately distinctive. Users assign a personal point value to each task; completing tasks accumulates a daily score displayed persistently in the UI. There are no popups, no interruptions, and no configuration overhead. Local email/password authentication with JWT-based long-lived sessions and email pre-fill means users log in once and stay productive.
+bmad-todo-app is a lightweight, full-stack personal task management web application built for developers who treat daily planning as a deliberate professional ritual. It covers the complete task lifecycle — create, view, complete, delete — with a pixel-art-inspired retro UI aesthetic that makes it immediately distinctive. A persistent completed/total task count updates in real time, giving users an at-a-glance view of daily progress. There are no popups, no interruptions, and no configuration overhead. Local email/password authentication with JWT-based long-lived sessions and email pre-fill means users log in once and stay productive.
 
 The project serves a dual purpose: a production-quality personal tool the author intends to use daily and share as a portfolio artifact, built with the engineering discipline that implies — clean REST API, durable persistence, and inspectable auth.
 
 ### What Makes This Special
 
 - **Purposeful simplicity with just enough structure.** Tasks support free-form labels, an optional deadline (date), and optional subtasks. All are lightweight and opt-in — the app never enforces structure or demands organization before letting you add a task.
-- **Intrinsic, non-intrusive gamification.** User-assigned task points create a meaningful personal score — purely reflective, never social. The score accumulates as tasks are completed and is always visible; no action required to see it.
+- **At-a-glance progress visibility.** A persistent completed/total task count (e.g., "3/5") updates instantly on each task state change — no action required to see where the day stands.
 - **Retro-but-practical aesthetic.** Pixel-art inspired but not dogmatically 8-bit — informed by what the chosen frontend component library can support, keeping the style distinctive without becoming a maintenance burden.
 
 The core insight: the best productivity tool for a developer demands zero maintenance and delivers a small, consistent daily ritual with a satisfying feedback loop.
@@ -40,7 +42,7 @@ The core insight: the best productivity tool for a developer demands zero mainte
 
 - **Project Type:** Full-stack web application (SPA frontend + REST API backend)
 - **Domain:** General productivity — developer tooling
-- **Complexity:** Low — CRUD with optional labels, deadlines, and subtasks; JWT authentication; passive gamification layer
+- **Complexity:** Low — CRUD with optional labels, deadlines, and subtasks; JWT authentication; task completion count display
 - **Project Context:** Greenfield
 
 ## Success Criteria
@@ -48,7 +50,7 @@ The core insight: the best productivity tool for a developer demands zero mainte
 ### User Success
 
 - Task entry is frictionless — from "I have tasks to add" to "tasks are in the app" in under 60 seconds
-- The daily score is permanently visible on the page (e.g., sidebar) and updates on each task state change — no user action required
+- The task completion count (completed/total) is permanently visible on the page and updates on each task state change — no user action required
 - Long-lived JWT sessions with email pre-fill eliminate login friction on return visits
 - Labels, deadlines, and subtasks are quick to attach and never block the core flow of adding or completing tasks
 - The pixel-art-inspired UI signals intentionality — immediately recognizable as distinctive on first visit
@@ -90,11 +92,11 @@ He finds bmad-todo-app.
 
 **Registration:** Marco lands on the app. The pixel-art aesthetic is immediately different from every productivity tool he's seen — it doesn't look corporate. He registers with email and password in under 30 seconds. No onboarding wizard, no tutorial modal. He's on his task list.
 
-**First task:** He types "Write unit tests for auth module" and assigns it 3 points. Adds a label "Backend". Hits enter. The task appears instantly.
+**First task:** He types "Write unit tests for auth module". Adds a label "Backend". Hits enter. The task appears instantly.
 
-**Building the list:** He adds three more tasks in under a minute: a 1-point "fix login button CSS" with a "Frontend" label, a 2-point "review PR from teammate" with a deadline for Sunday, and a 5-point "refactor API error handling" with two subtasks: "map error codes" and "update response schema".
+**Building the list:** He adds three more tasks in under a minute: "fix login button CSS" with a "Frontend" label, "review PR from teammate" with a deadline for Sunday, and "refactor API error handling" with two subtasks: "map error codes" and "update response schema".
 
-**Working through the day:** As he completes each task, he marks it done. The sidebar score updates after each completion. By evening he has 9 points. He closes the laptop. The ritual is complete.
+**Working through the day:** As he completes each task, he marks it done. The count ticks up — 1/4, 2/4, 3/4, 4/4. He closes the laptop. The ritual is complete.
 
 **New reality:** Marco opens the app Monday morning. His email is pre-filled. One click and he's in. This becomes his daily habit.
 
@@ -114,11 +116,11 @@ He finds bmad-todo-app.
 
 ### Journey 3: The Developer Planner — Rich Task (Labels, Deadline, Subtasks)
 
-**The moment:** Marco has a client deliverable due Thursday. He creates a task: "Deliver API integration" — assigns 8 points, adds label "Client", sets deadline to Thursday's date. He expands it with three subtasks: "Write endpoint", "Write tests", "Deploy to staging".
+**The moment:** Marco has a client deliverable due Thursday. He creates a task: "Deliver API integration" — adds label "Client", sets deadline to Thursday's date. He expands it with three subtasks: "Write endpoint", "Write tests", "Deploy to staging".
 
-He checks off subtasks during the day. The parent task stays incomplete until he explicitly marks it done — earning the full 8 points.
+He checks off subtasks during the day. The parent task stays incomplete until he explicitly marks it done.
 
-**Requirements revealed:** Subtask completion is independent from parent. Parent points are awarded on parent completion. Deadline is visible on the task card. Labels are visually distinct.
+**Requirements revealed:** Subtask completion is independent from parent. Parent task completes only when user explicitly marks it. Deadline is visible on the task card. Labels are visually distinct.
 
 ---
 
@@ -132,25 +134,13 @@ He checks off subtasks during the day. The parent task stays incomplete until he
 
 ---
 
-### Journey 5: The Developer Planner — Score History Review
-
-**Persona:** Same Marco, four weeks in.
-
-**The moment:** It's Friday afternoon. Marco opens the app and, instead of jumping to today's task list, he navigates to his score history. He sees a week of daily scores — Monday was a 14-point day, Tuesday a quiet 4, Wednesday a strong 11. He notices the pattern: mornings with a pre-built task list produce higher scores than days he flies blind.
-
-**What he does:** He glances at last Friday's score to benchmark against this week, then closes the view and returns to today's list with a renewed sense of intention.
-
-**Requirements revealed:** Persistent daily score records, score history view across multiple previous days, ability to compare scores across calendar days.
-
----
-
-### Journey 6: The Developer Planner — Filtered Task View
+### Journey 5: The Developer Planner — Filtered Task View
 
 **Persona:** Same Marco, mid-afternoon on a busy day.
 
 **The moment:** Marco has 12 tasks in his list — a mix of client work, personal projects, and admin. He needs to focus only on client-labelled tasks for the next two hours. He selects the "Client" label filter. The list collapses to 3 tasks. He works through them without distraction, then clears the filter to see the full list again.
 
-**Alternative:** He wants to review only what he's already completed before signing off — he filters by completion status to see his done tasks and the score they generated.
+**Alternative:** He wants to review only what he's already completed before signing off — he filters by completion status to see his done tasks.
 
 **Requirements revealed:** Filter task list by label, filter by completion status, filter by deadline, sort by label/deadline/completion status. Filters are temporary and non-destructive — clearing returns the full list.
 
@@ -160,21 +150,18 @@ He checks off subtasks during the day. The parent task stays incomplete until he
 |---|---|
 | Email/password registration and login | Journey 1 |
 | Long-lived JWT sessions + email pre-fill | Journey 2 |
-| Task CRUD with point assignment | Journeys 1, 3 |
+| Task CRUD | Journeys 1, 3 |
 | Free-form labels | Journeys 1, 3 |
 | Optional deadline (date) per task | Journey 3 |
 | Optional subtasks (independent completion) | Journeys 1, 3 |
-| Daily score in persistent sidebar, updates on action | Journey 1 |
+| Task completion count (completed/total), persistent and real-time | Journey 1 |
 | Persistent task state across sessions | Journey 2 |
 | Inline error feedback with retry | Journey 4 |
 | Fast task creation as primary recovery UX | Journey 4 |
-| Daily score history (persistent per-day record) | Journey 5 |
-| Score history view across previous days | Journey 5 |
-| Cross-day score comparison | Journey 5 |
-| Filter task list by label | Journey 6 |
-| Filter task list by completion status | Journey 6 |
-| Filter task list by deadline | Journey 6 |
-| Sort task list by label, deadline, or completion status | Journey 6 |
+| Filter task list by label | Journey 5 |
+| Filter task list by completion status | Journey 5 |
+| Filter task list by deadline | Journey 5 |
+| Sort task list by label, deadline, or completion status | Journey 5 |
 
 ## Project Scoping & Phased Development
 
@@ -188,15 +175,14 @@ He checks off subtasks during the day. The parent task stays incomplete until he
 **Core User Journeys Supported:**
 - First-time registration and onboarding
 - Daily task list creation and management
-- Task completion with score accumulation
+- Task completion with progress visibility
 - Return visit with frictionless session continuity
 
 **Must-Have Capabilities:**
 - Email/password authentication with JWT long-lived sessions and email pre-fill
 - Task CRUD: create, view, complete, delete
-- Task enrichment: user-assigned point value, free-form labels, optional deadline (date), optional subtasks (flat, one level)
-- Daily score: persistent sidebar display, updates on task state change
-- Daily score history — view and compare scores across days
+- Task enrichment: free-form labels, optional deadline (date), optional subtasks (flat, one level)
+- Task completion count: persistent completed/total display, updates on task state change
 - Task filtering and sorting by label, deadline, or completion status
 - Pixel-art-inspired UI using available component library
 - REST API with durable persistence
@@ -209,18 +195,17 @@ He checks off subtasks during the day. The parent task stays incomplete until he
 **Phase 2 (Growth):**
 - OAuth authentication (Google, GitHub)
 - PWA support for mobile usability
-- Richer gamification: streaks, milestones, personal records
+- Task completion streaks and personal records
 
 **Phase 3 (Vision):**
-- Public opt-in score sharing
-- Advanced gamification — badges, goals, weekly summaries
 - Browser extension for quick capture
 - Developer tool integrations (e.g., GitHub issues → tasks)
+- Advanced productivity analytics — weekly summaries, completion trends
 
 ### Risk Mitigation Strategy
 
 **Technical:** Keep the pixel-art aesthetic within what the chosen component library can express — no bespoke CSS art projects. Subtasks are flat, one level only.
-**Scope:** Score history and filtering are in MVP — architecture should account for this from day one.
+**Scope:** Filtering is in MVP — architecture should account for this from day one.
 **Resource:** Solo developer means no micro-service architecture — monolithic backend, single deployable unit per service.
 
 ## Web App Specific Requirements
@@ -229,7 +214,7 @@ He checks off subtasks during the day. The parent task stays incomplete until he
 
 - **SPA** — client-side routing, no full-page reloads after initial load
 - **Frontend/backend decoupling** — SPA communicates with backend exclusively via REST API (JSON); no server-side rendering
-- **Score updates** — daily score recalculates and re-renders on task state changes via fetch + state update; no WebSocket or SSE required
+- **Count updates** — task completion count recalculates and re-renders on task state changes via fetch + state update; no WebSocket or SSE required
 - **No SEO** — all content is authentication-gated; public pages (login, register) require no SEO optimization
 
 ### Browser Support
@@ -265,48 +250,36 @@ He checks off subtasks during the day. The parent task stays incomplete until he
 - **FR9:** Authenticated users can un-complete a previously completed task
 - **FR10:** Authenticated users can delete a task
 - **FR11:** Authenticated users can edit an existing task's title
-- **FR12:** Authenticated users can assign a point value to a task at creation time
-- **FR13:** Authenticated users can update the point value of an existing task
 
 ### Task Enrichment
 
-- **FR14:** Authenticated users can attach one or more free-form labels to a task
-- **FR15:** Authenticated users can remove a label from a task
-- **FR16:** Authenticated users can set an optional deadline date on a task
-- **FR17:** Authenticated users can remove the deadline from a task
-- **FR18:** Authenticated users can add subtasks to a task
-- **FR19:** Authenticated users can mark individual subtasks as complete independently
-- **FR20:** Authenticated users can delete a subtask
-- **FR21:** Subtasks are limited to one level of nesting (no nested subtasks)
-- **FR22:** Completing all subtasks does not automatically complete the parent task
+- **FR12:** Authenticated users can attach one or more free-form labels to a task
+- **FR13:** Authenticated users can remove a label from a task
+- **FR14:** Authenticated users can set an optional deadline date on a task
+- **FR15:** Authenticated users can remove the deadline from a task
+- **FR16:** Authenticated users can add subtasks to a task
+- **FR17:** Authenticated users can mark individual subtasks as complete independently
+- **FR18:** Authenticated users can delete a subtask
+- **FR19:** Subtasks are limited to one level of nesting (no nested subtasks)
+- **FR20:** Completing all subtasks does not automatically complete the parent task
 
-### Gamification & Scoring
+### Progress Visibility
 
-- **FR23:** The system displays the user's accumulated daily score persistently on every page of the authenticated app
-- **FR24:** The daily score increases when a task is marked complete, by that task's assigned point value
-- **FR25:** The system records the user's total score for each calendar day
-- **FR26:** Authenticated users can view their score history across previous days
-- **FR27:** Authenticated users can view a chronological list of daily scores for up to 30 previous calendar days
+- **FR21:** The system displays the user's task completion count (completed/total tasks) persistently on every page of the authenticated app; the count updates within 1 second of any task state change
 
 ### Organisation & Discovery
 
-- **FR28:** Authenticated users can filter their task list by label
-- **FR29:** Authenticated users can filter their task list by completion status
-- **FR30:** Authenticated users can filter their task list by deadline
-- **FR31:** Authenticated users can sort their task list by label, deadline, or completion status
+- **FR22:** Authenticated users can filter their task list by label
+- **FR23:** Authenticated users can filter their task list by completion status
+- **FR24:** Authenticated users can filter their task list by deadline
+- **FR25:** Authenticated users can sort their task list by label, deadline, or completion status
 
 ### User Experience & Feedback
 
-- **FR32:** The system provides inline error feedback when a task action fails
-- **FR33:** Users can retry a failed task action without re-entering data
-- **FR34:** The system reflects task state changes within 1 second after each action without a full page reload
-- **FR35:** All core flows are operable via keyboard navigation
-
-### System Automation
-
-- **FR36:** The system automatically creates a daily seed task — titled "Record your first task for today" (1 point) — for each user at the start of each calendar day; the task appears at the top of the task list and can be completed or deleted by the user
-
-> **Data model note:** Seed tasks are system-generated records identified by an `is_system` flag, distinguishing them from user-created tasks for filtering, scoring, and future analytics purposes.
+- **FR26:** The system provides inline error feedback when a task action fails
+- **FR27:** Users can retry a failed task action without re-entering data
+- **FR28:** The system reflects task state changes within 1 second after each action without a full page reload
+- **FR29:** All core flows are operable via keyboard navigation
 
 ## Non-Functional Requirements
 
@@ -314,7 +287,7 @@ He checks off subtasks during the day. The parent task stays incomplete until he
 
 - All user-initiated task actions (create, complete, delete, edit) complete and reflect in the UI within 1 second under normal network conditions
 - Initial page load completes within 3 seconds on a standard broadband connection
-- The daily score updates and renders within 500ms of a task state change
+- The task completion count updates and renders within 500ms of a task state change
 
 ### Security
 

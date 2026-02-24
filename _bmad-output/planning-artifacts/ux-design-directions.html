@@ -766,7 +766,7 @@
 <section class="direction-section" id="hybrid" style="border: 2px solid #00ff88; padding: 16px; margin-bottom: 72px; max-width: 960px; margin-left: auto; margin-right: auto;">
   <div class="direction-label" style="color:#00ff88; font-size: 10px; margin-bottom: 4px;">★ HYBRID — SELECTED DIRECTION</div>
   <div class="direction-desc" style="margin-bottom: 16px;">
-    D1 green palette + No sidebar + Score top-right under user/logout + D4 filter bar + Inline subtask expansion.
+    D1 green palette + No sidebar + Task count top-right under user/logout + D4 filter bar + Inline subtask expansion.
     Single-column, max 860px, compact density.
   </div>
   <div style="
@@ -793,7 +793,7 @@
       <!-- User + score stacked top-right -->
       <div style="margin-left:auto;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;gap:2px;padding: 6px 0;">
         <span style="font-size:11px;color:#555;">alessio &nbsp;<span style="color:#333;">|</span>&nbsp; <span style="color:#444;cursor:pointer;">logout</span></span>
-        <span style="font-family:'Press Start 2P',monospace;font-size:8px;color:#00ff88;">24 <span style="font-size:6px;color:#336644;">pts today</span></span>
+        <span style="font-family:'Press Start 2P',monospace;font-size:8px;color:#00ff88;">3/5 <span style="font-size:6px;color:#336644;">tasks</span></span>
       </div>
     </div>
     <!-- Filter bar (D4-style) -->
@@ -851,7 +851,6 @@
         <span style="font-size:10px;color:#555;border:1px solid #2a2a2a;padding:1px 5px;">Backend</span>
         <!-- Subtask badge -->
         <span style="font-size:10px;color:#336644;border:1px solid #224433;padding:1px 6px;cursor:pointer;" title="Click to expand subtasks">2/3 ↓</span>
-        <span style="font-size:11px;color:#555;margin-left:4px;">5 pts</span>
       </div>
       <!-- Subtask expansion (shown inline — this task is hovered/expanded) -->
       <div style="
@@ -888,7 +887,6 @@
         <div style="width:16px;height:16px;border:2px solid #444;flex-shrink:0;"></div>
         <span style="font-size:13px;color:#e0e0e0;flex:1;">Review PR from teammate</span>
         <span style="font-size:10px;color:#555;border:1px solid #2a2a2a;padding:1px 5px;">Review</span>
-        <span style="font-size:11px;color:#555;margin-left:auto;">2 pts</span>
       </div>
 
       <!-- Task: done -->
@@ -896,14 +894,12 @@
         <div style="width:16px;height:16px;border:2px solid #336644;background:#001a0d;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#00ff88;">✓</div>
         <span style="font-size:13px;color:#555;text-decoration:line-through;flex:1;">Write unit tests for auth module</span>
         <span style="font-size:10px;color:#333;border:1px solid #1a1a1a;padding:1px 5px;">Backend</span>
-        <span style="font-size:11px;color:#333;margin-left:auto;">3 pts</span>
       </div>
 
       <!-- Task: done -->
       <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:#141414;border-left:2px solid #222;opacity:0.5;">
         <div style="width:16px;height:16px;border:2px solid #336644;background:#001a0d;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#00ff88;">✓</div>
         <span style="font-size:13px;color:#555;text-decoration:line-through;flex:1;">Deploy API to staging</span>
-        <span style="font-size:11px;color:#333;margin-left:auto;">8 pts</span>
       </div>
     </div>
   </div>
@@ -914,7 +910,7 @@
 <!-- ═══════════ DIRECTION 1 ═══════════ -->
 <section class="direction-section" id="d1">
   <div class="direction-label">D1 — Green Accent · Left Sidebar Score · Pixel Border Tasks</div>
-  <div class="direction-desc">Score lives in a fixed left sidebar. Task list is the dominant right panel. Strong green accent. Most developer-terminal-like layout.</div>
+  <div class="direction-desc">Task count lives in a fixed left sidebar. Task list is the dominant right panel. Strong green accent. Most developer-terminal-like layout.</div>
   <div class="d1">
     <div class="d1-topbar">
       <span class="brand">BMAD::TODO</span>
@@ -923,19 +919,16 @@
     <div class="d1-body">
       <div class="d1-sidebar">
         <div class="d1-score-block">
-          <span class="score-label">TODAY'S SCORE</span>
-          <span class="score-value">24</span>
-          <span class="score-unit">pts</span>
+          <span class="score-label">TASKS</span>
+          <span class="score-value">3/5</span>
         </div>
         <nav class="d1-nav">
           <a href="#" class="active">▸ Tasks</a>
-          <a href="#">  History</a>
         </nav>
       </div>
       <div class="d1-main">
         <div class="d1-input-row">
           <input type="text" placeholder="Add a task and press Enter…" />
-          <input type="text" class="pts-input" placeholder="pts" />
         </div>
         <div class="d1-task">
           <div class="d1-check">✓</div>
@@ -943,7 +936,6 @@
           <div class="task-meta">
             <span class="tag">Backend</span>
           </div>
-          <span class="pts">5 pts</span>
         </div>
         <div class="d1-task">
           <div class="d1-check">✓</div>
@@ -951,7 +943,6 @@
           <div class="task-meta">
             <span class="tag">Review</span>
           </div>
-          <span class="pts">2 pts</span>
         </div>
         <div class="d1-task done">
           <div class="d1-check checked">✓</div>
@@ -959,7 +950,6 @@
           <div class="task-meta">
             <span class="tag">Backend</span>
           </div>
-          <span class="pts">3 pts</span>
         </div>
         <div class="d1-task done">
           <div class="d1-check checked">✓</div>
@@ -967,12 +957,10 @@
           <div class="task-meta">
             <span class="tag">Frontend</span>
           </div>
-          <span class="pts">1 pt</span>
         </div>
         <div class="d1-task done">
           <div class="d1-check checked">✓</div>
           <span class="task-title">Deploy API to staging</span>
-          <span class="pts">8 pts</span>
         </div>
       </div>
     </div>
@@ -984,53 +972,46 @@
 <!-- ═══════════ DIRECTION 2 ═══════════ -->
 <section class="direction-section" id="d2">
   <div class="direction-label">D2 — Amber Accent · Score in Top Bar · Underline Input · Centered Single Column</div>
-  <div class="direction-desc">Score sits in the top bar as a compact pill. No sidebar — full-width single column task list. Cleaner, more spacious feel. Amber is warmer than green.</div>
+  <div class="direction-desc">Task count sits in the top bar as a compact pill. No sidebar — full-width single column task list. Cleaner, more spacious feel. Amber is warmer than green.</div>
   <div class="d2">
     <div class="d2-topbar">
       <span class="brand">BMAD::TODO</span>
       <div class="nav-links">
         <a href="#" class="active">Tasks</a>
-        <a href="#">History</a>
       </div>
       <div class="d2-score-pill">
-        <span class="lbl">SCORE</span>
-        <span class="val">24</span>
+        <span class="lbl">TASKS</span>
+        <span class="val">3/5</span>
       </div>
     </div>
     <div class="d2-main">
       <div class="d2-section-label">TODAY — MON 23 FEB</div>
       <div class="d2-input-row">
         <input class="main" type="text" placeholder="What needs to get done today?" />
-        <input class="pts" type="text" placeholder="pts" />
       </div>
       <div class="d2-task">
         <div class="d2-check"></div>
         <span class="task-title">Refactor API error handling</span>
         <span class="tag">Backend</span>
-        <span class="d2-pts">5 pts</span>
       </div>
       <div class="d2-task">
         <div class="d2-check"></div>
         <span class="task-title">Review PR from teammate</span>
         <span class="tag">Review</span>
-        <span class="d2-pts">2 pts</span>
       </div>
       <div class="d2-task done">
         <div class="d2-check checked">✓</div>
         <span class="task-title">Write unit tests for auth module</span>
         <span class="tag">Backend</span>
-        <span class="d2-pts">3 pts</span>
       </div>
       <div class="d2-task done">
         <div class="d2-check checked">✓</div>
         <span class="task-title">Fix login button CSS</span>
         <span class="tag">Frontend</span>
-        <span class="d2-pts">1 pt</span>
       </div>
       <div class="d2-task done">
         <div class="d2-check checked">✓</div>
         <span class="task-title">Deploy API to staging</span>
-        <span class="d2-pts">8 pts</span>
       </div>
     </div>
   </div>
@@ -1041,7 +1022,7 @@
 <!-- ═══════════ DIRECTION 3 ═══════════ -->
 <section class="direction-section" id="d3">
   <div class="direction-label">D3 — Cyan Accent · Right Sidebar with Score History · Deep Space bg</div>
-  <div class="direction-desc">Score AND history live in a right sidebar. Main area is uncluttered. Deep navy background. History is always glanceable without navigating away.</div>
+  <div class="direction-desc">Task count AND completion rate live in a right sidebar. Main area is uncluttered. Deep navy background. Count is always glanceable without navigating away.</div>
   <div class="d3">
     <div class="d3-topbar">
       <span class="d3-brand">BMAD::TODO</span>
@@ -1056,43 +1037,28 @@
           <div class="d3-check"></div>
           <span class="task-title">Refactor API error handling</span>
           <span class="tag" style="margin-left:auto;font-size:10px;color:#555;border:1px solid #1e1e2e;padding:1px 5px;">Backend</span>
-          <span class="pts" style="margin-left:8px;font-size:11px;color:#444;">5</span>
         </div>
         <div class="d3-task">
           <div class="d3-check"></div>
           <span class="task-title">Review PR from teammate</span>
-          <span class="pts" style="margin-left:auto;font-size:11px;color:#444;">2</span>
         </div>
         <div class="d3-task done">
           <div class="d3-check checked" style="background:#001414;border-color:#003333;color:#003333;">✓</div>
           <span class="task-title">Write unit tests for auth module</span>
-          <span class="pts" style="margin-left:auto;font-size:11px;color:#2a2a2a;">3</span>
         </div>
         <div class="d3-task done">
           <div class="d3-check checked" style="background:#001414;border-color:#003333;color:#003333;">✓</div>
           <span class="task-title">Fix login button CSS</span>
-          <span class="pts" style="margin-left:auto;font-size:11px;color:#2a2a2a;">1</span>
         </div>
         <div class="d3-task done">
           <div class="d3-check checked" style="background:#001414;border-color:#003333;color:#003333;">✓</div>
           <span class="task-title">Deploy API to staging</span>
-          <span class="pts" style="margin-left:auto;font-size:11px;color:#2a2a2a;">8</span>
         </div>
       </div>
       <div class="d3-sidebar">
         <div class="d3-score">
-          <span class="lbl">TODAY</span>
-          <span class="val">24</span>
-          <span class="unit">pts</span>
-        </div>
-        <div class="d3-divider"></div>
-        <div class="d3-history">
-          <div class="hist-label">HISTORY</div>
-          <div class="day today"><span>Mon</span><span>24</span></div>
-          <div class="day"><span>Sun</span><span>11</span></div>
-          <div class="day"><span>Sat</span><span>18</span></div>
-          <div class="day"><span>Fri</span><span>14</span></div>
-          <div class="day"><span>Thu</span><span>7</span></div>
+          <span class="lbl">TASKS</span>
+          <span class="val" style="font-size:18px;">3/5</span>
         </div>
       </div>
     </div>
@@ -1103,14 +1069,14 @@
 
 <!-- ═══════════ DIRECTION 4 ═══════════ -->
 <section class="direction-section" id="d4">
-  <div class="direction-label">D4 — Purple Accent · Score in Header · Filter Toolbar · Full-width</div>
-  <div class="direction-desc">Score is inline in the header. A secondary toolbar provides filter/sort controls — always visible but subdued. Purple accent is more distinctive.</div>
+  <div class="direction-label">D4 — Purple Accent · Task Count in Header · Filter Toolbar · Full-width</div>
+  <div class="direction-desc">Task count is inline in the header. A secondary toolbar provides filter/sort controls — always visible but subdued. Purple accent is more distinctive.</div>
   <div class="d4">
     <div class="d4-header">
       <span class="brand">BMAD::TODO</span>
       <div class="score-inline">
-        <span class="lbl">TODAY'S SCORE</span>
-        <span class="val">24 pts</span>
+        <span class="lbl">TASKS</span>
+        <span class="val">3/5</span>
       </div>
     </div>
     <div class="d4-toolbar">
@@ -1129,27 +1095,22 @@
         <div class="d4-check"></div>
         <span class="task-title">Refactor API error handling</span>
         <span class="tag" style="margin-left:8px;font-size:10px;color:#7733cc;border:1px solid #7733cc;padding:1px 5px;">Backend</span>
-        <span class="pts" style="margin-left:auto;font-size:11px;color:#444;">5 pts</span>
       </div>
       <div class="d4-task">
         <div class="d4-check"></div>
         <span class="task-title">Review PR from teammate</span>
-        <span class="pts" style="margin-left:auto;font-size:11px;color:#444;">2 pts</span>
       </div>
       <div class="d4-task done">
         <div class="d4-check checked">✓</div>
         <span class="task-title">Write unit tests for auth module</span>
-        <span class="pts" style="margin-left:auto;font-size:11px;color:#333;">3 pts</span>
       </div>
       <div class="d4-task done">
         <div class="d4-check checked">✓</div>
         <span class="task-title">Fix login button CSS</span>
-        <span class="pts" style="margin-left:auto;font-size:11px;color:#333;">1 pt</span>
       </div>
       <div class="d4-task done">
         <div class="d4-check checked">✓</div>
         <span class="task-title">Deploy API to staging</span>
-        <span class="pts" style="margin-left:auto;font-size:11px;color:#333;">8 pts</span>
       </div>
     </div>
   </div>
@@ -1159,14 +1120,14 @@
 
 <!-- ═══════════ DIRECTION 5 ═══════════ -->
 <section class="direction-section" id="d5">
-  <div class="direction-label">D5 — Red Accent · Ultra-minimal · No Cards · Score Inline Top Bar</div>
+  <div class="direction-label">D5 — Red Accent · Ultra-minimal · No Cards · Count Inline Top Bar</div>
   <div class="direction-desc">Strips every container away. Task list is pure text with a thin bottom border. Red accent is sharp and confident. Maximum focus on content with zero chrome.</div>
   <div class="d5">
     <div class="d5-topbar">
       <span class="d5-brand">BMAD::TODO</span>
       <div class="d5-score-block">
-        <span class="lbl">score</span>
-        <span class="val">24 pts</span>
+        <span class="lbl">tasks</span>
+        <span class="val">3/5</span>
       </div>
     </div>
     <div class="d5-main">
@@ -1175,28 +1136,23 @@
         <div class="d5-check"></div>
         <span class="task-title">Refactor API error handling</span>
         <span class="d5-tag">Backend</span>
-        <span class="pts" style="margin-left:auto;font-size:11px;color:#444;">5 pts</span>
       </div>
       <div class="d5-task">
         <div class="d5-check"></div>
         <span class="task-title">Review PR from teammate</span>
-        <span class="pts" style="margin-left:auto;font-size:11px;color:#444;">2 pts</span>
       </div>
       <div class="d5-task done">
         <div class="d5-check checked"></div>
         <span class="task-title">Write unit tests for auth module</span>
         <span class="d5-tag">Backend</span>
-        <span class="pts" style="margin-left:auto;font-size:11px;color:#2a2a2a;">3 pts</span>
       </div>
       <div class="d5-task done">
         <div class="d5-check checked"></div>
         <span class="task-title">Fix login button CSS</span>
-        <span class="pts" style="margin-left:auto;font-size:11px;color:#2a2a2a;">1 pt</span>
       </div>
       <div class="d5-task done">
         <div class="d5-check checked"></div>
         <span class="task-title">Deploy API to staging</span>
-        <span class="pts" style="margin-left:auto;font-size:11px;color:#2a2a2a;">8 pts</span>
       </div>
     </div>
   </div>
@@ -1206,48 +1162,42 @@
 
 <!-- ═══════════ DIRECTION 6 ═══════════ -->
 <section class="direction-section" id="d6">
-  <div class="direction-label">D6 — Green Accent · Pixel Card Border · Score Chip in Top Bar · Subtask Count</div>
-  <div class="direction-desc">Each task is a distinct pixel-bordered card. Score sits in a compact labeled chip in the top bar. Strong card identity reinforces the 8bitcn-ui aesthetic most directly.</div>
+  <div class="direction-label">D6 — Green Accent · Pixel Card Border · Task Count Chip in Top Bar · Subtask Count</div>
+  <div class="direction-desc">Each task is a distinct pixel-bordered card. Task count sits in a compact labeled chip in the top bar. Strong card identity reinforces the 8bitcn-ui aesthetic most directly.</div>
   <div class="d6">
     <div class="d6-topbar">
       <span class="d6-brand">BMAD::TODO</span>
       <div class="d6-score-chip">
-        <span class="lbl">SCORE</span>
-        <span class="val">24 pts</span>
+        <span class="lbl">TASKS</span>
+        <span class="val">3/5</span>
       </div>
     </div>
     <div class="d6-main">
       <div class="d6-input-card">
         <input type="text" placeholder="New task…" />
-        <input class="pts" type="text" placeholder="pts" />
       </div>
       <div class="d6-task-card">
         <div class="d6-check"></div>
         <span class="task-title">Refactor API error handling</span>
         <span class="tag" style="font-size:10px;color:#555;border:1px solid #2a2a2a;padding:1px 5px;">Backend</span>
         <span class="d6-subtasks">2/3 subtasks</span>
-        <span class="pts" style="margin-left:8px;font-size:11px;color:#444;">5 pts</span>
       </div>
       <div class="d6-task-card">
         <div class="d6-check"></div>
         <span class="task-title">Review PR from teammate</span>
         <span class="tag" style="font-size:10px;color:#555;border:1px solid #2a2a2a;padding:1px 5px;">Review</span>
-        <span class="pts" style="margin-left:auto;font-size:11px;color:#444;">2 pts</span>
       </div>
       <div class="d6-task-card done">
         <div class="d6-check checked">✓</div>
         <span class="task-title">Write unit tests for auth module</span>
-        <span class="pts" style="margin-left:auto;font-size:11px;color:#2a2a2a;">3 pts</span>
       </div>
       <div class="d6-task-card done">
         <div class="d6-check checked">✓</div>
         <span class="task-title">Fix login button CSS</span>
-        <span class="pts" style="margin-left:auto;font-size:11px;color:#2a2a2a;">1 pt</span>
       </div>
       <div class="d6-task-card done">
         <div class="d6-check checked">✓</div>
         <span class="task-title">Deploy API to staging</span>
-        <span class="pts" style="margin-left:auto;font-size:11px;color:#2a2a2a;">8 pts</span>
       </div>
     </div>
   </div>
