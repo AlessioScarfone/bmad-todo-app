@@ -3,18 +3,24 @@ import cors from '@fastify/cors'
 import cookie from '@fastify/cookie'
 import jwt from '@fastify/jwt'
 import underPressure from '@fastify/under-pressure'
-import { sql } from './db/client.js'
+import type { Sql } from 'postgres'
+import { fileURLToPath } from 'url'
+import { getSqlClient } from './db/client.js'
 import { runMigrations } from './db/migrate.js'
+import dbPlugin from './plugins/db.js'
+import authRoutes from './routes/auth.js'
 
 const PORT = parseInt(process.env.PORT ?? '3001', 10)
 const NODE_ENV = process.env.NODE_ENV ?? 'production'
 
-export function buildServer(jwtSecret: string) {
+export function buildServer(jwtSecret: string, sqlOverride?: Sql) {
+  const dbSql = sqlOverride ?? getSqlClient()
+
   const fastify = Fastify({
     logger: {
       level: NODE_ENV === 'production' ? 'info' : 'debug',
       transport:
-        NODE_ENV !== 'production'
+        NODE_ENV === 'development'
           ? { target: 'pino-pretty', options: { colorize: true } }
           : undefined,
     },
@@ -48,6 +54,14 @@ export function buildServer(jwtSecret: string) {
     },
   })
 
+  fastify.register(dbPlugin, {
+    sql: dbSql,
+  })
+
+  fastify.register(authRoutes, {
+    prefix: '/api',
+  })
+
   return fastify
 }
 
@@ -61,7 +75,7 @@ async function start() {
 
   const fastify = buildServer(JWT_SECRET)
   try {
-    await runMigrations(sql)
+    await runMigrations(getSqlClient())
     fastify.log.info('Migrations complete')
 
     await fastify.listen({ port: PORT, host: '0.0.0.0' })
@@ -71,4 +85,8 @@ async function start() {
   }
 }
 
-start()
+const isDirectExecution = process.argv[1] === fileURLToPath(import.meta.url)
+
+if (isDirectExecution) {
+  start()
+}

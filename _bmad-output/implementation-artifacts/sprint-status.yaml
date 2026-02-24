@@ -43,8 +43,8 @@ development_status:
   # ─── Epic 1: Project Foundation & Authentication ───────────────────────────
   epic-1: in-progress
   1-1-project-scaffolding-docker-infrastructure-baseline: done
-  1-2-user-registration: ready-for-dev
-  1-3-user-login-long-lived-session: backlog
+  1-2-user-registration: review
+  1-3-user-login-long-lived-session: ready-for-dev
   1-4-email-pre-fill-on-return-logout: backlog
   epic-1-retrospective: optional
 

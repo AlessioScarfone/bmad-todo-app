@@ -1,6 +1,6 @@
 # Story 1.2: User Registration
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -38,23 +38,23 @@ So that I can access the application and my personal task list.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Shared types — registration schemas** (AC: AC4)
-  - [ ] 1.1 In `shared/types/index.ts`, add:
+- [x] **Task 1: Shared types — registration schemas** (AC: AC4)
+  - [x] 1.1 In `shared/types/index.ts`, add:
     - `RegisterBodySchema` → `{ email: Type.String({ format: 'email', minLength: 1 }), password: Type.String({ minLength: 8 }) }`
     - `type RegisterBody = Static<typeof RegisterBodySchema>`
     - `AuthUserSchema` → `{ id: Type.Number(), email: Type.String() }` (the response shape on register/login)
     - `type AuthUser = Static<typeof AuthUserSchema>`
-  - [ ] 1.2 Verify `shared/types/index.ts` still compiles cleanly after additions
+  - [x] 1.2 Verify `shared/types/index.ts` still compiles cleanly after additions
 
-- [ ] **Task 2: Backend — DB query** (AC: AC1, AC2)
-  - [ ] 2.1 Create `backend/src/db/queries/auth.ts`:
+- [x] **Task 2: Backend — DB query** (AC: AC1, AC2)
+  - [x] 2.1 Create `backend/src/db/queries/auth.ts`:
     - `getUserByEmail(sql, email: string): Promise<{ id: number; email: string; password_hash: string } | undefined>` — `SELECT id, email, password_hash FROM users WHERE email = $email LIMIT 1`
     - `createUser(sql, email: string, passwordHash: string): Promise<{ id: number; email: string }>` — `INSERT INTO users (email, password_hash) VALUES ($email, $passwordHash) RETURNING id, email`
-  - [ ] 2.2 Use the `sql` tagged-template literal from `../client.js` (ESM import with `.js` extension)
-  - [ ] 2.3 No default exports — named exports only
+  - [x] 2.2 Use the `sql` tagged-template literal from `../client.js` (ESM import with `.js` extension)
+  - [x] 2.3 No default exports — named exports only
 
-- [ ] **Task 3: Backend — auth route plugin** (AC: AC1, AC2, AC4)
-  - [ ] 3.1 Create `backend/src/routes/auth.ts` as a Fastify plugin using `fastify-plugin` (`fp`):
+- [x] **Task 3: Backend — auth route plugin** (AC: AC1, AC2, AC4)
+  - [x] 3.1 Create `backend/src/routes/auth.ts` as a Fastify plugin using `fastify-plugin` (`fp`):
     ```typescript
     import fp from 'fastify-plugin'
     import type { FastifyPluginAsync } from 'fastify'
@@ -66,20 +66,20 @@ So that I can access the application and my personal task list.
     }
     export default fp(authRoutes)
     ```
-  - [ ] 3.2 Install `fastify-plugin`: `npm install fastify-plugin` in `backend/`
-  - [ ] 3.3 `POST /auth/register` handler logic:
+  - [x] 3.2 Install `fastify-plugin`: `npm install fastify-plugin` in `backend/`
+  - [x] 3.3 `POST /auth/register` handler logic:
     - ⚠️ **NEVER log `req.body`** on auth routes
     - Hash password with `bcrypt.hash(password, 12)`
     - Call `createUser()` — catch `unique_violation` (PG error code `23505`) and return `409` with `{ statusCode: 409, error: "CONFLICT", message: "Email already in use" }`
     - On success: return `201` with `{ id, email }` (direct object, no wrapper)
-  - [ ] 3.4 Register the auth plugin in `backend/src/server.ts` inside `buildServer()`:
+  - [x] 3.4 Register the auth plugin in `backend/src/server.ts` inside `buildServer()`:
     ```typescript
     fastify.register(authRoutes, { prefix: '/api' })
     ```
     This makes the route accessible at `POST /api/auth/register` (path within plugin: `/auth/register`)
 
-- [ ] **Task 4: Backend — integration tests** (AC: AC1, AC2, AC4)
-  - [ ] 4.1 Create `backend/test/routes/auth.test.ts` using Testcontainers:
+- [x] **Task 4: Backend — integration tests** (AC: AC1, AC2, AC4)
+  - [x] 4.1 Create `backend/test/routes/auth.test.ts` using Testcontainers:
     - Use `createTestDb()` from `test/helpers/db.ts`
     - Use `buildServer(jwtSecret)` — pass a fixed test secret (e.g. `'test-secret'`)
     - **Wire the test db's `sql` into the server** — see Dev Notes for pattern
@@ -89,10 +89,10 @@ So that I can access the application and my personal task list.
       - `POST /api/auth/register` with missing email → 400
       - `POST /api/auth/register` with password shorter than 8 chars → 400
       - Assert `password_hash` stored in DB is NOT equal to plaintext password (bcrypt)
-  - [ ] 4.2 Run `npm test` — all tests (previous + new) must pass
+  - [x] 4.2 Run `npm test` — all tests (previous + new) must pass
 
-- [ ] **Task 5: Frontend — RegisterPage** (AC: AC1, AC2, AC3)
-  - [ ] 5.1 Replace the placeholder `frontend/src/pages/RegisterPage.tsx` with a real registration form:
+- [x] **Task 5: Frontend — RegisterPage** (AC: AC1, AC2, AC3)
+  - [x] 5.1 Replace the placeholder `frontend/src/pages/RegisterPage.tsx` with a real registration form:
     - Controlled form: `email` + `password` fields
     - Client-side validation on submit: empty email or password → show inline field-level error, **no API call**
     - Email format validation (basic: must contain `@`)
@@ -104,8 +104,8 @@ So that I can access the application and my personal task list.
     - Submit button disabled while request is in-flight
     - **Pixel-art aesthetic** (8bitcn-ui / Tailwind) — simple, composed, not celebratory
     - "Already have an account? Log in" link → `/login`
-  - [ ] 5.2 No toast or modal errors — **all errors inline only** (per UX spec)
-  - [ ] 5.3 Verify TypeScript compiles cleanly: `cd frontend && npx tsc --noEmit`
+  - [x] 5.2 No toast or modal errors — **all errors inline only** (per UX spec)
+  - [x] 5.3 Verify TypeScript compiles cleanly: `cd frontend && npx tsc --noEmit`
 
 ## Dev Notes
 
@@ -335,10 +335,41 @@ The `TaskListPage.tsx` and `LoginPage.tsx` remain as placeholders. After success
 
 ### Agent Model Used
 
-Claude Sonnet 4.6 (via GitHub Copilot)
+GPT-5.3-Codex (via GitHub Copilot)
 
 ### Debug Log References
 
+- `cd backend && npm install fastify-plugin`
+- `cd backend && npm test`
+- `cd backend && npm run build`
+- `cd frontend && npx tsc --noEmit`
+
 ### Completion Notes List
 
+- Added shared auth request/response types in `shared/types/index.ts` (`RegisterBodySchema`, `RegisterBody`, `AuthUserSchema`, `AuthUser`).
+- Implemented auth DB query module in `backend/src/db/queries/auth.ts` with named exports (`getUserByEmail`, `createUser`).
+- Added registration route plugin in `backend/src/routes/auth.ts` with TypeBox validation, bcrypt hashing (12 rounds), duplicate-email handling (`409 CONFLICT`), and BAD_REQUEST validation shape.
+- Introduced Fastify DB decorator plugin in `backend/src/plugins/db.ts` and wired server/plugin registration in `backend/src/server.ts` with `/api` prefix preserved.
+- Refactored DB client initialization in `backend/src/db/client.ts` and startup behavior in `backend/src/server.ts` to support import-safe tests and injected test SQL.
+- Added integration coverage in `backend/test/routes/auth.test.ts` for success, duplicate email, validation errors, and bcrypt hash persistence checks.
+- Replaced placeholder register page with fully functional inline-validation form in `frontend/src/pages/RegisterPage.tsx` (no toast/modal, disabled submit while loading, proper error mapping, redirect on success).
+- Verified backend tests and build, and frontend TypeScript compile checks pass.
+
 ### File List
+
+- `shared/types/index.ts`
+- `backend/src/db/queries/auth.ts`
+- `backend/src/routes/auth.ts`
+- `backend/src/plugins/db.ts`
+- `backend/src/server.ts`
+- `backend/src/db/client.ts`
+- `backend/test/routes/auth.test.ts`
+- `backend/package.json`
+- `backend/package-lock.json`
+- `frontend/src/pages/RegisterPage.tsx`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `_bmad-output/implementation-artifacts/1-2-user-registration.md`
+
+### Change Log
+
+- 2026-02-24: Implemented Story 1.2 user registration end-to-end across shared types, backend route/query/testing, and frontend registration UI; completed validation and moved story to `review`.

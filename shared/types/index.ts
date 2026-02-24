@@ -10,6 +10,22 @@ export const UserSchema = Type.Object({
 
 export type User = Static<typeof UserSchema>
 
+// ─── Auth — Request/Response schemas ─────────────────────────────────────────
+
+export const RegisterBodySchema = Type.Object({
+  email: Type.String({ format: 'email', minLength: 1 }),
+  password: Type.String({ minLength: 8 }),
+})
+
+export type RegisterBody = Static<typeof RegisterBodySchema>
+
+export const AuthUserSchema = Type.Object({
+  id: Type.Number(),
+  email: Type.String(),
+})
+
+export type AuthUser = Static<typeof AuthUserSchema>
+
 // ─── Task (placeholder — full schema added in Story 2.1) ─────────────────────
 
 export const TaskSchema = Type.Object({
