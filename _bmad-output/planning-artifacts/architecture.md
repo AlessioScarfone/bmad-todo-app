@@ -113,7 +113,7 @@ npm install -D typescript @types/node vitest @testcontainers/postgresql
 - `@fastify/type-provider-typebox` provides full request/response type inference from TypeBox schemas — types flow end-to-end without code-gen
 - First-party plugins (`@fastify/jwt`, `@fastify/cors`, `@fastify/cookie`) cover all auth and security requirements without third-party risk
 - NestJS is excluded — decorators/DI/module registration adds ceremony that doesn't earn its weight on a low-complexity solo project
-- Shared TypeBox `Static<typeof Schema>` types exportable to frontend from a `shared/types` package — prevents API/client drift
+- TypeBox schemas in `backend/src/types/`, plain TS interfaces in `frontend/src/types/` — kept in sync by convention
 
 **Plugins:**
 | Plugin | Purpose |
@@ -180,7 +180,7 @@ backend/src/db/
 **Example pattern:**
 ```typescript
 import { sql } from '../client'
-import type { Task } from '../../../shared/types'
+import type { Task } from '../types/tasks.js'
 
 export const getTasks = (userId: number) =>
   sql<Task[]>`
@@ -569,7 +569,11 @@ One file per resource in `routes/` — `tasks.ts`, `auth.ts`, `labels.ts`. Each 
 
 #### Shared types
 
-TypeBox `Static<>` types defined once in `shared/types/` at the repo root. Both frontend and backend import from there. No duplicate interface definitions across packages.
+> **ADR update (Story 1.2, 2026-02-24):** The original plan to maintain a `shared/types/` root package was superseded during implementation. Configuring cross-package TypeScript path aliases for a simple app added tooling complexity without meaningful benefit at this scale. Types are now co-located per package:
+> - **Backend:** `backend/src/types/` — TypeBox schemas and `Static<>` types used by route handlers and validation
+> - **Frontend:** `frontend/src/types/` — plain TypeScript interfaces matching the API response shapes
+>
+> **Rule:** API response shapes must be kept in sync manually. When a backend schema changes, update the corresponding frontend interface. No cross-package imports.
 
 ---
 
@@ -640,7 +644,7 @@ Filter and sort state lives in React `useState` in `TaskListPage`. Applied **cli
 - Use `snake_case` for all SQL identifiers (tables, columns, indexes)
 - Return `{ statusCode, error, message }` for every API error — no exceptions
 - Place test files in `test/` mirroring `src/` — never co-located with source
-- Import entity types (`Task`, `User`, `Label` …) from `shared/types` — never redefine locally
+- Import entity types (`Task`, `User`, `Label` …) from `backend/src/types/` (backend) or `frontend/src/types/` (frontend) — never redefine inline
 - Never log request bodies on auth routes
 - Never use `any` in TypeScript — use `unknown` and narrow, or define a TypeBox schema
 - Apply the TanStack Query optimistic mutation pattern for all task mutations
@@ -792,9 +796,12 @@ bmad-todo-app/
 
 #### Shared Types Boundary
 
-- `shared/types/` is the single source of truth for entity shapes
-- Frontend `lib/api.ts` returns types imported from `shared/types/`
-- Backend TypeBox schemas extend types from `shared/types/` — no redefinition
+> **Updated (Story 1.2, 2026-02-24):** `shared/types/` was removed. See "Shared types" section above for the revised approach.
+
+- `backend/src/types/` contains TypeBox schemas — single source of truth for validation and backend type inference
+- `frontend/src/types/` contains plain TS interfaces — must mirror backend response shapes
+- Neither package imports from the other — types are kept in sync by convention
+- No type may be defined in a route file or component — always extract to the `types/` directory
 
 ---
 
@@ -864,7 +871,7 @@ User action
 
 **Critical (resolve in first implementation story):**
 
-1. **`shared/types/` import mechanism** — `frontend/` and `backend/` are separate packages. Configure as **npm/pnpm workspaces** or add `"paths": { "shared/*": ["../../shared/*"] }` to both `tsconfig.json` files. Must be the first implementation task.
+1. ~~**`shared/types/` import mechanism**~~ — **Resolved (Story 1.2):** Shared types layer removed in favour of co-located `backend/src/types/` and `frontend/src/types/` directories. No workspace configuration required.
 
 **Minor (handle during implementation):**
 
@@ -919,10 +926,10 @@ User action
 
 ### Implementation Handoff
 
-**First implementation task:** Initialise the monorepo structure and configure `shared/types/` imports (npm workspaces or `tsconfig` path aliases) before any feature work begins.
+**First implementation task:** ~~Initialise the monorepo structure and configure `shared/types/` imports~~ — Complete (Story 1.1/1.2). Shared types layer removed; see Shared Types section.
 
 **AI Agent Guidelines:**
 - Follow all architectural decisions exactly as documented — no local reinterpretation
 - Apply implementation patterns consistently across all components
 - Refer to this document for all architectural questions before making independent decisions
-- The `shared/types/` folder is the single source of truth for all entity shapes — never redefine locally
+- Types live in `backend/src/types/` (TypeBox schemas) and `frontend/src/types/` (TS interfaces) — keep in sync, never redefine inline in routes or components

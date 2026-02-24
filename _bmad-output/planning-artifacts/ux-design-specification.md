@@ -553,7 +553,7 @@ All 8bitcn-ui components use the copy-paste ownership model — tokens are overr
 #### `<AppHeader>`
 
 **Purpose:** Top bar housing brand, navigation anchor, and user info + task count.
-**Anatomy:** `[BMAD::TODO brand left] [user + logout | task count stacked top-right]`
+**Anatomy:** `[BMAD:TODO brand left] [user + logout | task count stacked top-right]`
 **States:** Authenticated only (unauthenticated users see the login page, not the header)
 **Accessibility:** `<header>` landmark, brand is an `<h1>` or `<span role="heading">`, logout is a `<button>`, task count is `aria-label="Tasks completed: N of M"`
 **Key constraint:** Count display must never shift layout when digit count changes — use fixed-width monospace span

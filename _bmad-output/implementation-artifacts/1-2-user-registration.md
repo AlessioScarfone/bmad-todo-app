@@ -1,6 +1,6 @@
 # Story 1.2: User Registration
 
-Status: in-progress
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -411,4 +411,4 @@ Implementation is functionally correct and all Acceptance Criteria are met. 4 is
 
 ### Outcome
 
-**Changes Requested** — C1 (shared types architecture) and C2 (git commit hygiene) require human decision before marking done.
+**Approved ✅** — C1 resolved (keep split-types; architecture.md updated). C2 resolved (committed). All fixes applied, all 12 tests pass.
