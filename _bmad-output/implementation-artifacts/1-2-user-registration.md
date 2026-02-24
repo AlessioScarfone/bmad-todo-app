@@ -1,6 +1,6 @@
 # Story 1.2: User Registration
 
-Status: review
+Status: in-progress
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -357,7 +357,9 @@ GPT-5.3-Codex (via GitHub Copilot)
 
 ### File List
 
-- `shared/types/index.ts`
+- ~~`shared/types/index.ts`~~ **(DELETED — replaced by separate type files below)**
+- `backend/src/types/auth.ts` *(new — RegisterBodySchema, RegisterBody)*
+- `frontend/src/types/auth.ts` *(new — AuthUser interface)*
 - `backend/src/db/queries/auth.ts`
 - `backend/src/routes/auth.ts`
 - `backend/src/plugins/db.ts`
@@ -366,10 +368,47 @@ GPT-5.3-Codex (via GitHub Copilot)
 - `backend/test/routes/auth.test.ts`
 - `backend/package.json`
 - `backend/package-lock.json`
+- `backend/tsconfig.json` *(updated include paths)*
+- `backend/vitest.config.ts` *(updated reporter/timeout)*
 - `frontend/src/pages/RegisterPage.tsx`
+- `frontend/tsconfig.app.json` *(updated paths)*
+- `frontend/package-lock.json`
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`
 - `_bmad-output/implementation-artifacts/1-2-user-registration.md`
 
 ### Change Log
 
 - 2026-02-24: Implemented Story 1.2 user registration end-to-end across shared types, backend route/query/testing, and frontend registration UI; completed validation and moved story to `review`.
+- 2026-02-24: [AI Code Review] Fixed H1 — replaced duck-typed `23505` error check with `instanceof postgres.PostgresError` (note: `postgres` package does not export `DatabaseError` as a named ES export; `postgres.PostgresError` is the correct runtime class). Fixed M1 — strengthened bcrypt hash test to assert `bcrypt.compare()` returns `true`, not just `hash ≠ plaintext`. Fixed M2 — removed explicit `req: { body: ... }` handler annotation that bypassed TypeBoxTypeProvider inference. Updated File List to document actual files changed (config files + type structure change). **H2 RETRACTED** — `fp({ encapsulate: true })` is intentional: in this version of fastify-plugin `encapsulate: true` sets `skip-override = false`, keeping normal Fastify scoping so the `/api` prefix applies correctly to routes (db-plugin exports its decorator to root scope via its own `fp()` without encapsulate, making `fastify.sql` accessible from child scopes).
+
+## Senior Developer Review (AI)
+
+**Reviewer:** Alessio (AI-assisted) | **Date:** 2026-02-24
+
+### Summary
+
+Implementation is functionally correct and all Acceptance Criteria are met. 4 issues were fixed automatically. 2 critical items require human decision.
+
+### Issues Fixed (3)
+
+| ID | Severity | File | Fix Applied |
+|----|----------|------|-------------|
+| H1 | HIGH | `backend/src/routes/auth.ts` | Replaced duck-typed `code === '23505'` with `err instanceof postgres.PostgresError && err.code === '23505'`; added `import postgres from 'postgres'` (package does not export `DatabaseError` as named ES export) |
+| M1 | MEDIUM | `backend/test/routes/auth.test.ts` | Added `bcrypt.compare()` assertion to verify hash is valid, not merely ≠ plaintext |
+| M2 | MEDIUM | `backend/src/routes/auth.ts` | Removed explicit `req: { body: ... }` annotation; TypeBoxTypeProvider now infers body type from schema |
+
+### H2 Retracted (False Positive)
+
+`fp(authRoutes, { encapsulate: true })` is **intentional and correct** in this codebase. In this version of `fastify-plugin`, `encapsulate: true` sets `Symbol.for('skip-override') = false`, which keeps normal Fastify scoping — this is required for the `/api` prefix to apply to routes registered inside the plugin. `fastify.sql` remains accessible because `db-plugin` exports its decorator to the root scope via `fp()` without `encapsulate`, which propagates to all child scopes. Removing `encapsulate: true` caused all route tests to return 404. Finding withdrawn.
+
+### Open Items (Human Decision Required)
+
+| ID | Severity | Description |
+|----|----------|-------------|
+| C1 | CRITICAL | `shared/types/index.ts` was **deleted** instead of modified. `backend/src/types/auth.ts` is missing `AuthUserSchema` (TypeBox schema); `frontend/src/types/auth.ts` uses a plain `interface` not `Static<typeof AuthUserSchema>`. Decide: keep the split-types architecture (then update architecture.md) or restore `shared/` layer. |
+| C2 | CRITICAL | All Story 1.2 changes are **unstaged working-tree modifications** on top of a Story 1.3 HEAD commit. Git history does not isolate this story's work. Recommend staging and committing Story 1.2 changes cleanly before proceeding. |
+| L2 | LOW | `setErrorHandler` inside `fp()`-wrapped plugin may affect parent scope due to encapsulation removal. Confirm error handler scope under load. |
+
+### Outcome
+
+**Changes Requested** — C1 (shared types architecture) and C2 (git commit hygiene) require human decision before marking done.

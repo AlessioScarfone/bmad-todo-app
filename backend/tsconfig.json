@@ -3,6 +3,7 @@
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "baseUrl": ".",
     "lib": ["ESNext"],
     "outDir": "dist",
     "rootDir": ".",
@@ -12,10 +13,7 @@
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "verbatimModuleSyntax": false,
-    "types": ["vitest/globals"],
-    "paths": {
-      "shared/types": ["../shared/types/index.ts"]
-    }
+    "types": ["vitest/globals"]
   },
   "include": ["src/**/*", "test/**/*"],
   "exclude": ["node_modules", "dist"]

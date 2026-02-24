@@ -9,9 +9,4 @@ export default defineConfig({
     include: ['test/**/*.test.ts'],
     reporter: 'verbose',
   },
-  resolve: {
-    alias: {
-      'shared/types': '../shared/types/index.ts',
-    },
-  },
 })

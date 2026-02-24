@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import type { AuthUser } from 'shared/types'
+import type { AuthUser } from '../types/auth'
 import { api } from '../lib/api'
 
 interface ApiError extends Error {
@@ -109,7 +109,7 @@ export default function RegisterPage() {
               onChange={event => setPassword(event.target.value)}
               className="w-full border-2 border-neutral-600 bg-neutral-950 px-3 py-2 text-sm outline-none focus:border-neutral-300"
               aria-invalid={Boolean(passwordError)}
-              aria-describedby={passwordError ? 'password-error' : 'password-hint'}
+              aria-describedby={`password-hint${passwordError ? ' password-error' : ''}`}
             />
             <p id="password-hint" className="mt-1 text-xs text-neutral-400">
               Minimum 8 characters.

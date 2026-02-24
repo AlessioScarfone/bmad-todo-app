@@ -5,6 +5,7 @@
     "useDefineForClassFields": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
+    "baseUrl": ".",
     "types": ["vite/client"],
     "skipLibCheck": true,
 
@@ -24,10 +25,7 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
 
-    /* Shared types */
-    "paths": {
-      "shared/types": ["../../shared/types/index.ts"]
-    }
+    "paths": {}
   },
   "include": ["src"]
 }

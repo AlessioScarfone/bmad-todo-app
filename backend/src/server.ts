@@ -18,11 +18,7 @@ export function buildServer(jwtSecret: string, sqlOverride?: Sql) {
 
   const fastify = Fastify({
     logger: {
-      level: NODE_ENV === 'production' ? 'info' : 'debug',
-      transport:
-        NODE_ENV === 'development'
-          ? { target: 'pino-pretty', options: { colorize: true } }
-          : undefined,
+      level: NODE_ENV === 'production' ? 'info' : 'debug'
     },
   })
 

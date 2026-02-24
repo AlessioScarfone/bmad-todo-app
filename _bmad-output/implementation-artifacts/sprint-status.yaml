@@ -43,9 +43,9 @@ development_status:
   # ─── Epic 1: Project Foundation & Authentication ───────────────────────────
   epic-1: in-progress
   1-1-project-scaffolding-docker-infrastructure-baseline: done
-  1-2-user-registration: review
+  1-2-user-registration: in-progress
   1-3-user-login-long-lived-session: ready-for-dev
-  1-4-email-pre-fill-on-return-logout: backlog
+  1-4-email-pre-fill-on-return-logout: ready-for-dev
   epic-1-retrospective: optional
 
   # ─── Epic 2: Core Task Management & Task Count Display ─────────────────────

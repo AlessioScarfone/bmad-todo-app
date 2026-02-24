@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import bcrypt from 'bcrypt'
 import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql'
 import type { Sql } from 'postgres'
 import { createTestDb } from '../helpers/db.js'
@@ -101,6 +102,23 @@ describe('POST /api/auth/register', () => {
     })
   })
 
+  it('returns 400 when email format is invalid', async () => {
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/auth/register',
+      payload: {
+        email: 'notanemail',
+        password: 'password123',
+      },
+    })
+
+    expect(response.statusCode).toBe(400)
+    expect(response.json()).toMatchObject({
+      statusCode: 400,
+      error: 'BAD_REQUEST',
+    })
+  })
+
   it('stores password_hash and never plaintext', async () => {
     const password = 'mysecurepassword'
     const email = 'hash-check@example.com'
@@ -125,5 +143,6 @@ describe('POST /api/auth/register', () => {
 
     expect(users).toHaveLength(1)
     expect(users[0].password_hash).not.toBe(password)
+    expect(await bcrypt.compare(password, users[0].password_hash)).toBe(true)
   })
 })

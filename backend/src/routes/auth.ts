@@ -2,13 +2,9 @@ import fp from 'fastify-plugin'
 import type { FastifyPluginAsync } from 'fastify'
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import bcrypt from 'bcrypt'
-import { Type } from '@sinclair/typebox'
+import postgres from 'postgres'
+import { RegisterBodySchema } from '../types/auth.js'
 import { createUser } from '../db/queries/auth.js'
-
-const RegisterBodySchema = Type.Object({
-  email: Type.String({ format: 'email', minLength: 1 }),
-  password: Type.String({ minLength: 8 }),
-})
 
 const authRoutes: FastifyPluginAsync = async fastify => {
   const f = fastify.withTypeProvider<TypeBoxTypeProvider>()
@@ -34,7 +30,7 @@ const authRoutes: FastifyPluginAsync = async fastify => {
         body: RegisterBodySchema,
       },
     },
-    async (req: { body: { email: string; password: string } }, reply) => {
+    async (req, reply) => {
       const { email, password } = req.body
 
       const passwordHash = await bcrypt.hash(password, 12)
@@ -43,12 +39,7 @@ const authRoutes: FastifyPluginAsync = async fastify => {
         const user = await createUser(fastify.sql, email, passwordHash)
         return reply.status(201).send(user)
       } catch (err) {
-        if (
-          typeof err === 'object' &&
-          err !== null &&
-          'code' in err &&
-          (err as { code?: string }).code === '23505'
-        ) {
+        if (err instanceof postgres.PostgresError && err.code === '23505') {
           return reply.status(409).send({
             statusCode: 409,
             error: 'CONFLICT',
