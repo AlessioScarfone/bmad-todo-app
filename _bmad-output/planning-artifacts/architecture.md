@@ -249,6 +249,7 @@ api (Fastify :3001) → db (PostgreSQL :5432)
 | Client-side routing | React Router v7 |
 | Server state / optimistic UI | TanStack Query |
 | Design system | 8bitcn-ui (shadcn/ui + Radix UI + Tailwind CSS) |
+| Pixel font | Press Start 2P (or equivalent), loaded via Google Fonts `<link>` in `frontend/index.html`; fallback: `monospace` |
 | Backend framework | Fastify + TypeScript |
 | Schema validation & types | TypeBox (`@sinclair/typebox` + `@fastify/type-provider-typebox`) |
 | Database | PostgreSQL 16 (`postgres:16-alpine`) |

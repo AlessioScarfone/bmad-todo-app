@@ -144,8 +144,8 @@ Authenticated users can enhance tasks with free-form labels, optional deadline d
 Authenticated users can filter their task list by label, completion status, or deadline and sort by label, deadline, or completion status. Filters are client-side, session-only, and non-destructive — clearing returns the full list instantly.
 **FRs covered:** FR22, FR23, FR24, FR25
 
-### Epic 5: Resilience, Accessibility & Quality Assurance
-Users receive inline error feedback with one-tap retry on any failed action; all state changes reflect within 1 second with no full page reload; every core flow is operable via keyboard alone. WCAG 2.1 AA compliance (zero critical violations), ≥70% meaningful test coverage, ≥5 passing Playwright E2E tests.
+### Epic 5: Resilience & Accessibility
+Users receive inline error feedback with one-tap retry on any failed action; all state changes reflect within 1 second with no full page reload; every core flow is operable via keyboard alone. WCAG 2.1 AA compliance (zero critical violations). Test coverage requirements and E2E test targets are captured in the Definition of Done (see end of document).
 **FRs covered:** FR26, FR27, FR28, FR29
 **NFRs addressed:** NFR1–NFR17 (all performance, security, accessibility, reliability, and testing targets)
 ---
@@ -176,6 +176,8 @@ So that there is a verified, runnable baseline (`docker-compose up`) to build al
 **When** `migrate.ts` completes
 **Then** the `_migrations` table exists and `001_init.sql` is recorded as applied
 **And** the `users` table exists with columns: `id`, `email`, `password_hash`, `created_at`
+
+> **Migration strategy decision (QA-2):** The project uses a phased migration approach. `001_auth.sql` creates the `users` table (this story). `002_tasks.sql` creates the `tasks` table (Story 2.1). `003_enrichment.sql` creates `labels`, `task_labels`, and `subtasks` tables (Story 3.1). Each migration is applied by `migrate.ts` at API startup in sequence. This aligns each DB table creation with the story that first introduces it.
 
 ### Story 1.2: User Registration
 
@@ -277,7 +279,6 @@ So that I can immediately start adding tasks without any extra navigation.
 **Given** I am authenticated and navigate to the task list
 **When** the page loads
 **Then** I see an inline task creation row permanently visible at the top of the list (no modal, no "+ New Task" button opening a form)
-**And** the `tasks` table exists in the database without `points` or `is_system` columns
 
 **Given** I have no tasks yet
 **When** the task list loads
@@ -289,9 +290,7 @@ So that I can immediately start adding tasks without any extra navigation.
 **Then** only tasks belonging to the authenticated user are returned (WHERE user_id = $userId)
 **And** the response is a direct array (never a `{ data: [...] }` wrapper)
 
-**Given** the `tasks` table exists in the database
-**When** the schema is inspected
-**Then** it has columns: `id`, `user_id`, `title`, `is_completed`, `completed_at`, `deadline`, `created_at`, `updated_at` (no `points` or `is_system` column)
+> **Developer note (QA-5):** Schema verification (confirming the `tasks` table has no `points` or `is_system` columns and has the correct column set: `id`, `user_id`, `title`, `is_completed`, `completed_at`, `deadline`, `created_at`, `updated_at`) must be asserted in a Vitest integration test using Testcontainers — it is not a UI-verifiable acceptance criterion.
 
 ### Story 2.2: Create Task
 
@@ -435,6 +434,8 @@ So that I can visually categorise my work (e.g., "Client", "Backend", "Admin").
 **Then** it is removed from all tasks it was attached to (CASCADE via `task_labels`)
 **And** only labels belonging to the authenticated user can be deleted (403 otherwise)
 
+> **Traceability note (QA-4):** `DELETE /api/labels/:id` is an architectural extension of FR13. FR13 covers removing a label from a specific task; global label deletion (removing a label from all tasks and the label registry itself) is an implicit requirement for label hygiene. This extension is intentional and documented here.
+
 ### Story 3.2: Deadline — Set and Remove
 
 As an authenticated user,
@@ -479,7 +480,7 @@ So that I can track the steps needed to finish a larger piece of work.
 **Given** I mark a subtask as complete
 **When** `PATCH /api/tasks/:id/subtasks/:subId` is called
 **Then** the subtask shows a completed visual state
-**And** the parent task remains incomplete — its completion checkbox is unaffected (FR22)
+**And** the parent task remains incomplete — its completion checkbox is unaffected (FR20)
 
 **Given** all subtasks of a task are marked complete
 **When** I view the parent task
@@ -492,7 +493,7 @@ So that I can track the steps needed to finish a larger piece of work.
 
 **Given** I attempt to add a subtask to a subtask
 **When** the UI renders
-**Then** no nested subtask input is available — nesting is structurally prevented (FR21)
+**Then** no nested subtask input is available — nesting is structurally prevented (FR19)
 **And** the API returns `400` if a subtask creation is attempted with a parent that is itself a subtask
 
 ---
@@ -563,9 +564,9 @@ So that I can view my tasks in the order most useful for my current focus.
 
 ---
 
-## Epic 5: Resilience, Accessibility & Quality Assurance
+## Epic 5: Resilience & Accessibility
 
-Users receive inline error feedback with one-tap retry on any failed action; all state changes reflect within 1 second with no full page reload; every core flow is operable via keyboard alone. WCAG 2.1 AA compliance (zero critical violations), ≥70% meaningful test coverage, ≥5 passing Playwright E2E tests.
+Users receive inline error feedback with one-tap retry on any failed action; all state changes reflect within 1 second with no full page reload; every core flow is operable via keyboard alone. WCAG 2.1 AA compliance (zero critical violations). Test coverage requirements and E2E test targets are captured in the project Definition of Done (see end of document).
 
 ### Story 5.1: Inline Error Feedback & Retry
 
@@ -670,27 +671,36 @@ So that I can use the app regardless of how I interact with technology.
 **When** measured against WCAG AA thresholds
 **Then** all text and interactive element contrast ratios meet or exceed 4.5:1 (normal text) and 3:1 (large text / UI components)
 
-### Story 5.5: Test Coverage & Playwright E2E Suite
+---
 
-As a developer,
-I want ≥70% meaningful test coverage and ≥5 passing Playwright E2E tests,
-So that the codebase meets quality standards and core user flows are regression-protected.
+## Definition of Done
 
-**Acceptance Criteria:**
+> **QA-1 Resolution:** Story 5.5 has been dissolved. The test coverage and E2E requirements below are project-level quality gates that apply to every story — they are enforced at sprint review and tracked as part of the Definition of Done, not as a standalone user story.
 
-**Given** the Vitest test suite is run against the backend
-**When** coverage is measured
-**Then** meaningful coverage is ≥70% across: DB query functions (`tasks.ts`, `auth.ts`, `subtasks.ts`, `labels.ts`), auth middleware (JWT validation), and task count derivation logic
+A story is considered **Done** when ALL of the following are true:
 
-**Given** backend integration tests run
-**When** Testcontainers spins up a real `postgres:16-alpine` instance
-**Then** migrations execute successfully against it and all query functions are tested against real SQL behaviour (constraints, `ON CONFLICT`, `RETURNING`)
+### Functional
+- All acceptance criteria pass and have been tested manually or via automated test
+- No regressions introduced to previously passing stories
 
-**Given** the Playwright E2E suite runs against the full Docker Compose stack
-**When** all 5+ E2E tests execute
-**Then** they all pass; the tests cover at minimum: user registration, user login + session persistence, task creation, task completion with task count update, and task deletion with confirmation
+### Code Quality
+- Tests reside in `test/` directories mirroring `src/` — never co-located with source files
+- Frontend test files use `.test.tsx?` extension; backend test files use `.test.ts`
 
-**Given** test files are created
-**When** placed in the repository
-**Then** they reside in `test/` directories mirroring `src/` structure — never co-located with source files
-**And** frontend test files use `.test.tsx?` extension; backend test files use `.test.ts`
+### Test Coverage (enforced at end of each Epic)
+- **Backend:** Vitest unit/integration coverage ≥ 70% meaningful coverage across DB query functions (`tasks.ts`, `auth.ts`, `subtasks.ts`, `labels.ts`), auth middleware (JWT validation), and task count derivation logic
+- **Backend integration:** Testcontainers spins up a real `postgres:16-alpine` instance; migrations execute successfully and all query functions are tested against real SQL behaviour (constraints, `ON CONFLICT`, `RETURNING`)
+
+### E2E Suite (enforced at project completion)
+- ≥ 5 Playwright E2E tests pass against the full Docker Compose stack, covering at minimum:
+  1. User registration
+  2. User login + session persistence
+  3. Task creation
+  4. Task completion with task count update
+  5. Task deletion with two-step confirmation
+
+### Accessibility
+- Zero critical WCAG 2.1 AA violations (axe-core or equivalent)
+
+### Deployment
+- `docker-compose up --build` succeeds from a clean environment with no manual steps
