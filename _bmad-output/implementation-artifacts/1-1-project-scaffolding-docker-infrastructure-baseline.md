@@ -1,6 +1,6 @@
 # Story 1.1: Project Scaffolding & Docker Infrastructure Baseline
 
-Status: done
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -445,34 +445,6 @@ Claude Sonnet 4.6 (via GitHub Copilot)
 - `backend/test/helpers/db.ts` (created)
 - `backend/test/db/migrate.test.ts` (created)
 
-### Senior Developer Review (AI)
-
-_Reviewer: Alessio on 2026-02-24_
-
-**Outcome: Approved** (after fixes applied)
-
-| Severity | Count | Status |
-|---|---|---|
-| 🔴 High | 3 | Fixed |
-| 🟡 Medium | 4 | Fixed (3) / Noted (1) |
-| 🟢 Low | 2 | Noted |
-
-**Fixes applied:**
-
-- **[H1] Tests were failing** — `DOCKER_HOST` was missing from `npm test` script. Added `DOCKER_HOST=unix://$HOME/.colima/default/docker.sock` to both `test` and `test:watch` scripts. All 6 tests now pass. [`backend/package.json`]
-- **[H2] `afterAll` teardown crash** — when `beforeAll` threw, `sql` and `container` were `undefined`, causing a secondary `TypeError`. Changed to optional chaining (`sql?.end()`, `container?.stop()`). [`backend/test/db/migrate.test.ts`]
-- **[H3] `TaskSchema` field drift** — `completed` renamed to `is_completed` to match the database column name defined in architecture and used in Story 2.1+. [`shared/types/index.ts`]
-- **[M1] `web` service startup race** — added `healthcheck` (`wget`) to `api` service; updated `web.depends_on` to `condition: service_healthy`. [`docker-compose.yml`]
-- **[M2] Missing nginx forwarded headers** — added `X-Forwarded-For` and `X-Forwarded-Proto` to the `/api/` proxy block. [`frontend/nginx.conf`]
-- **[M3] Test files excluded from type-checking** — removed `test` from `tsconfig.json` exclude, extended `include` to `["src/**/*", "test/**/*"]`, added `"types": ["vitest/globals"]`. [`backend/tsconfig.json`]
-- **[M4] Health route** — replaced manual `GET /health` with `@fastify/under-pressure` (event loop delay, heap, RSS, ELU thresholds; auto 503 on pressure). [`backend/src/server.ts`]
-
-**Noted (not fixed, next story considerations):**
-
-- **[L1]** `cors: origin: true` — acceptable for MVP; lock to specific origin before any public deployment.
-- **[L2]** Press Start 2P font defined in `@theme` but not applied to `body` by default — intentional for Story 1.1; Story 2.1 should apply it.
-
 ### Change Log
 
 - **2026-02-24:** Initial implementation of Story 1.1 — complete project scaffolding. Vite + React + TS frontend, Fastify + TS backend, PostgreSQL Docker Compose stack. Migration runner verified with 6 Testcontainers integration tests (all pass).
-- **2026-02-24:** Code review (AI) — 3 High, 4 Medium, 2 Low issues found and fixed. All 6 tests now pass. Story marked done.
