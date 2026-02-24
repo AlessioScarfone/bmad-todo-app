@@ -295,3 +295,64 @@ describe('GET /api/auth/me', () => {
     })
   })
 })
+
+describe('POST /api/auth/logout', () => {
+  const logoutEmail = 'logout-user@example.com'
+  const logoutPassword = 'logoutpassword123'
+
+  beforeAll(async () => {
+    await app.inject({
+      method: 'POST',
+      url: '/api/auth/register',
+      payload: { email: logoutEmail, password: logoutPassword },
+    })
+  })
+
+  it('returns 200 and clears the token cookie with a valid session cookie', async () => {
+    // First login to get a valid token cookie
+    const loginRes = await app.inject({
+      method: 'POST',
+      url: '/api/auth/login',
+      payload: { email: logoutEmail, password: logoutPassword },
+    })
+    expect(loginRes.statusCode).toBe(200)
+
+    const setCookie = loginRes.headers['set-cookie'] as string | string[]
+    const cookie = Array.isArray(setCookie) ? setCookie[0] : setCookie
+
+    // Call logout with valid session cookie
+    const logoutRes = await app.inject({
+      method: 'POST',
+      url: '/api/auth/logout',
+      headers: { cookie },
+    })
+
+    expect(logoutRes.statusCode).toBe(200)
+    expect(logoutRes.json()).toMatchObject({ message: 'Logged out' })
+
+    // Cookie must be cleared (Max-Age=0 or past Expires)
+    const responseCookie = logoutRes.headers['set-cookie'] as string
+    expect(responseCookie).toMatch(/Max-Age=0|expires=.*1970/i)
+  })
+
+  it('returns 200 with no cookie present (idempotent)', async () => {
+    const logoutRes = await app.inject({
+      method: 'POST',
+      url: '/api/auth/logout',
+    })
+
+    expect(logoutRes.statusCode).toBe(200)
+    expect(logoutRes.json()).toMatchObject({ message: 'Logged out' })
+  })
+
+  it('returns 200 with a tampered / invalid JWT cookie (idempotent, no auth check)', async () => {
+    const logoutRes = await app.inject({
+      method: 'POST',
+      url: '/api/auth/logout',
+      headers: { cookie: 'token=totally.invalid.jwt' },
+    })
+
+    expect(logoutRes.statusCode).toBe(200)
+    expect(logoutRes.json()).toMatchObject({ message: 'Logged out' })
+  })
+})

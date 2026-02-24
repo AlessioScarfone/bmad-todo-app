@@ -109,6 +109,16 @@ const authRoutes: FastifyPluginAsync = async fastify => {
       return { id, email }
     },
   )
+
+  // No authenticate preHandler — logout must succeed even with an
+  // expired or absent cookie (idempotent per AC4).
+  f.post('/auth/logout', async (_req, reply) => {
+    // clearCookie path must match setCookie path in POST /auth/login
+    return reply
+      .clearCookie('token', { path: '/' })
+      .status(200)
+      .send({ message: 'Logged out' })
+  })
 }
 
 export default fp(authRoutes, {

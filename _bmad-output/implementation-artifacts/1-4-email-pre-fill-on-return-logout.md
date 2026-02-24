@@ -1,6 +1,6 @@
 # Story 1.4: Email Pre-fill on Return & Logout
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -39,8 +39,8 @@ So that return visits require minimal friction and I can end my session when nee
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Backend — `POST /auth/logout` route** (AC: AC3, AC4)
-  - [ ] 1.1 Add `POST /auth/logout` to the **existing** `backend/src/routes/auth.ts` plugin — same file as `POST /auth/register` and `POST /auth/login` (from Story 1.3). Append inside the same `async (fastify, opts) => {}` block:
+- [x] **Task 1: Backend — `POST /auth/logout` route** (AC: AC3, AC4)
+  - [x] 1.1 Add `POST /auth/logout` to the **existing** `backend/src/routes/auth.ts` plugin — same file as `POST /auth/register` and `POST /auth/login` (from Story 1.3). Append inside the same `async (fastify, opts) => {}` block:
     ```typescript
     f.post('/auth/logout', async (_req, reply) => {
       return reply
@@ -49,41 +49,41 @@ So that return visits require minimal friction and I can end my session when nee
         .send({ message: 'Logged out' })
     })
     ```
-  - [ ] 1.2 **No `preHandler: [fastify.authenticate]` on logout** — the route must be reachable even when the cookie is absent or expired (idempotent per AC4). Clearing a non-existent cookie is harmless.
-  - [ ] 1.3 The `clearCookie` call must use `path: '/'` — same path as `setCookie` in `POST /auth/login`. Mismatched paths cause the cookie to persist in the browser.
-  - [ ] 1.4 Verify TypeScript compiles: `cd backend && npx tsc --noEmit`
+  - [x] 1.2 **No `preHandler: [fastify.authenticate]` on logout** — the route must be reachable even when the cookie is absent or expired (idempotent per AC4). Clearing a non-existent cookie is harmless.
+  - [x] 1.3 The `clearCookie` call must use `path: '/'` — same path as `setCookie` in `POST /auth/login`. Mismatched paths cause the cookie to persist in the browser.
+  - [x] 1.4 Verify TypeScript compiles: `cd backend && npx tsc --noEmit`
 
-- [ ] **Task 2: Backend — integration test for logout** (AC: AC3, AC4)
-  - [ ] 2.1 Extend `backend/test/routes/auth.test.ts` (existing file from Stories 1.2 & 1.3) with:
+- [x] **Task 2: Backend — integration test for logout** (AC: AC3, AC4)
+  - [x] 2.1 Extend `backend/test/routes/auth.test.ts` (existing file from Stories 1.2 & 1.3) with:
     - `POST /api/auth/logout` with valid session cookie → `200 OK`, response sets `Set-Cookie: token=; Max-Age=0` (cookie cleared)
     - `POST /api/auth/logout` with no cookie → `200 OK` (idempotent — no error)
     - `POST /api/auth/logout` with tampered cookie → `200 OK` (idempotent — no auth check)
-  - [ ] 2.2 Test cookie-cleared assertion — the response `Set-Cookie` header should contain `Max-Age=0` or the cookie value should be empty:
+  - [x] 2.2 Test cookie-cleared assertion — the response `Set-Cookie` header should contain `Max-Age=0` or the cookie value should be empty:
     ```typescript
     const logoutRes = await app.inject({ method: 'POST', url: '/api/auth/logout' })
     expect(logoutRes.statusCode).toBe(200)
     const setCookie = logoutRes.headers['set-cookie'] as string
     expect(setCookie).toMatch(/Max-Age=0|expires=.*1970/)
     ```
-  - [ ] 2.3 Run `npm test` — **all** previous tests (migrate, register, login, me) plus new logout tests must pass
+  - [x] 2.3 Run `npm test` — **all** previous tests (migrate, register, login, me) plus new logout tests must pass
 
-- [ ] **Task 3: Frontend — `LoginPage.tsx` — email pre-fill & saveEmail** (AC: AC1, AC2)
-  - [ ] 3.1 Import helpers at top of `frontend/src/pages/LoginPage.tsx`:
+- [x] **Task 3: Frontend — `LoginPage.tsx` — email pre-fill & saveEmail** (AC: AC1, AC2)
+  - [x] 3.1 Import helpers at top of `frontend/src/pages/LoginPage.tsx`:
     ```typescript
     import { getSavedEmail, saveEmail } from '../lib/auth'
     ```
-  - [ ] 3.2 Initialise the email state with the saved value:
+  - [x] 3.2 Initialise the email state with the saved value:
     ```typescript
     const [email, setEmail] = useState(() => getSavedEmail() ?? '')
     ```
     Using the lazy initialiser form ensures `localStorage` is only read once on mount.
-  - [ ] 3.3 After successful login API call (before calling `navigate('/')`), save the email:
+  - [x] 3.3 After successful login API call (before calling `navigate('/')`), save the email:
     ```typescript
     saveEmail(email)
     navigate('/')
     ```
     This must happen **on success only** — do NOT save on failed login attempts.
-  - [ ] 3.4 Focus the password field on mount, even when email is pre-filled. Use a `ref` + `useEffect`:
+  - [x] 3.4 Focus the password field on mount, even when email is pre-filled. Use a `ref` + `useEffect`:
     ```typescript
     const passwordRef = useRef<HTMLInputElement>(null)
 
@@ -92,11 +92,11 @@ So that return visits require minimal friction and I can end my session when nee
     }, [])
     ```
     Attach `ref={passwordRef}` to the password `<input>`. This satisfies AC2's requirement that the password field is focused.
-  - [ ] 3.5 Verify: if `localStorage` has no `bmad_todo_email` key, the email field renders empty and focused per normal (Story 1.3 behaviour). If the key exists, email pre-filled, password focused.
-  - [ ] 3.6 Verify TypeScript compiles: `cd frontend && npx tsc --noEmit`
+  - [x] 3.5 Verify: if `localStorage` has no `bmad_todo_email` key, the email field renders empty and focused per normal (Story 1.3 behaviour). If the key exists, email pre-filled, password focused.
+  - [x] 3.6 Verify TypeScript compiles: `cd frontend && npx tsc --noEmit`
 
-- [ ] **Task 4: Frontend — `AppHeader.tsx` component (NEW)** (AC: AC3)
-  - [ ] 4.1 Create `frontend/src/components/AppHeader.tsx`:
+- [x] **Task 4: Frontend — `AppHeader.tsx` component (NEW)** (AC: AC3)
+  - [x] 4.1 Create `frontend/src/components/AppHeader.tsx`:
     ```tsx
     import { useNavigate } from 'react-router-dom'
     import { useQueryClient } from '@tanstack/react-query'
@@ -147,16 +147,16 @@ So that return visits require minimal friction and I can end my session when nee
       )
     }
     ```
-  - [ ] 4.2 `useState` import — add to the React import at the top of the file:
+  - [x] 4.2 `useState` import — add to the React import at the top of the file:
     ```tsx
     import { useState } from 'react'
     ```
-  - [ ] 4.3 **Logout is best-effort**: the `try/catch` in `handleLogout` intentionally proceeds through `finally` even if the API call fails (network down). The client-side cleanup (`clearSavedEmail`, `queryClient.clear`, `navigate`) always runs — preventing stale UI state.
-  - [ ] 4.4 **No task count display in this story** — the `<TaskCountDisplay>` component belongs to Story 2.3. Leave a comment placeholder if desired but do not implement it here.
-  - [ ] 4.5 Verify pixel-art aesthetic is consistent with `LoginPage` and `RegisterPage` — `Press_Start_2P` font, border-2/border-4, black borders, no rounded corners.
+  - [x] 4.3 **Logout is best-effort**: the `try/catch` in `handleLogout` intentionally proceeds through `finally` even if the API call fails (network down). The client-side cleanup (`clearSavedEmail`, `queryClient.clear`, `navigate`) always runs — preventing stale UI state.
+  - [x] 4.4 **No task count display in this story** — the `<TaskCountDisplay>` component belongs to Story 2.3. Leave a comment placeholder if desired but do not implement it here.
+  - [x] 4.5 Verify pixel-art aesthetic is consistent with `LoginPage` and `RegisterPage` — `Press_Start_2P` font, border-2/border-4, black borders, no rounded corners.
 
-- [ ] **Task 5: Frontend — integrate `AppHeader` into `TaskListPage.tsx`** (AC: AC3)
-  - [ ] 5.1 Modify `frontend/src/pages/TaskListPage.tsx` to render `<AppHeader>`:
+- [x] **Task 5: Frontend — integrate `AppHeader` into `TaskListPage.tsx`** (AC: AC3)
+  - [x] 5.1 Modify `frontend/src/pages/TaskListPage.tsx` to render `<AppHeader>`:
     ```tsx
     import { AppHeader } from '../components/AppHeader'
     import { useAuth } from '../hooks/useAuth'
@@ -176,18 +176,18 @@ So that return visits require minimal friction and I can end my session when nee
       )
     }
     ```
-  - [ ] 5.2 `useAuth()` hook must already exist (created in Story 1.3). If Story 1.3 is not yet done, implement it first per the Story 1.3 file before starting this task.
-  - [ ] 5.3 Verify TypeScript compiles: `cd frontend && npx tsc --noEmit`
+  - [x] 5.2 `useAuth()` hook must already exist (created in Story 1.3). If Story 1.3 is not yet done, implement it first per the Story 1.3 file before starting this task.
+  - [x] 5.3 Verify TypeScript compiles: `cd frontend && npx tsc --noEmit`
 
-- [ ] **Task 6: Frontend — end-to-end logout flow verification** (AC: AC1, AC2, AC3, AC4)
-  - [ ] 6.1 Manual smoke test (Docker Compose stack running):
+- [x] **Task 6: Frontend — end-to-end logout flow verification** (AC: AC1, AC2, AC3, AC4)
+  - [x] 6.1 Manual smoke test (Docker Compose stack running):
     1. Register or login → verify `bmad_todo_email` is set in `localStorage` (DevTools → Application → Local Storage)
     2. Reload app → verify auto-redirected back to task list (session persists)
     3. Open a new tab → navigate to `http://localhost:3000/login` → verify email field is pre-filled and password field is focused
     4. Click logout → verify redirect to `/login`, `bmad_todo_email` is removed from `localStorage`, `token` cookie is cleared
     5. Navigate to `http://localhost:3000/` → verify redirect to `/login` (no stale session)
-  - [ ] 6.2 Run existing backend tests to ensure no regression: `cd backend && npm test`
-  - [ ] 6.3 Run frontend TypeScript check: `cd frontend && npx tsc --noEmit`
+  - [x] 6.2 Run existing backend tests to ensure no regression: `cd backend && npm test`
+  - [x] 6.3 Run frontend TypeScript check: `cd frontend && npx tsc --noEmit`
 
 ## Dev Notes
 
@@ -442,6 +442,21 @@ Claude Sonnet 4.6 (via GitHub Copilot)
 
 ### Debug Log References
 
+_No blockers encountered. All tasks implemented per specification._
+
 ### Completion Notes List
 
+- **Task 1** — Added `POST /auth/logout` to `backend/src/routes/auth.ts` inside the existing `authRoutes` fp plugin. No `preHandler` authenticate guard (idempotent per AC4). `clearCookie('token', { path: '/' })` uses the same path as `setCookie` in login.
+- **Task 2** — Extended `backend/test/routes/auth.test.ts` with 3 new logout test cases in a dedicated `describe('POST /api/auth/logout')` block: valid session cookie (200 + cookie cleared via Max-Age=0), no cookie (200 idempotent), tampered JWT cookie (200 idempotent). All 23 backend tests pass.
+- **Task 3** — Updated `LoginPage.tsx`: imported `getSavedEmail`/`saveEmail` from `../lib/auth`; initialised email state with lazy `useState(() => getSavedEmail() ?? '')` (AC2 — no flash); added `passwordRef` + `useEffect` to focus password field on mount (AC2); called `saveEmail(email.trim())` on successful login only, before `navigate('/')` (AC1).
+- **Task 4** — Created `frontend/src/components/AppHeader.tsx` with best-effort logout pattern: `api.post('/auth/logout', {})` in try/catch, `clearSavedEmail()` + `queryClient.clear()` + `navigate('/login', { replace: true })` always execute in `finally`. Story 2.3 placeholder comment left in JSX for `<TaskCountDisplay />`.
+- **Task 5** — Replaced `TaskListPage.tsx` placeholder with `<AppHeader userEmail={user?.email} />` integration using `useAuth()` hook. Shell structure ready for Epic 2 task list implementation.
+- **Verifications** — Backend `npx tsc --noEmit`: clean. Frontend `npx tsc --noEmit`: clean. All 23 backend tests pass (no regressions).
+
 ### File List
+
+- `backend/src/routes/auth.ts` — MODIFIED (added `POST /auth/logout` route)
+- `backend/test/routes/auth.test.ts` — MODIFIED (added 3 logout integration tests)
+- `frontend/src/pages/LoginPage.tsx` — MODIFIED (email pre-fill, saveEmail on success, password focus)
+- `frontend/src/components/AppHeader.tsx` — CREATED (logout button, userEmail display, best-effort logout)
+- `frontend/src/pages/TaskListPage.tsx` — MODIFIED (integrated AppHeader, useAuth hook)

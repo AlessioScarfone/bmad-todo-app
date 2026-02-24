@@ -1,9 +1,10 @@
-import { useState, type FormEvent } from 'react'
+import { useState, useRef, useEffect, type FormEvent } from 'react'
 import { Link, useNavigate, Navigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import type { AuthUser } from '../types/auth'
 import { api } from '../lib/api'
 import { useAuth } from '../hooks/useAuth'
+import { getSavedEmail, saveEmail } from '../lib/auth'
 
 interface ApiError extends Error {
   statusCode?: number
@@ -14,8 +15,15 @@ export default function LoginPage() {
   const queryClient = useQueryClient()
   const { user, isLoading: isAuthLoading } = useAuth()
 
-  const [email, setEmail] = useState('')
+  // Lazy initialiser — reads localStorage once on mount, before first render (AC2)
+  const [email, setEmail] = useState(() => getSavedEmail() ?? '')
   const [password, setPassword] = useState('')
+
+  // Focus password field on mount even when email is pre-filled (AC2)
+  const passwordRef = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    passwordRef.current?.focus()
+  }, [])
   const [emailError, setEmailError] = useState<string | null>(null)
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const [serverError, setServerError] = useState<string | null>(null)
@@ -59,6 +67,7 @@ export default function LoginPage() {
         email: email.trim(),
         password,
       })
+      saveEmail(email.trim()) // persist for pre-fill on next return visit (AC1)
       await queryClient.invalidateQueries({ queryKey: ['auth', 'me'] })
       navigate('/')
     } catch (error) {
@@ -124,6 +133,7 @@ export default function LoginPage() {
               autoComplete="current-password"
               value={password}
               onChange={event => setPassword(event.target.value)}
+              ref={passwordRef}
               className="w-full bg-[#0f0f0f] border-2 border-[#e0e0e0] px-3 py-2 font-mono text-[13px] text-[#f0f0f0] outline-none focus:border-[#00ff88] rounded-none"
               aria-invalid={Boolean(passwordError)}
               aria-describedby={passwordError ? 'password-error' : undefined}
