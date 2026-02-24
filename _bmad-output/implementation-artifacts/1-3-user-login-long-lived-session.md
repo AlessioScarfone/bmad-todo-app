@@ -38,8 +38,8 @@ So that I don't have to re-authenticate on return visits.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Shared types — login schemas** (AC: AC1, AC3)
-  - [ ] 1.1 Add to `shared/types/index.ts` (do NOT remove existing schemas):
+- [x] **Task 1: Shared types — login schemas** (AC: AC1, AC3)
+  - [x] 1.1 Add to `shared/types/index.ts` (do NOT remove existing schemas):
     ```typescript
     export const LoginBodySchema = Type.Object({
       email: Type.String({ format: 'email', minLength: 1 }),
@@ -48,10 +48,10 @@ So that I don't have to re-authenticate on return visits.
     export type LoginBody = Static<typeof LoginBodySchema>
     ```
     Note: `AuthUserSchema` was already added in Story 1.2 — reuse it for `GET /auth/me` response.
-  - [ ] 1.2 Verify `shared/types/index.ts` compiles cleanly
+  - [x] 1.2 Verify `shared/types/index.ts` compiles cleanly
 
-- [ ] **Task 2: Backend — Fastify `authenticate` decorator** (AC: AC2, AC4)
-  - [ ] 2.1 In `backend/src/server.ts`, inside `buildServer()`, declare a reusable `authenticate` preHandler decorator **after** JWT plugin registration:
+- [x] **Task 2: Backend — Fastify `authenticate` decorator** (AC: AC2, AC4)
+  - [x] 2.1 In `backend/src/server.ts`, inside `buildServer()`, declare a reusable `authenticate` preHandler decorator **after** JWT plugin registration:
     ```typescript
     fastify.decorate('authenticate', async function (
       request: FastifyRequest,
@@ -68,7 +68,7 @@ So that I don't have to re-authenticate on return visits.
       }
     })
     ```
-  - [ ] 2.2 Add TypeScript module augmentation in `backend/src/types.d.ts` (new file) to declare the decorator on `FastifyInstance`:
+  - [x] 2.2 Add TypeScript module augmentation in `backend/src/types.d.ts` (new file) to declare the decorator on `FastifyInstance`:
     ```typescript
     import type { FastifyRequest, FastifyReply } from 'fastify'
     declare module 'fastify' {
@@ -77,7 +77,7 @@ So that I don't have to re-authenticate on return visits.
       }
     }
     ```
-  - [ ] 2.3 Add JWT payload type declaration so `request.user` is typed (same file or separate `jwt.d.ts`):
+  - [x] 2.3 Add JWT payload type declaration so `request.user` is typed (same file or separate `jwt.d.ts`):
     ```typescript
     declare module '@fastify/jwt' {
       interface FastifyJWT {
@@ -87,8 +87,8 @@ So that I don't have to re-authenticate on return visits.
     }
     ```
 
-- [ ] **Task 3: Backend — login and `/me` routes** (AC: AC1, AC2, AC3, AC4)
-  - [ ] 3.1 Add `POST /auth/login` to the **existing** `backend/src/routes/auth.ts` plugin (same file as `POST /auth/register` from Story 1.2):
+- [x] **Task 3: Backend — login and `/me` routes** (AC: AC1, AC2, AC3, AC4)
+  - [x] 3.1 Add `POST /auth/login` to the **existing** `backend/src/routes/auth.ts` plugin (same file as `POST /auth/register` from Story 1.2):
     - ⚠️ **NEVER log `req.body`** on auth routes
     - Call `getUserByEmail(sql, email)` — if not found → `401`
     - `bcrypt.compare(password, user.password_hash)` — if false → `401` (same generic message, never reveal which field is wrong)
@@ -96,27 +96,27 @@ So that I don't have to re-authenticate on return visits.
     - Set cookie via `reply.setCookie('token', token, { httpOnly: true, sameSite: 'strict', secure: NODE_ENV === 'production', path: '/', maxAge: 30 * 24 * 60 * 60 })`
     - Return `200` with `{ id: user.id, email: user.email }` (direct object, no wrapper)
     - **Note on `secure` flag:** In development (Docker Compose on localhost) set `secure: false`; in production set `secure: true` — use `process.env.NODE_ENV === 'production'`
-  - [ ] 3.2 Add `GET /auth/me` to the same `routes/auth.ts` plugin:
+  - [x] 3.2 Add `GET /auth/me` to the same `routes/auth.ts` plugin:
     - Protect with `{ preHandler: [fastify.authenticate] }`
     - Extract `const { id, email } = request.user`
     - Return `200` with `{ id, email }` (the `AuthUserSchema` shape from shared types)
-  - [ ] 3.3 `NODE_ENV` must be read from `process.env` at the module level or inside the plugin options — do not hardcode
+  - [x] 3.3 `NODE_ENV` must be read from `process.env` at the module level or inside the plugin options — do not hardcode
 
-- [ ] **Task 4: Backend — integration tests** (AC: AC1, AC2, AC3, AC4)
-  - [ ] 4.1 Extend `backend/test/routes/auth.test.ts` (from Story 1.2) with new test cases:
+- [x] **Task 4: Backend — integration tests** (AC: AC1, AC2, AC3, AC4)
+  - [x] 4.1 Extend `backend/test/routes/auth.test.ts` (from Story 1.2) with new test cases:
     - `POST /api/auth/login` with valid credentials → 200, `{ id, email }`, response sets `Set-Cookie: token=...`
     - `POST /api/auth/login` with wrong password → 401, `{ statusCode: 401, error: "UNAUTHORIZED" }`
     - `POST /api/auth/login` with non-existent email → 401 (same shape — no field hint)
     - `GET /api/auth/me` with valid cookie → 200, `{ id, email }`
     - `GET /api/auth/me` with no cookie → 401
     - `GET /api/auth/me` with tampered/invalid token → 401
-  - [ ] 4.2 For cookie-based test flow, extract the `Set-Cookie` header from login response and pass it in subsequent `GET /api/auth/me` inject call:
+  - [x] 4.2 For cookie-based test flow, extract the `Set-Cookie` header from login response and pass it in subsequent `GET /api/auth/me` inject call:
     ```typescript
     const loginRes = await app.inject({ method: 'POST', url: '/api/auth/login', payload: { email, password } })
     const cookie = loginRes.headers['set-cookie'] as string
     const meRes = await app.inject({ method: 'GET', url: '/api/auth/me', headers: { cookie } })
     ```
-  - [ ] 4.3 Run `npm test` — **all** previous tests (migrate, auth register) plus new login/me tests must pass
+  - [x] 4.3 Run `npm test` — **all** previous tests (migrate, auth register) plus new login/me tests must pass
 
 - [ ] **Task 5: Frontend — QueryClientProvider setup** (AC: AC2, AC4)
   - [ ] 5.1 Add `QueryClientProvider` to `frontend/src/main.tsx` — this is required for `useAuth` hook (uses `useQuery`) to work:
@@ -432,6 +432,26 @@ Claude Sonnet 4.6 (via GitHub Copilot)
 
 ### Debug Log References
 
+- `AuthUserSchema` was not present in Story 1.2 output; added to `backend/src/types/auth.ts` alongside the new `LoginBodySchema` (no shared/ directory exists in this project).
+- `fastify.decorate('authenticate', ...)` placed synchronously inside `buildServer()` after all plugin registrations — the decorator is available on the root fastify instance before `ready()` processes queued plugins.
+
 ### Completion Notes List
 
+- ✅ Task 1: Added `LoginBodySchema`, `LoginBody`, `AuthUserSchema`, and `AuthUser` to `backend/src/types/auth.ts`. TypeScript compiles cleanly.
+- ✅ Task 2: Created `backend/src/types.d.ts` with Fastify module augmentation (`FastifyInstance.authenticate`) and `@fastify/jwt` payload/user type declarations. Added `authenticate` decorator to `buildServer()` in `server.ts` — calls `request.jwtVerify()` (cookie-based, handled automatically by the jwt plugin config) and returns 401 on failure.
+- ✅ Task 3: Extended `backend/src/routes/auth.ts` with `POST /auth/login` (bcrypt compare, 30-day JWT cookie, never logs req.body) and `GET /auth/me` (protected via `fastify.authenticate` preHandler, returns `{ id, email }` from `request.user`). `secure` flag driven by `process.env.NODE_ENV === 'production'`.
+- ✅ Task 4: Extended `backend/test/routes/auth.test.ts` with 8 new test cases across two `describe` blocks (`POST /api/auth/login` and `GET /api/auth/me`). Cookie extraction from `Set-Cookie` header used to chain login → /me requests. All 20 tests pass (2 test files: migrate + auth).
+
 ### File List
+
+- `backend/src/types/auth.ts` — modified: added `LoginBodySchema`, `LoginBody`, `AuthUserSchema`, `AuthUser`
+- `backend/src/types.d.ts` — new: Fastify `authenticate` decorator augmentation + `@fastify/jwt` payload types
+- `backend/src/server.ts` — modified: added `FastifyRequest`/`FastifyReply` imports, `authenticate` decorator in `buildServer()`
+- `backend/src/routes/auth.ts` — modified: added `POST /auth/login` and `GET /auth/me` routes; imported `LoginBodySchema`, `getUserByEmail`
+- `backend/test/routes/auth.test.ts` — modified: added `describe('POST /api/auth/login')` and `describe('GET /api/auth/me')` test blocks (8 new test cases)
+
+## Change Log
+
+| Date | Change | Author |
+|------|--------|--------|
+| 2026-02-24 | Implemented backend tasks 1–4: login schemas, authenticate decorator, POST /auth/login + GET /auth/me routes, integration tests (20/20 passing) | Claude Sonnet 4.6 |

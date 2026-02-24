@@ -1,4 +1,5 @@
 import Fastify from 'fastify'
+import type { FastifyRequest, FastifyReply } from 'fastify'
 import cors from '@fastify/cors'
 import cookie from '@fastify/cookie'
 import jwt from '@fastify/jwt'
@@ -57,6 +58,23 @@ export function buildServer(jwtSecret: string, sqlOverride?: Sql) {
   fastify.register(authRoutes, {
     prefix: '/api',
   })
+
+  // ─── Decorators ────────────────────────────────────────────────────────────
+
+  fastify.decorate(
+    'authenticate',
+    async function (request: FastifyRequest, reply: FastifyReply) {
+      try {
+        await request.jwtVerify()
+      } catch {
+        return reply.status(401).send({
+          statusCode: 401,
+          error: 'UNAUTHORIZED',
+          message: 'Authentication required',
+        })
+      }
+    },
+  )
 
   return fastify
 }
