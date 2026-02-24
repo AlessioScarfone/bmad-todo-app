@@ -40,7 +40,7 @@ So that there is a verified, runnable baseline (`docker-compose up`) to build al
 
 - [x] **Task 2: Frontend scaffolding** (AC: AC1)
   - [x] 2.1 Run `npm create vite@latest frontend -- --template react-ts` at repo root
-  - [x] 2.2 Install UI and routing dependencies: `react-router-dom@7`, `@tanstack/react-query`, `tailwindcss`, `@radix-ui/react-*` (as needed per 8bitcn-ui), `class-variance-authority`, `clsx`, `tailwind-merge`
+  - [x] 2.2 Install UI and routing dependencies: `react-router-dom@7`, `@tanstack/react-query`, `tailwindcss`, `@radix-ui/react-*` (headless primitives for accessible components), `class-variance-authority`, `clsx`, `tailwind-merge`
   - [x] 2.3 Configure Tailwind (`tailwind.config.ts`, `postcss.config.js`), add Press Start 2P Google Fonts `<link>` in `frontend/index.html`
   - [x] 2.4 Set up basic routing skeleton in `frontend/src/main.tsx`: `BrowserRouter` → `Routes` with placeholder `LoginPage`, `RegisterPage`, `TaskListPage`
   - [x] 2.5 Configure `frontend/vite.config.ts` — no `/api` proxy needed in dev (nginx handles it in production); set `base: '/'`
@@ -93,7 +93,7 @@ This story establishes the **entire project skeleton**. All subsequent stories b
 | Frontend build | Vite + React + TypeScript | Latest stable via `npm create vite@latest` |
 | Client routing | React Router v7 | `react-router-dom@7` |
 | Server state | TanStack Query | Latest stable `@tanstack/react-query` |
-| Design system | 8bitcn-ui (shadcn/ui + Radix UI + Tailwind CSS) | Per 8bitcn-ui docs |
+| Design system | Custom components — Tailwind CSS + Radix UI primitives | No third-party component library |
 | Backend | Fastify + TypeScript | Latest stable |
 | Schema validation | TypeBox | `@sinclair/typebox` + `@fastify/type-provider-typebox` |
 | Database | PostgreSQL 16 | `postgres:16-alpine` Docker image |

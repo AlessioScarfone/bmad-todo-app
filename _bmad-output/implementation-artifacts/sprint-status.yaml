@@ -44,7 +44,7 @@ development_status:
   epic-1: in-progress
   1-1-project-scaffolding-docker-infrastructure-baseline: done
   1-2-user-registration: done
-  1-3-user-login-long-lived-session: in-progress
+  1-3-user-login-long-lived-session: done
   1-4-email-pre-fill-on-return-logout: ready-for-dev
   epic-1-retrospective: optional
 

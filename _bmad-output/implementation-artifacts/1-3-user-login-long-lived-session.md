@@ -1,6 +1,6 @@
 # Story 1.3: User Login & Long-lived Session
 
-Status: in-progress
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -118,77 +118,30 @@ So that I don't have to re-authenticate on return visits.
     ```
   - [x] 4.3 Run `npm test` — **all** previous tests (migrate, auth register) plus new login/me tests must pass
 
-- [ ] **Task 5: Frontend — QueryClientProvider setup** (AC: AC2, AC4)
-  - [ ] 5.1 Add `QueryClientProvider` to `frontend/src/main.tsx` — this is required for `useAuth` hook (uses `useQuery`) to work:
-    ```tsx
-    import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-    const queryClient = new QueryClient()
-    // Wrap BrowserRouter with QueryClientProvider:
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>...</BrowserRouter>
-    </QueryClientProvider>
-    ```
+- [x] **Task 5: Frontend — QueryClientProvider setup** (AC: AC2, AC4)
+  - [x] 5.1 Add `QueryClientProvider` to `frontend/src/main.tsx` — this is required for `useAuth` hook (uses `useQuery`) to work.
 
-- [ ] **Task 6: Frontend — `useAuth` hook** (AC: AC2, AC4)
-  - [ ] 6.1 Create `frontend/src/hooks/useAuth.ts`:
-    ```typescript
-    import { useQuery } from '@tanstack/react-query'
-    import { api } from '../lib/api'
-    import type { AuthUser } from '../../../shared/types'
+- [x] **Task 6: Frontend — `useAuth` hook** (AC: AC2, AC4)
+  - [x] 6.1 Create `frontend/src/hooks/useAuth.ts` with `useQuery(['auth', 'me'])` calling `api.get<AuthUser>('/auth/me')`, `retry: false`, `staleTime: 5min`. Returns `{ user, isLoading, isAuthenticated }`. Imports `AuthUser` from `../types/auth` (frontend-local type, no shared/ directory in this project).
 
-    export function useAuth() {
-      const { data: user, isLoading, isError } = useQuery({
-        queryKey: ['auth', 'me'],
-        queryFn: () => api.get<AuthUser>('/auth/me'),
-        retry: false,              // don't retry on 401
-        staleTime: 5 * 60 * 1000, // consider auth fresh for 5 min
-      })
-      return {
-        user: isError ? undefined : user,
-        isLoading,
-        isAuthenticated: !!user && !isError,
-      }
-    }
-    ```
+- [x] **Task 7: Frontend — `ProtectedRoute` component** (AC: AC2, AC4)
+  - [x] 7.1 Created `frontend/src/components/ProtectedRoute.tsx` — shows pixel-art loading state while `isLoading`, redirects to `/login` if no user.
+  - [x] 7.2 `TaskListPage` route in `main.tsx` wrapped with `<ProtectedRoute>`. Login and Register pages remain unprotected.
 
-- [ ] **Task 7: Frontend — `ProtectedRoute` component** (AC: AC2, AC4)
-  - [ ] 7.1 Create `frontend/src/components/ProtectedRoute.tsx`:
-    ```tsx
-    import { Navigate } from 'react-router-dom'
-    import { useAuth } from '../hooks/useAuth'
+- [x] **Task 8: Frontend — `LoginPage.tsx` implementation** (AC: AC1, AC3)
+  - [x] 8.1 Replaced placeholder `frontend/src/pages/LoginPage.tsx` with full login form — controlled email + password fields, client-side validation (no API call on empty fields), `api.post<AuthUser>('/auth/login', ...)`, on success `navigate('/')`, on 401 shows generic "Invalid email or password", on other error shows "Login failed. Please try again.", button disabled while in-flight. Pixel-art aesthetic matches `RegisterPage` design.
+  - [x] 8.2 `useAuth()` called at top of `LoginPage` — returns `null` while `isAuthLoading`, renders `<Navigate to="/" replace />` if user is already authenticated.
+  - [x] 8.3 No email saved to localStorage — reserved for Story 1.4.
+  - [x] 8.4 `cd frontend && npx tsc --noEmit` — zero errors.
 
-    export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-      const { user, isLoading } = useAuth()
-      if (isLoading) return <div className="p-8 text-center font-['Press_Start_2P'] text-sm">Loading...</div>
-      if (!user) return <Navigate to="/login" replace />
-      return <>{children}</>
-    }
-    ```
-  - [ ] 7.2 Wrap the `TaskListPage` route in `main.tsx` with `<ProtectedRoute>`:
-    ```tsx
-    <Route path="/" element={<ProtectedRoute><TaskListPage /></ProtectedRoute>} />
-    ```
-    Login and Register pages remain unprotected (accessible without auth).
+### Review Follow-ups (AI)
 
-- [ ] **Task 8: Frontend — `LoginPage.tsx` implementation** (AC: AC1, AC3)
-  - [ ] 8.1 Replace the placeholder `frontend/src/pages/LoginPage.tsx` with a real login form:
-    - Controlled form: `email` + `password` fields
-    - Client-side validation on submit: empty email or password → show inline error, **no API call**
-    - Submit calls `api.post<AuthUser>('/auth/login', { email, password })`
-    - On success → `navigate('/')` (React Router `useNavigate`)
-    - On error (401) → show generic inline error: _"Invalid email or password"_ — **same message regardless of which field is wrong** (security requirement; never hint which field failed)
-    - On other error → generic: _"Login failed. Please try again."_
-    - Submit button disabled while request is in-flight
-    - **Pixel-art aesthetic** (Press Start 2P font, Tailwind) — calm and composed
-    - "Don't have an account? Register" link → `/register`
-  - [ ] 8.2 If authenticated user navigates to `/login`, redirect them to `/` (avoid double-login):
-    ```tsx
-    const { user, isLoading } = useAuth()
-    if (isLoading) return null
-    if (user) return <Navigate to="/" replace />
-    ```
-  - [ ] 8.3 **Do NOT** save email to localStorage here — that belongs to Story 1.4
-  - [ ] 8.4 Verify TypeScript compiles cleanly: `cd frontend && npx tsc --noEmit`
+- [x] [AI-Review][MEDIUM] Invalidate `['auth','me']` query after successful login before navigation to prevent stale auth cache on immediate route transition [`frontend/src/pages/LoginPage.tsx`]
+- [x] [AI-Review][HIGH] Reconcile Dev Agent Record `File List` with git working tree evidence for this review cycle (backend entries refer to prior implementation cycle; current cycle includes frontend auth refresh fix + implementation artifact status/docs sync)
+- [x] [AI-Review][MEDIUM] Ensure current review-cycle changes to implementation artifacts are explicitly documented in Dev Agent Record (`story` + `sprint-status` updates)
+- [x] [AI-Review][MEDIUM] Distinguish unauthorized (`401`) from transient `/auth/me` failures in auth query flow to avoid incorrect login redirect on non-auth server errors [`frontend/src/hooks/useAuth.ts`]
+- [x] [AI-Review][MEDIUM] Add explicit guarded error UI for protected-route auth check failures instead of treating all failures as unauthenticated [`frontend/src/components/ProtectedRoute.tsx`]
+- [x] [AI-Review][LOW] Respect reduced-motion preference for login button hover transition [`frontend/src/pages/LoginPage.tsx`]
 
 ## Dev Notes
 
@@ -426,6 +379,44 @@ frontend/src/
 
 ## Dev Agent Record
 
+### Senior Developer Review (AI) — Re-run
+
+Reviewer: Alessio (AI-assisted)  
+Date: 2026-02-24
+
+Outcome: **Approved**
+
+Findings addressed in this pass:
+- Resolved non-401 auth-check failure handling so transient backend issues do not incorrectly redirect to `/login`.
+- Added explicit protected-route error state for auth-check failures.
+- Improved reduced-motion accessibility compliance on login submit interaction.
+
+Status decision:
+- All HIGH and MEDIUM findings from this pass were fixed.
+- Story acceptance criteria remain implemented.
+- Story moved to `done` and sprint status synced accordingly.
+
+### Senior Developer Review (AI)
+
+Reviewer: Alessio (AI-assisted)  
+Date: 2026-02-24
+
+Outcome: **Review Complete (Returned to review queue)**
+
+Findings summary:
+- **HIGH (resolved):** Reconciled story `File List` against git evidence by separating prior implementation-cycle files from current review-cycle edits.
+- **MEDIUM (resolved):** Auth cache refresh robustness issue on post-login transition fixed in this review.
+- **MEDIUM (resolved):** Current implementation-artifact updates are now documented and synced.
+- **LOW (resolved):** Consistency gap between completion narrative and current git evidence window addressed with explicit review-cycle notes.
+
+Fixes applied during review:
+- Updated login success flow to invalidate `['auth','me']` query before route transition.
+- Updated story review notes to reconcile file-evidence scope for this review cycle.
+- Synced story/sprint status updates for Story 1.3.
+
+Remaining required actions:
+- None for this review cycle.
+
 ### Agent Model Used
 
 Claude Sonnet 4.6 (via GitHub Copilot)
@@ -441,6 +432,10 @@ Claude Sonnet 4.6 (via GitHub Copilot)
 - ✅ Task 2: Created `backend/src/types.d.ts` with Fastify module augmentation (`FastifyInstance.authenticate`) and `@fastify/jwt` payload/user type declarations. Added `authenticate` decorator to `buildServer()` in `server.ts` — calls `request.jwtVerify()` (cookie-based, handled automatically by the jwt plugin config) and returns 401 on failure.
 - ✅ Task 3: Extended `backend/src/routes/auth.ts` with `POST /auth/login` (bcrypt compare, 30-day JWT cookie, never logs req.body) and `GET /auth/me` (protected via `fastify.authenticate` preHandler, returns `{ id, email }` from `request.user`). `secure` flag driven by `process.env.NODE_ENV === 'production'`.
 - ✅ Task 4: Extended `backend/test/routes/auth.test.ts` with 8 new test cases across two `describe` blocks (`POST /api/auth/login` and `GET /api/auth/me`). Cookie extraction from `Set-Cookie` header used to chain login → /me requests. All 20 tests pass (2 test files: migrate + auth).
+- ✅ Task 5: Added `QueryClientProvider` (single `QueryClient` instance) wrapping `BrowserRouter` in `main.tsx`. `ProtectedRoute` imported and wired around the `TaskListPage` route.
+- ✅ Task 6: Created `frontend/src/hooks/useAuth.ts` — `useQuery(['auth', 'me'])` fetching `/auth/me`, `retry: false`, `staleTime: 5min`. Returns `{ user, isLoading, isAuthenticated }`. Imports `AuthUser` from `../types/auth`.
+- ✅ Task 7: Created `frontend/src/components/ProtectedRoute.tsx` — pixel-art loading state while `isLoading`, redirects to `/login` if unauthenticated, renders children if authenticated. `/login` and `/register` remain public.
+- ✅ Task 8: Replaced placeholder `LoginPage.tsx` with full pixel-art implementation — controlled form, client-side validation (no API call on empty fields), generic 401 error message (security), button disabled in-flight, redirect-if-already-authenticated. TypeScript clean (`npx tsc --noEmit` zero errors).
 
 ### File List
 
@@ -449,9 +444,17 @@ Claude Sonnet 4.6 (via GitHub Copilot)
 - `backend/src/server.ts` — modified: added `FastifyRequest`/`FastifyReply` imports, `authenticate` decorator in `buildServer()`
 - `backend/src/routes/auth.ts` — modified: added `POST /auth/login` and `GET /auth/me` routes; imported `LoginBodySchema`, `getUserByEmail`
 - `backend/test/routes/auth.test.ts` — modified: added `describe('POST /api/auth/login')` and `describe('GET /api/auth/me')` test blocks (8 new test cases)
+- `frontend/src/main.tsx` — modified: added `QueryClientProvider` wrapper, `ProtectedRoute` guard on `/` route
+- `frontend/src/hooks/useAuth.ts` — new: `useAuth()` hook using `useQuery` to call `GET /auth/me`
+- `frontend/src/components/ProtectedRoute.tsx` — new: auth guard component, redirects unauthenticated users to `/login`
+- `frontend/src/pages/LoginPage.tsx` — replaced: full login form implementation with pixel-art aesthetic
 
 ## Change Log
 
 | Date | Change | Author |
 |------|--------|--------|
 | 2026-02-24 | Implemented backend tasks 1–4: login schemas, authenticate decorator, POST /auth/login + GET /auth/me routes, integration tests (20/20 passing) | Claude Sonnet 4.6 |
+| 2026-02-24 | Implemented frontend tasks 5–8: QueryClientProvider, useAuth hook, ProtectedRoute component, full LoginPage with pixel-art aesthetic. TypeScript clean. | Claude Sonnet 4.6 |
+| 2026-02-24 | Senior developer adversarial review executed; added review findings, follow-up tasks, and post-login auth query invalidation fix. | GitHub Copilot |
+| 2026-02-24 | Closed remaining AI review follow-ups (git-evidence reconciliation + documentation sync) and returned story status to review. | GitHub Copilot |
+| 2026-02-24 | Re-ran adversarial code review; fixed auth error classification, protected-route error handling, and reduced-motion interaction polish; marked story done. | GitHub Copilot |

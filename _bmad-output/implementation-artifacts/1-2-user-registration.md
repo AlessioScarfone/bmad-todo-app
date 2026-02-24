@@ -102,7 +102,7 @@ So that I can access the application and my personal task list.
     - On error (409 from server) → show inline error: "An account with this email already exists"
     - On other error → show generic inline error: "Registration failed. Please try again."
     - Submit button disabled while request is in-flight
-    - **Pixel-art aesthetic** (8bitcn-ui / Tailwind) — simple, composed, not celebratory
+    - **Pixel-art aesthetic** (bare Tailwind CSS utility classes) — simple, composed, not celebratory
     - "Already have an account? Log in" link → `/login`
   - [x] 5.2 No toast or modal errors — **all errors inline only** (per UX spec)
   - [x] 5.3 Verify TypeScript compiles cleanly: `cd frontend && npx tsc --noEmit`

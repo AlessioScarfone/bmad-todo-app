@@ -187,7 +187,7 @@ None — all 29 FRs are explicitly covered.
 
 | UX Requirement | Architecture Support | Status |
 |----------------|---------------------|--------|
-| 8bitcn-ui (shadcn/ui + Radix UI + Tailwind) | Explicitly specified in architecture tech stack | ✅ Aligned |
+| Custom components (Tailwind CSS + Radix UI primitives — no component library) | Confirmed: all UI hand-rolled with utility classes + Radix UI headless primitives | ✅ Aligned |
 | TanStack Query for optimistic UI + error retry | Architecture confirms as primary server-state manager | ✅ Aligned |
 | Task count derived client-side from cache (no extra API call) | Architecture confirms: `tasks.filter(t => t.is_completed).length` | ✅ Aligned |
 | Filters applied client-side on TanStack Query cache | Confirmed in architecture (GET /api/tasks query params for future) | ✅ Aligned |

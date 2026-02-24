@@ -51,7 +51,7 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 - Task count is derived client-side from the task list response — no separate endpoint needed
 - No SEO requirements — all content is authentication-gated
 - Docker Compose is the sole deployment mechanism — no external infrastructure
-- Frontend design system: 8bitcn-ui (shadcn/ui architecture, Tailwind CSS, Radix UI primitives)
+- Frontend design system: custom components (Tailwind CSS utility classes + Radix UI primitives — no third-party component library)
 - React SPA with client-side routing
 - No dedicated background worker process required
 
@@ -92,7 +92,7 @@ npm install -D typescript @types/node vitest @testcontainers/postgresql
 **Rationale:**
 - The PRD specifies a SPA with client-side routing and no SEO requirements — Next.js/Remix server runtimes add unnecessary complexity
 - Vite produces a pure static bundle served by nginx — a 3-line multi-stage Dockerfile, no Node runtime in production
-- 8bitcn-ui is built on shadcn/ui + Tailwind CSS + Radix UI, a native fit for this Vite + React setup
+- All UI components are hand-rolled using Tailwind CSS utility classes + Radix UI headless primitives (no third-party component library) — full control, zero external design-system dependency
 - **React Router v7** (client-side mode) handles auth redirects and page routing declaratively
 - **TanStack Query** manages server state: optimistic mutations, background refetch, and error retry are first-class — all required by the UX spec
 
@@ -248,7 +248,7 @@ api (Fastify :3001) → db (PostgreSQL :5432)
 | Frontend framework | Vite + React + TypeScript |
 | Client-side routing | React Router v7 |
 | Server state / optimistic UI | TanStack Query |
-| Design system | 8bitcn-ui (shadcn/ui + Radix UI + Tailwind CSS) |
+| Design system | Custom components — Tailwind CSS + Radix UI primitives (no component library) |
 | Pixel font | Press Start 2P (or equivalent), loaded via Google Fonts `<link>` in `frontend/index.html`; fallback: `monospace` |
 | Backend framework | Fastify + TypeScript |
 | Schema validation & types | TypeBox (`@sinclair/typebox` + `@fastify/type-provider-typebox`) |
@@ -861,7 +861,7 @@ User action
 **NFR coverage:**
 - **Performance** — Optimistic UI + direct SQL queries; no ORM overhead
 - **Security** — bcrypt (12 rounds), `httpOnly` cookie, per-user `WHERE user_id` on every query, no sensitive data logged
-- **Accessibility** — 8bitcn-ui Radix UI primitives provide ARIA/keyboard nav; WCAG rules specified in patterns
+- **Accessibility** — Radix UI headless primitives provide ARIA/keyboard nav out of the box; WCAG rules specified in patterns
 - **Reliability** — Testcontainers integration tests + Playwright E2E against real stack; `docker-compose up` clean deploy
 - **Deployment** — Three-service Docker Compose; `docker-compose up --build` is complete
 

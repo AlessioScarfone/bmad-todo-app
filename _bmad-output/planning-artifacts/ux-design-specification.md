@@ -176,30 +176,30 @@ Developer-first launcher that demonstrates how a tool can feel like a superpower
 
 ### Design System Choice
 
-**8bitcn-ui** (github.com/TheOrcDev/8bitcn-ui) — a shadcn/ui-inspired React component library with a native 8-bit/pixel-art aesthetic, built on Tailwind CSS.
+**Custom components** — all UI components are hand-rolled using **Tailwind CSS utility classes** + **Radix UI headless primitives**. No third-party component library is used.
 
 ### Rationale for Selection
 
-- **Aesthetic alignment** — pixel-art visual language is built in, not retrofitted. The retro identity of bmad-todo-app is a first-class citizen of the component system, not a CSS override layer.
-- **Ownership model** — components are copy-pasted and owned locally (shadcn/ui architecture), eliminating version lock-in and enabling full customization without fighting framework opinions.
-- **Accessible primitives** — inherits Radix UI headless components under the hood (via shadcn/ui lineage), providing keyboard navigation, ARIA attributes, and focus management out of the box — directly supporting WCAG 2.1 AA compliance.
-- **Tailwind-native** — integrates naturally with utility-first CSS; design tokens (colors, spacing, typography) are Tailwind variables, making theming straightforward.
-- **React-native** — exact match for the chosen frontend framework.
-- **Solo developer pragmatism** — avoids building a custom pixel design system from scratch while retaining full control over every component used.
+- **Full control** — every pixel of the pixel-art aesthetic is authored directly in Tailwind; no upstream design system to fight or override.
+- **Accessible primitives** — Radix UI headless components provide keyboard navigation, ARIA attributes, and focus management out of the box — directly supporting WCAG 2.1 AA compliance without bringing visual opinions.
+- **Zero external dependency** — no component library to version-pin, patch, or adapt; the entire visual layer is owned in-repo.
+- **Tailwind-native** — utility-first CSS with design tokens (colors, spacing, typography) defined as Tailwind CSS variables.
+- **React-native** — Radix UI primitives are React-first headless components; pair directly with Vite + React.
+- **Solo developer pragmatism** — hand-rolling the small set of components this app actually uses is faster than adapting a library at this scope.
 
 ### Implementation Approach
 
-- Use 8bitcn-ui as the base component palette: buttons, inputs, checkboxes, cards, dialogs, dropdowns
-- Extend with custom Tailwind utilities for layout (task list, sidebar, top bar)
-- Keep the component footprint minimal — only import and own components actually used in the app
+- Compose each component from Radix UI headless primitives (for behavior/accessibility) + Tailwind utility classes (for visual style)
+- Build only the components actually used in the app — minimum viable component surface
 - Apply a consistent Tailwind color palette that respects WCAG 2.1 AA contrast ratios within the pixel-art theme
+- All component files live in `frontend/src/components/` — owned fully, no copy-paste external sources
 
 ### Customization Strategy
 
 - **Typography** — use a pixel/monospace font (e.g., Press Start 2P or similar) for headings and UI chrome; fall back to a readable system font for task body text to preserve legibility at small sizes
 - **Color palette** — define a small, deliberate palette of 4–6 colors: background, surface, primary action, completed/muted state, error, and count indicator. All must pass AA contrast.
-- **Component overrides** — completed task state (strikethrough + muted), inline creation field, and count display will require custom Tailwind variants layered on 8bitcn-ui base components
-- **Animation** — disable or minimize any built-in transitions on count-adjacent components; keep completion feedback to a CSS class swap (no JavaScript animation libraries needed)
+- **Custom component variants** — completed task state (strikethrough + muted), inline creation field, and count display are built as dedicated Tailwind utility compositions, not overrides on an external library
+- **Animation** — keep all completion feedback to a CSS class swap; no JavaScript animation libraries needed
 
 ## 2. Core User Experience
 
@@ -256,14 +256,14 @@ This is an **established UX pattern** — inline list creation and checkbox comp
 |---|---|---|
 | `color-bg` | Page background | Deep charcoal `#1a1a2e` or near-black `#0f0f0f` |
 | `color-surface` | Task card / panel surface | Slightly lighter `#1e1e2e` or `#1c1c1c` |
-| `color-border` | Pixel borders (8bitcn-ui) | Off-white `#e0e0e0` for contrast against dark bg |
+| `color-border` | Pixel borders | Off-white `#e0e0e0` for contrast against dark bg |
 | `color-primary` | Primary action (buttons, checkbox active) | Retro accent — green `#00ff88` or amber `#ffcc00` |
 | `color-text` | Primary text | Near-white `#f0f0f0` |
 | `color-text-muted` | Secondary text (labels, metadata) | Medium gray `#888` |
 | `color-completed` | Completed task text | Muted/dimmed `#555` |
 | `color-error` | Inline error state | Retro red `#ff4444` |
 
-All color pairs must pass WCAG 2.1 AA contrast ratio (≥4.5:1 for normal text, ≥3:1 for large text). Final values confirmed during implementation against actual 8bitcn-ui rendering.
+All color pairs must pass WCAG 2.1 AA contrast ratio (≥4.5:1 for normal text, ≥3:1 for large text). Final values confirmed during implementation against actual rendered output.
 
 ### Typography System
 
@@ -305,7 +305,7 @@ All color pairs must pass WCAG 2.1 AA contrast ratio (≥4.5:1 for normal text, 
 
 ### Accessibility Considerations
 
-- All interactive elements (checkbox, task title edit, buttons, dropdowns) must have visible focus rings — styled with pixel-art border pattern (8bitcn-ui provides these)
+- All interactive elements (checkbox, task title edit, buttons, dropdowns) must have visible focus rings — styled with pixel-art border pattern (implemented via Tailwind `focus-visible:ring` utilities)
 - Minimum touch/click target: `32px × 32px` even in compact layout
 - Task count display color must not rely on color alone to convey meaning — always accompanied by the numeric fraction (e.g. `3/5`)
 - Destructive action (delete task) requires explicit confirmation (two-step: reveal delete button on hover/focus, confirm on click)
@@ -338,18 +338,18 @@ Six directions were mocked up across two color palettes (green, amber, cyan, pur
 
 ### Design Rationale
 
-The hybrid removes the sidebar entirely, keeping the layout as focused as possible on the task list itself. Task count visibility is preserved top-right (complies with FR21 on count display) but is deliberately small and subordinate to the task content. The D4 filter bar is retained because it surfaces filtering without requiring navigation or interaction cost. The green palette from D1 is the most aligned with the pixel-terminal aesthetic and the 8bitcn-ui library's default dark theme.
+The hybrid removes the sidebar entirely, keeping the layout as focused as possible on the task list itself. Task count visibility is preserved top-right (complies with FR21 on count display) but is deliberately small and subordinate to the task content. The D4 filter bar is retained because it surfaces filtering without requiring navigation or interaction cost. The green palette from D1 is the most aligned with the pixel-terminal aesthetic and the hand-rolled custom component approach.
 
 The decision to remove the sidebar aligns with the core design principle: **task list is the hero.** Secondary information (count display, filters) earns presence only when it does not take pixel real estate away from tasks.
 
-### Implementation Notes (8bitcn-ui)
+### Implementation Notes (Custom Components)
 
-- **Filter pills:** `<Button variant="outline">` — active state adds green border `border-color: #00ff88`
-- **Task input:** bare `<Input>` with green `2px` border, full width
+- **Filter pills:** `<button>` with `outline` Tailwind variant — active state adds green border `border-color: #00ff88`
+- **Task input:** bare `<input>` with green `2px` border, full width
 - **Task rows:** custom `div` with `border-left` accent for hover/active state (not a card component — avoids excess padding)
 - **Count display:** plain styled `span` elements in the top-right header zone — no special component needed
 - **Subtask area:** conditional render below parent task row when `expanded` flag is true; reuses same input component at smaller scale
-- **Checkbox:** 8bitcn-ui `<Checkbox>` component styled with green accent color
+- **Checkbox:** Radix UI `<Checkbox>` primitive styled with green accent color via Tailwind utilities
 
 ---
 
@@ -529,22 +529,24 @@ flowchart TD
 
 ## Component Strategy
 
-### Design System Components (8bitcn-ui)
+### Custom Component Palette
 
-8bitcn-ui provides the foundational primitives. These are used as-is or with minor token overrides:
+All components are hand-rolled. Radix UI headless primitives are used where behavior/accessibility complexity would otherwise need to be re-implemented:
 
-| Component | Usage in bmad-todo-app |
-|---|---|
-| `<Button variant="outline">` | Filter pills (All / Active / Done / label), secondary actions |
-| `<Button variant="ghost">` | Inline action icons on task hover (edit, delete) |
-| `<Button variant="destructive">` | Delete confirmation action |
-| `<Input>` | Task creation input (top of list), subtask inline input, label inline input |
-| `<Checkbox>` | Task completion toggle — styled with `#00ff88` accent |
-| `<Badge>` | Base for label badges, deadline badges, subtask count badges |
-| `<Tooltip>` | Icon button labels |
-| `<Separator>` | Section dividers in header zone |
+| Component | Radix UI Primitive | Usage in bmad-todo-app |
+|---|---|---|
+| `<Button variant="outline">` | — (plain `<button>`) | Filter pills (All / Active / Done / label), secondary actions |
+| `<Button variant="ghost">` | — (plain `<button>`) | Inline action icons on task hover (edit, delete) |
+| `<Button variant="destructive">` | — (plain `<button>`) | Delete confirmation action |
+| `<Input>` | — (plain `<input>`) | Task creation input (top of list), subtask inline input, label inline input |
+| `<Checkbox>` | `@radix-ui/react-checkbox` | Task completion toggle — styled with `#00ff88` accent |
+| `<Badge>` | — (plain `<span>`) | Label badges, deadline badges, subtask count badges |
+| `<Tooltip>` | `@radix-ui/react-tooltip` | Icon button labels |
+| `<Separator>` | `@radix-ui/react-separator` | Section dividers in header zone |
+| `<DropdownMenu>` | `@radix-ui/react-dropdown-menu` | Sort dropdown |
+| `<Dialog>` | `@radix-ui/react-dialog` | Modal dialogs if needed |
 
-All 8bitcn-ui components use the copy-paste ownership model — tokens are overridden via Tailwind CSS variables at the project level; no upstream dependency to maintain.
+All components are styled exclusively with Tailwind CSS utility classes. No external visual library dependency.
 
 ---
 
@@ -609,7 +611,7 @@ All 8bitcn-ui components use the copy-paste ownership model — tokens are overr
 **States:**
 - Each pill: `inactive` (dim border) / `active` (green border + text)
 - Label pills: dynamically rendered from distinct labels present in today's task list
-- Sort button: dropdown using `<DropdownMenu>` from 8bitcn-ui
+- Sort button: dropdown using `<DropdownMenu>` (Radix UI `@radix-ui/react-dropdown-menu` primitive)
 
 **Behavior:** Multiple filters additive (label + Active simultaneously). “All” clears all filters. No filter state persists across sessions.
 **Accessibility:** `<nav aria-label="Task filters">`, each button has `aria-pressed` toggled on active state, sort dropdown has `aria-haspopup="listbox"`
@@ -661,8 +663,8 @@ No tasks match this filter.
 
 ### Component Implementation Strategy
 
-- **Token override first:** Apply `#00ff88` accent and `#0f0f0f` / `#1a1a1a` backgrounds via Tailwind CSS variables before touching component internals. Many 8bitcn-ui components will adopt the correct visual automatically.
-- **Compose from primitives:** `<TaskRow>` uses 8bitcn-ui `<Checkbox>` and `<Badge>` internally — don't reinvent what's provided.
+- **Define tokens first:** Apply `#00ff88` accent and `#0f0f0f` / `#1a1a1a` backgrounds as Tailwind CSS variables in `index.css` before writing component styles.
+- **Compose from primitives:** `<TaskRow>` uses Radix UI `<Checkbox>` and a hand-rolled `<Badge>` span internally — use what Radix provides for behavior, write all visual styles with Tailwind.
 - **No external state in display components:** `<TaskRow>`, `<SubtaskPanel>`, `<FilterBar>` are presentational. State lives in React context or the parent page component.
 - **One component = one file:** Each custom component in `src/components/` with a co-located `*.test.tsx` file.
 
@@ -671,7 +673,7 @@ No tasks match this filter.
 **Phase 1 — Core (required for any usable session):**
 1. `<AppHeader>` + `<TaskCountDisplay>` — always visible shell
 2. `<TaskRow>` — base state (no subtasks, no enrichment yet)
-3. `<Input>` task creation (task list input — 8bitcn-ui, configured)
+3. `<input>` task creation (plain HTML input, styled with Tailwind)
 4. `<EmptyState>` — first-use experience
 
 **Phase 2 — Enrichment (required for full PRD compliance):**
@@ -796,7 +798,7 @@ bmad-todo-app has a **single primary view**: the task list. Navigation is minima
 | **Escape = cancel** | `Escape` closes / collapses any inline editor without saving. Universal across all inline forms. |
 | **Keyboard shortcuts** | `Space` toggles checkbox on focused task row. No other global shortcuts in MVP. |
 | **Click outside = cancel** | Clicking outside an expanded subtask panel or inline editor collapses it without saving. |
-| **Pixel cursor on interactive elements** | `cursor: pointer` on all clickable elements — consistent with 8bitcn-ui defaults. |
+| **Pixel cursor on interactive elements** | `cursor: pointer` on all clickable elements — applied globally in Tailwind base styles. |
 
 ---
 

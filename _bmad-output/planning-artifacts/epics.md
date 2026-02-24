@@ -91,7 +91,7 @@ NFR17: Minimum 5 passing Playwright E2E tests covering core user flows
 - `prefers-reduced-motion` respected — all transitions disabled for users who opt out
 - Filter bar always rendered at zero interaction cost (no click to reveal)
 - All errors shown inline (never in a modal or toast that auto-dismisses)
-- Pixel-art aesthetic via 8bitcn-ui (shadcn/ui + Radix UI + Tailwind CSS) — calm and composed, not celebratory
+- Pixel-art aesthetic via custom components (Tailwind CSS utility classes + Radix UI primitives) — calm and composed, not celebratory
 - ARIA requirements: `role="alert"` on inline errors, `aria-live="polite"` on empty state region, `aria-pressed` on active filter buttons, `aria-expanded` on subtask panel trigger, checkbox `aria-label="Mark [task title] as done"`, task count `aria-label="Tasks completed: N of M"` with `aria-live="polite"`
 
 ### FR Coverage Map
