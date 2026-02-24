@@ -1,0 +1,79 @@
+# generated: 2026-02-24
+# project: bmad-todo-app
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: _bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-02-24
+project: bmad-todo-app
+project_key: NOKEY
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
+
+development_status:
+  # ─── Epic 1: Project Foundation & Authentication ───────────────────────────
+  epic-1: backlog
+  1-1-project-scaffolding-docker-infrastructure-baseline: backlog
+  1-2-user-registration: backlog
+  1-3-user-login-long-lived-session: backlog
+  1-4-email-pre-fill-on-return-logout: backlog
+  epic-1-retrospective: optional
+
+  # ─── Epic 2: Core Task Management & Task Count Display ─────────────────────
+  epic-2: backlog
+  2-1-task-list-view-database-foundation: backlog
+  2-2-create-task: backlog
+  2-3-mark-task-complete-un-complete-with-live-task-count: backlog
+  2-4-edit-task-title: backlog
+  2-5-delete-task: backlog
+  epic-2-retrospective: optional
+
+  # ─── Epic 3: Task Enrichment — Labels, Deadlines & Subtasks ────────────────
+  epic-3: backlog
+  3-1-labels-attach-and-remove: backlog
+  3-2-deadline-set-and-remove: backlog
+  3-3-subtasks-add-complete-and-delete: backlog
+  epic-3-retrospective: optional
+
+  # ─── Epic 4: Task Filtering & Sorting ──────────────────────────────────────
+  epic-4: backlog
+  4-1-filter-task-list-by-label-status-and-deadline: backlog
+  4-2-sort-task-list: backlog
+  epic-4-retrospective: optional
+
+  # ─── Epic 5: Resilience & Accessibility ────────────────────────────────────
+  epic-5: backlog
+  5-1-inline-error-feedback-retry: backlog
+  5-2-performance-sub-second-state-reflection: backlog
+  5-3-full-keyboard-navigation: backlog
+  5-4-wcag-2-1-aa-compliance-prefers-reduced-motion: backlog
+  epic-5-retrospective: optional
