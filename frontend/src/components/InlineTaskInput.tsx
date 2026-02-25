@@ -61,7 +61,7 @@ export function InlineTaskInput() {
   }
 
   return (
-    <div className="border-2 border-black bg-white">
+    <div className="border-2 border-[#e0e0e0] bg-[#1c1c1c]">
       <div className="flex gap-2 p-3">
         <input
           type="text"
@@ -69,7 +69,7 @@ export function InlineTaskInput() {
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           placeholder="Add a task..."
-          className="flex-1 font-pixel text-[8px] outline-none bg-transparent"
+          className="flex-1 font-mono text-[13px] text-[#f0f0f0] placeholder-[#555] outline-none bg-transparent"
           aria-label="New task title"
           aria-describedby={validationError ? 'task-title-error' : undefined}
           disabled={isPending}
@@ -77,7 +77,7 @@ export function InlineTaskInput() {
         <button
           type="button"
           onClick={() => submit(title)}
-          className="font-pixel text-[8px] px-2 border-2 border-black bg-white hover:bg-black hover:text-white motion-safe:transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="font-pixel text-[8px] px-2 border-2 border-[#00ff88] text-[#00ff88] bg-transparent hover:bg-[#00ff88] hover:text-[#0f0f0f] motion-safe:transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           aria-label="Submit new task"
           disabled={isPending}
         >
@@ -89,7 +89,7 @@ export function InlineTaskInput() {
       {validationError && (
         <p
           id="task-title-error"
-          className="px-3 pb-2 font-pixel text-[8px] text-red-600"
+          className="px-3 pb-2 font-mono text-[11px] text-[#ff4444]"
           role="alert"
         >
           Task title cannot be empty.
@@ -99,11 +99,11 @@ export function InlineTaskInput() {
       {/* AC4 — inline error with retry / dismiss */}
       {networkError && (
         <div className="px-3 pb-2 flex items-center gap-2" role="alert">
-          <span className="font-pixel text-[8px] text-red-600">{networkError}</span>
+          <span className="font-mono text-[11px] text-[#ff4444]">{networkError}</span>
           <button
             type="button"
             onClick={handleRetry}
-            className="font-pixel text-[8px] px-2 border border-black bg-white hover:bg-black hover:text-white motion-safe:transition-colors"
+            className="font-pixel text-[8px] px-2 border border-[#e0e0e0] text-[#f0f0f0] bg-transparent hover:border-[#00ff88] hover:text-[#00ff88] motion-safe:transition-colors"
             aria-label="Retry"
           >
             Retry
@@ -111,7 +111,7 @@ export function InlineTaskInput() {
           <button
             type="button"
             onClick={handleDismiss}
-            className="font-pixel text-[8px] text-gray-500 underline"
+            className="font-pixel text-[8px] text-[#888] underline hover:text-[#f0f0f0] motion-safe:transition-colors"
             aria-label="Dismiss"
           >
             Dismiss

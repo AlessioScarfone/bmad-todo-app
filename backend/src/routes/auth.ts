@@ -113,9 +113,17 @@ const authRoutes: FastifyPluginAsync = async fastify => {
   // No authenticate preHandler — logout must succeed even with an
   // expired or absent cookie (idempotent per AC4).
   f.post('/auth/logout', async (_req, reply) => {
-    // clearCookie path must match setCookie path in POST /auth/login
+    // clearCookie options MUST match setCookie options from POST /auth/login
+    // (path, httpOnly, sameSite, secure) so the browser correctly identifies
+    // and removes the cookie. In production NODE_ENV the cookie was set with
+    // Secure=true and SameSite=Strict — clearCookie must mirror these.
     return reply
-      .clearCookie('token', { path: '/' })
+      .clearCookie('token', {
+        path: '/',
+        httpOnly: true,
+        sameSite: 'strict',
+        secure: process.env.NODE_ENV === 'production',
+      })
       .status(200)
       .send({ message: 'Logged out' })
   })

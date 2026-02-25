@@ -13,7 +13,7 @@ export default function TaskListPage() {
   const totalTasks = tasks.length
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0f0f0f]">
       <AppHeader
         userEmail={user?.email}
         completedTasks={completedTasks}
@@ -27,9 +27,12 @@ export default function TaskListPage() {
         {isLoading ? null : tasks.length === 0 ? (
           <EmptyState />
         ) : (
-          <ul className="mt-4 space-y-2" aria-label="Task list">
+          <ul className="mt-4 space-y-1" aria-label="Task list">
             {tasks.map(task => (
-              <li key={task.id} className="p-3 border-2 border-black bg-white font-pixel text-[8px]">
+              <li
+                key={task.id}
+                className="px-3 py-2 border-l-2 border-[#2a2a2a] bg-[#1c1c1c] hover:border-l-[#00ff88] font-mono text-[13px] text-[#f0f0f0] motion-safe:transition-colors"
+              >
                 {task.title}
               </li>
             ))}

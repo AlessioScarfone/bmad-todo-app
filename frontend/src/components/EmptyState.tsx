@@ -1,11 +1,11 @@
 export function EmptyState() {
   return (
     <div
-      className="mt-8 text-center"
+      className="mt-12 text-center"
       aria-live="polite"
     >
-      <p className="font-pixel text-[8px] text-gray-500">
-        No tasks yet. Add your first task above!
+      <p className="font-pixel text-[8px] text-[#555] leading-loose">
+        No tasks yet.<br />Type above and press Enter.
       </p>
     </div>
   )
