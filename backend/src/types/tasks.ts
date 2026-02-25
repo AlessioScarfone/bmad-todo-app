@@ -12,3 +12,9 @@ export const TaskSchema = Type.Object({
 })
 
 export type Task = Static<typeof TaskSchema>
+
+export const CreateTaskBodySchema = Type.Object({
+  title: Type.String({ minLength: 1 }),
+})
+
+export type CreateTaskBody = Static<typeof CreateTaskBodySchema>

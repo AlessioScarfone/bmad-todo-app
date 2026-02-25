@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createTestDb } from '../../helpers/db.js'
-import { getTasks } from '../../../src/db/queries/tasks.js'
+import { getTasks, createTask } from '../../../src/db/queries/tasks.js'
 
 describe('tasks schema + query', () => {
   let ctx: Awaited<ReturnType<typeof createTestDb>>
@@ -70,5 +70,33 @@ describe('tasks schema + query', () => {
     `
     const tasks = await getTasks(ctx.sql, u3.id)
     expect(tasks).toEqual([])
+  })
+
+  it('createTask inserts a task and returns it with camelCase fields', async () => {
+    const [u] = await ctx.sql`
+      INSERT INTO users (email, password_hash) VALUES ('create1@test.com', 'hash') RETURNING id
+    `
+    const task = await createTask(ctx.sql, u.id, 'My new task')
+    expect(task.title).toBe('My new task')
+    expect(task.isCompleted).toBe(false)
+    expect(task.completedAt).toBeNull()
+    expect(task.userId).toBe(u.id)
+    expect(typeof task.id).toBe('number')
+    // postgres returns native Date objects for timestamp columns at the query layer;
+    // ISO string serialization happens when Fastify sends the JSON response.
+    expect(task.createdAt instanceof Date || typeof task.createdAt === 'string').toBe(true)
+    expect(task.updatedAt instanceof Date || typeof task.updatedAt === 'string').toBe(true)
+  })
+
+  it('createTask enforces ownership \u2014 task belongs to specified userId', async () => {
+    const [u1] = await ctx.sql`
+      INSERT INTO users (email, password_hash) VALUES ('create2@test.com', 'hash') RETURNING id
+    `
+    const [u2] = await ctx.sql`
+      INSERT INTO users (email, password_hash) VALUES ('create3@test.com', 'hash') RETURNING id
+    `
+    await createTask(ctx.sql, u1.id, 'Task for u1')
+    const u2Tasks = await getTasks(ctx.sql, u2.id)
+    expect(u2Tasks.every(t => t.title !== 'Task for u1')).toBe(true)
   })
 })

@@ -16,3 +16,20 @@ export const getTasks = (sql: Sql, userId: number): Promise<Task[]> =>
     WHERE user_id = ${userId}
     ORDER BY created_at DESC
   `
+
+export const createTask = async (sql: Sql, userId: number, title: string): Promise<Task> => {
+  const [task] = await sql<Task[]>`
+    INSERT INTO tasks (user_id, title, is_completed)
+    VALUES (${userId}, ${title}, false)
+    RETURNING
+      id,
+      user_id AS "userId",
+      title,
+      is_completed AS "isCompleted",
+      completed_at AS "completedAt",
+      deadline,
+      created_at AS "createdAt",
+      updated_at AS "updatedAt"
+  `
+  return task
+}

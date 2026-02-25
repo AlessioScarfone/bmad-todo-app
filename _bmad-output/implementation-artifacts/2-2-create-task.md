@@ -1,6 +1,6 @@
 # Story 2.2: Create Task
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -43,42 +43,42 @@ so that I can capture work items in one fluid action.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Backend API create endpoint** (AC: AC3)
-  - [ ] Add `POST /api/tasks` in `backend/src/routes/tasks.ts` with `preHandler: [fastify.authenticate]`
-  - [ ] Validate payload via TypeBox schema (`title` required, trimmed non-empty)
-  - [ ] Return created task object directly with HTTP `201`
-  - [ ] Ensure inserted row defaults `is_completed = false`, `completed_at = null`
-  - [ ] Reuse existing response shape conventions from `GET /api/tasks` (camelCase fields: `isCompleted`, `createdAt`, etc.)
+- [x] **Task 1: Backend API create endpoint** (AC: AC3)
+  - [x] Add `POST /api/tasks` in `backend/src/routes/tasks.ts` with `preHandler: [fastify.authenticate]`
+  - [x] Validate payload via TypeBox schema (`title` required, trimmed non-empty)
+  - [x] Return created task object directly with HTTP `201`
+  - [x] Ensure inserted row defaults `is_completed = false`, `completed_at = null`
+  - [x] Reuse existing response shape conventions from `GET /api/tasks` (camelCase fields: `isCompleted`, `createdAt`, etc.)
 
-- [ ] **Task 2: Query layer implementation** (AC: AC3)
-  - [ ] Add create query in `backend/src/db/queries/tasks.ts`
-  - [ ] Use explicit columns and safe parameterized SQL (`postgres` tagged templates)
-  - [ ] Guarantee ownership isolation by using authenticated `userId` from JWT claims
-  - [ ] Keep SQL aliases consistent with existing `getTasks` mapping (`user_id AS "userId"`, `is_completed AS "isCompleted"`, etc.)
+- [x] **Task 2: Query layer implementation** (AC: AC3)
+  - [x] Add create query in `backend/src/db/queries/tasks.ts`
+  - [x] Use explicit columns and safe parameterized SQL (`postgres` tagged templates)
+  - [x] Guarantee ownership isolation by using authenticated `userId` from JWT claims
+  - [x] Keep SQL aliases consistent with existing `getTasks` mapping (`user_id AS "userId"`, `is_completed AS "isCompleted"`, etc.)
 
-- [ ] **Task 3: Frontend inline create flow** (AC: AC1, AC2)
-  - [ ] Implement/complete inline create row behavior on task list page
-  - [ ] Enter submits; blank/whitespace title shows inline validation (no API call)
-  - [ ] Keep focus ergonomics for fast repeated entry
-  - [ ] Wire `frontend/src/components/InlineTaskInput.tsx` into mutation flow without replacing the existing component
+- [x] **Task 3: Frontend inline create flow** (AC: AC1, AC2)
+  - [x] Implement/complete inline create row behavior on task list page
+  - [x] Enter submits; blank/whitespace title shows inline validation (no API call)
+  - [x] Keep focus ergonomics for fast repeated entry
+  - [x] Wire `frontend/src/components/InlineTaskInput.tsx` into mutation flow without replacing the existing component
 
-- [ ] **Task 4: Optimistic mutation + rollback** (AC: AC1, AC4, AC5)
-  - [ ] Use TanStack Query mutation for optimistic insert at list top
-  - [ ] On success, reconcile with server response
-  - [ ] On error, show inline retry UI and support rollback path
-  - [ ] Ensure task count derives from cached tasks list (`completed/total`)
-  - [ ] Update cache through query key `['tasks']` to stay consistent with `useTasks`
+- [x] **Task 4: Optimistic mutation + rollback** (AC: AC1, AC4, AC5)
+  - [x] Use TanStack Query mutation for optimistic insert at list top
+  - [x] On success, reconcile with server response
+  - [x] On error, show inline retry UI and support rollback path
+  - [x] Ensure task count derives from cached tasks list (`completed/total`)
+  - [x] Update cache through query key `['tasks']` to stay consistent with `useTasks`
 
-- [ ] **Task 5: UX compliance alignment checks** (Regression guardrail)
-  - [ ] Preserve the design-system palette and token usage from UX specification
-  - [ ] Confirm task list colors do not diverge from approved dark/green retro palette
-  - [ ] Ensure no changes regress existing logout flow from Story 1.4
+- [x] **Task 5: UX compliance alignment checks** (Regression guardrail)
+  - [x] Preserve the design-system palette and token usage from UX specification
+  - [x] Confirm task list colors do not diverge from approved dark/green retro palette
+  - [x] Ensure no changes regress existing logout flow from Story 1.4
 
-- [ ] **Task 6: Tests** (AC: AC1-AC5)
-  - [ ] Backend integration tests for `POST /api/tasks` success + validation + auth
-  - [ ] Frontend tests for Enter submit, blank title validation, optimistic add, rollback
-  - [ ] Verify task count updates from cache with no additional endpoint call
-  - [ ] Extend existing route test file `backend/test/routes/tasks.test.ts` (avoid creating duplicate route test suites)
+- [x] **Task 6: Tests** (AC: AC1-AC5)
+  - [x] Backend integration tests for `POST /api/tasks` success + validation + auth
+  - [x] Frontend tests for Enter submit, blank title validation, optimistic add, rollback
+  - [x] Verify task count updates from cache with no additional endpoint call
+  - [x] Extend existing route test file `backend/test/routes/tasks.test.ts` (avoid creating duplicate route test suites)
 
 ## Dev Notes
 
@@ -165,7 +165,39 @@ GPT-5.3-Codex
 ### Completion Notes List
 
 - Ultimate context engine analysis completed - comprehensive developer guide created.
+- Implemented `POST /api/tasks` with TypeBox `CreateTaskBodySchema` validation, 201 direct response, `is_completed=false` default.
+- Added `createTask` query with explicit column selection, parameterized SQL, and per-user ownership isolation (`user_id = ${userId}`).
+- Implemented `useCreateTask` hook with TanStack Query optimistic mutation: `onMutate` prepends temp task at list top, `onError` rolls back and invalidates to re-sync, `onSuccess` reconciles with server task directly (no `onSettled` invalidation — avoids the extra GET that would violate AC5).
+- Wired `InlineTaskInput`: Enter submits, whitespace-only title shows inline validation (no API call), network failures show inline retry/dismiss affordances.
+- Task count (AC5) derives from `['tasks']` cache in `TaskListPage` — no new endpoint added, and no redundant refetch on success.
+- Set up frontend vitest + @testing-library infrastructure (was absent); added 10 frontend component tests (9 original + 1 new for AC1 optimistic-at-top).
+- Extended `backend/test/routes/tasks.test.ts` with 6 POST integration tests; extended `backend/test/db/queries/tasks.test.ts` with 2 `createTask` tests.
+- All 40 backend tests pass; all 10 frontend tests pass. No regressions to auth/logout (Story 1.4) or task-list view (Story 2.1).
+- **Code review fixes applied (2026-02-25):**
+  - [H1] Removed `onSettled: invalidateQueries` — was firing an extra GET /api/tasks on every successful create, violating AC5. Moved invalidation to `onError` only for cache re-sync after failure.
+  - [M1] Added `frontend/package-lock.json` to story File List (was in git, absent from story).
+  - [M2] Fixed AC5 frontend test — now spies on `api.get` and asserts it is NOT called after a successful create.
+  - [M3] Normalized whitespace-only 400 error field from `"BAD_REQUEST"` to `"Bad Request"` to match TypeBox/Fastify default error shape.
+  - [M4] Added frontend test asserting optimistic task appears at list index 0 before server responds (AC1 coverage gap).
 
 ### File List
 
 - _bmad-output/implementation-artifacts/2-2-create-task.md
+- _bmad-output/implementation-artifacts/sprint-status.yaml
+- backend/src/types/tasks.ts
+- backend/src/db/queries/tasks.ts
+- backend/src/routes/tasks.ts
+- backend/test/routes/tasks.test.ts
+- backend/test/db/queries/tasks.test.ts
+- frontend/src/hooks/useTasks.ts
+- frontend/src/components/InlineTaskInput.tsx
+- frontend/package.json
+- frontend/package-lock.json
+- frontend/vitest.config.ts
+- frontend/test/setup.ts
+- frontend/test/components/InlineTaskInput.test.tsx
+
+## Change Log
+
+- Story 2.2 (Create Task) implemented — `POST /api/tasks` endpoint, optimistic UI mutation, inline validation, retry/rollback UX, task count derived from cache. Frontend vitest test infrastructure added. (Date: 2026-02-25)
+- Code review performed — 5 issues fixed (1 High, 4 Medium): removed AC5-violating onSettled refetch, normalized error field casing, strengthened AC5 and AC1 test coverage, documented package-lock.json. Story marked done. (Date: 2026-02-25)
