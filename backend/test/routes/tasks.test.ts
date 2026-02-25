@@ -195,3 +195,214 @@ describe('POST /api/tasks', () => {
     expect(tasks.every((t: { title: string }) => t.title !== 'User 6 private task')).toBe(true)
   })
 })
+
+describe('PATCH /api/tasks/:id/complete', () => {
+  let ctx: Awaited<ReturnType<typeof createTestDb>>
+  let app: ReturnType<typeof buildServer>
+
+  beforeAll(async () => {
+    ctx = await createTestDb()
+    app = buildServer('test-secret', ctx.sql)
+    await app.ready()
+  }, 60_000)
+
+  afterAll(async () => {
+    await app.close()
+    await ctx.sql.end()
+    await ctx.container.stop()
+  })
+
+  async function registerAndLogin(email: string) {
+    const passwordHash = await bcrypt.hash('password123', 12)
+    await ctx.sql`INSERT INTO users (email, password_hash) VALUES (${email}, ${passwordHash})`
+    const loginRes = await app.inject({
+      method: 'POST',
+      url: '/api/auth/login',
+      payload: { email, password: 'password123' },
+    })
+    const setCookie = loginRes.headers['set-cookie'] as string
+    return setCookie.split(';')[0]
+  }
+
+  async function createUserTask(email: string, title: string) {
+    const cookie = await registerAndLogin(email)
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/tasks',
+      payload: { title },
+      headers: { cookie },
+    })
+    return { cookie, task: res.json() }
+  }
+
+  it('returns 401 when unauthenticated', async () => {
+    const res = await app.inject({ method: 'PATCH', url: '/api/tasks/1/complete' })
+    expect(res.statusCode).toBe(401)
+  })
+
+  it('returns 404 when task does not exist', async () => {
+    const cookie = await registerAndLogin('complete-notfound@test.com')
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/api/tasks/999999999/complete',
+      headers: { cookie },
+    })
+    expect(res.statusCode).toBe(404)
+    expect(res.json()).toMatchObject({ statusCode: 404, error: 'NOT_FOUND' })
+  })
+
+  it('returns 404 when task belongs to another user', async () => {
+    const { task } = await createUserTask('complete-owner@test.com', 'Owner task')
+    const otherCookie = await registerAndLogin('complete-other@test.com')
+    const res = await app.inject({
+      method: 'PATCH',
+      url: `/api/tasks/${task.id}/complete`,
+      headers: { cookie: otherCookie },
+    })
+    expect(res.statusCode).toBe(404)
+  })
+
+  it('returns 200 with isCompleted: true and completedAt set (AC1)', async () => {
+    const { cookie, task } = await createUserTask('complete-success@test.com', 'To be completed')
+    const res = await app.inject({
+      method: 'PATCH',
+      url: `/api/tasks/${task.id}/complete`,
+      headers: { cookie },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(body.isCompleted).toBe(true)
+    expect(body.completedAt).not.toBeNull()
+    expect(body.id).toBe(task.id)
+    expect(body.title).toBe('To be completed')
+  })
+
+  it('updated_at is updated after complete (AC1)', async () => {
+    const { cookie, task } = await createUserTask('complete-updtdat@test.com', 'Update at test')
+    await new Promise(r => setTimeout(r, 10))
+    const res = await app.inject({
+      method: 'PATCH',
+      url: `/api/tasks/${task.id}/complete`,
+      headers: { cookie },
+    })
+    expect(res.statusCode).toBe(200)
+    const original = new Date(task.updatedAt).getTime()
+    const updated = new Date(res.json().updatedAt).getTime()
+    expect(updated).toBeGreaterThanOrEqual(original)
+  })
+
+  it('response is direct task object (no wrapper) (AC1)', async () => {
+    const { cookie, task } = await createUserTask('complete-nowrapper@test.com', 'Direct task')
+    const res = await app.inject({
+      method: 'PATCH',
+      url: `/api/tasks/${task.id}/complete`,
+      headers: { cookie },
+    })
+    const body = res.json()
+    expect(typeof body.id).toBe('number')
+    expect(typeof body.title).toBe('string')
+    expect(typeof body.isCompleted).toBe('boolean')
+    expect(Array.isArray(body)).toBe(false)
+  })
+})
+
+describe('PATCH /api/tasks/:id/uncomplete', () => {
+  let ctx: Awaited<ReturnType<typeof createTestDb>>
+  let app: ReturnType<typeof buildServer>
+
+  beforeAll(async () => {
+    ctx = await createTestDb()
+    app = buildServer('test-secret', ctx.sql)
+    await app.ready()
+  }, 60_000)
+
+  afterAll(async () => {
+    await app.close()
+    await ctx.sql.end()
+    await ctx.container.stop()
+  })
+
+  async function registerAndLogin(email: string) {
+    const passwordHash = await bcrypt.hash('password123', 12)
+    await ctx.sql`INSERT INTO users (email, password_hash) VALUES (${email}, ${passwordHash})`
+    const loginRes = await app.inject({
+      method: 'POST',
+      url: '/api/auth/login',
+      payload: { email, password: 'password123' },
+    })
+    const setCookie = loginRes.headers['set-cookie'] as string
+    return setCookie.split(';')[0]
+  }
+
+  async function createAndCompleteTask(email: string, title: string) {
+    const cookie = await registerAndLogin(email)
+    const createRes = await app.inject({
+      method: 'POST',
+      url: '/api/tasks',
+      payload: { title },
+      headers: { cookie },
+    })
+    const task = createRes.json()
+    await app.inject({
+      method: 'PATCH',
+      url: `/api/tasks/${task.id}/complete`,
+      headers: { cookie },
+    })
+    return { cookie, task }
+  }
+
+  it('returns 401 when unauthenticated', async () => {
+    const res = await app.inject({ method: 'PATCH', url: '/api/tasks/1/uncomplete' })
+    expect(res.statusCode).toBe(401)
+  })
+
+  it('returns 404 when task does not exist', async () => {
+    const cookie = await registerAndLogin('uncomplete-notfound@test.com')
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/api/tasks/999999999/uncomplete',
+      headers: { cookie },
+    })
+    expect(res.statusCode).toBe(404)
+    expect(res.json()).toMatchObject({ statusCode: 404, error: 'NOT_FOUND' })
+  })
+
+  it('returns 404 when task belongs to another user', async () => {
+    const { task } = await createAndCompleteTask('uncomplete-owner@test.com', 'Owner task')
+    const otherCookie = await registerAndLogin('uncomplete-other@test.com')
+    const res = await app.inject({
+      method: 'PATCH',
+      url: `/api/tasks/${task.id}/uncomplete`,
+      headers: { cookie: otherCookie },
+    })
+    expect(res.statusCode).toBe(404)
+  })
+
+  it('returns 200 with isCompleted: false and completedAt: null (AC3)', async () => {
+    const { cookie, task } = await createAndCompleteTask('uncomplete-success@test.com', 'To be uncompleted')
+    const res = await app.inject({
+      method: 'PATCH',
+      url: `/api/tasks/${task.id}/uncomplete`,
+      headers: { cookie },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(body.isCompleted).toBe(false)
+    expect(body.completedAt).toBeNull()
+    expect(body.id).toBe(task.id)
+  })
+
+  it('updated_at is updated after uncomplete (AC3)', async () => {
+    const { cookie, task } = await createAndCompleteTask('uncomplete-updtdat@test.com', 'Update at test')
+    await new Promise(r => setTimeout(r, 10))
+    const res = await app.inject({
+      method: 'PATCH',
+      url: `/api/tasks/${task.id}/uncomplete`,
+      headers: { cookie },
+    })
+    expect(res.statusCode).toBe(200)
+    const original = new Date(task.updatedAt).getTime()
+    const updated = new Date(res.json().updatedAt).getTime()
+    expect(updated).toBeGreaterThanOrEqual(original)
+  })
+})

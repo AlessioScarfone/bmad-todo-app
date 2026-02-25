@@ -1,6 +1,6 @@
 # Story 2.3: Mark Task Complete & Un-complete with Live Task Count
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -38,59 +38,59 @@ so that my task count reflects my progress in real time.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Backend — complete/uncomplete query functions** (AC: AC1, AC3)
-  - [ ] Add `completeTask(sql, taskId, userId)` in `backend/src/db/queries/tasks.ts`
-  - [ ] `UPDATE tasks SET is_completed = true, completed_at = NOW(), updated_at = NOW() WHERE id = $id AND user_id = $userId RETURNING ...`
-  - [ ] Add `uncompleteTask(sql, taskId, userId)` in same file
-  - [ ] `UPDATE tasks SET is_completed = false, completed_at = NULL, updated_at = NOW() WHERE id = $id AND user_id = $userId RETURNING ...`
-  - [ ] Both functions must return `Task | undefined` — check if row was found (null = 404 or 403)
-  - [ ] Use the same column aliases as `getTasks` (`user_id AS "userId"`, `is_completed AS "isCompleted"`, `completed_at AS "completedAt"` etc.)
+- [x] **Task 1: Backend — complete/uncomplete query functions** (AC: AC1, AC3)
+  - [x] Add `completeTask(sql, taskId, userId)` in `backend/src/db/queries/tasks.ts`
+  - [x] `UPDATE tasks SET is_completed = true, completed_at = NOW(), updated_at = NOW() WHERE id = $id AND user_id = $userId RETURNING ...`
+  - [x] Add `uncompleteTask(sql, taskId, userId)` in same file
+  - [x] `UPDATE tasks SET is_completed = false, completed_at = NULL, updated_at = NOW() WHERE id = $id AND user_id = $userId RETURNING ...`
+  - [x] Both functions must return `Task | undefined` — check if row was found (null = 404 or 403)
+  - [x] Use the same column aliases as `getTasks` (`user_id AS "userId"`, `is_completed AS "isCompleted"`, `completed_at AS "completedAt"` etc.)
 
-- [ ] **Task 2: Backend — PATCH route endpoints** (AC: AC1, AC3)
-  - [ ] Add `PATCH /api/tasks/:id/complete` in `backend/src/routes/tasks.ts` with `preHandler: [fastify.authenticate]`
-  - [ ] Add `PATCH /api/tasks/:id/uncomplete` in `backend/src/routes/tasks.ts` with `preHandler: [fastify.authenticate]`
-  - [ ] Both routes: parse `:id` as integer from params (TypeBox `Type.Number()` on params schema)
-  - [ ] Ownership enforced: call query with `userId` from JWT — if result is undefined → return 404 `{ statusCode: 404, error: "NOT_FOUND", message: "Task not found" }`
-  - [ ] On success: return the updated task object directly (no wrapper) with HTTP `200`
+- [x] **Task 2: Backend — PATCH route endpoints** (AC: AC1, AC3)
+  - [x] Add `PATCH /api/tasks/:id/complete` in `backend/src/routes/tasks.ts` with `preHandler: [fastify.authenticate]`
+  - [x] Add `PATCH /api/tasks/:id/uncomplete` in `backend/src/routes/tasks.ts` with `preHandler: [fastify.authenticate]`
+  - [x] Both routes: parse `:id` as integer from params (TypeBox `Type.Number()` on params schema)
+  - [x] Ownership enforced: call query with `userId` from JWT — if result is undefined → return 404 `{ statusCode: 404, error: "NOT_FOUND", message: "Task not found" }`
+  - [x] On success: return the updated task object directly (no wrapper) with HTTP `200`
 
-- [ ] **Task 3: Frontend — `useToggleTask` mutation hook** (AC: AC1, AC2, AC3, AC4)
-  - [ ] Add `useToggleTask()` in `frontend/src/hooks/useTasks.ts`
-  - [ ] `mutationFn`: if `task.isCompleted` → call `api.patch('/tasks/:id/uncomplete')`, else `api.patch('/tasks/:id/complete')`
-  - [ ] `onMutate`: cancel `['tasks']` queries, snapshot previous, set optimistic `isCompleted = !current` for affected task id
-  - [ ] `onError`: rollback to previous snapshot (do NOT invalidate unnecessarily — avoids extra GET)
-  - [ ] `onSuccess`: replace task in cache with server-confirmed task to reconcile (same pattern as `useCreateTask`)
-  - [ ] `onError` (also): `queryClient.invalidateQueries({ queryKey: ['tasks'] })` to re-sync after failure
+- [x] **Task 3: Frontend — `useToggleTask` mutation hook** (AC: AC1, AC2, AC3, AC4)
+  - [x] Add `useToggleTask()` in `frontend/src/hooks/useTasks.ts`
+  - [x] `mutationFn`: if `task.isCompleted` → call `api.patch('/tasks/:id/uncomplete')`, else `api.patch('/tasks/:id/complete')`
+  - [x] `onMutate`: cancel `['tasks']` queries, snapshot previous, set optimistic `isCompleted = !current` for affected task id
+  - [x] `onError`: rollback to previous snapshot (do NOT invalidate unnecessarily — avoids extra GET)
+  - [x] `onSuccess`: replace task in cache with server-confirmed task to reconcile (same pattern as `useCreateTask`)
+  - [x] `onError` (also): `queryClient.invalidateQueries({ queryKey: ['tasks'] })` to re-sync after failure
 
-- [ ] **Task 4: Frontend — `TaskRow` component** (AC: AC1, AC2, AC3, AC4)
-  - [ ] Create `frontend/src/components/TaskRow.tsx`
-  - [ ] Renders a row with: checkbox, task title (strikethrough if complete), inline error area
-  - [ ] Checkbox: native `<input type="checkbox">` (or Radix UI Checkbox primitive) with `aria-label="Mark [task title] as done"` / `aria-label="Mark [task title] as not done"` toggled by current state
-  - [ ] Space key on focused row toggles completion (keyboard-native UX requirement)
-  - [ ] Completed task title shows visual distinction: line-through + muted text color (use Tailwind `line-through text-gray-400`)
-  - [ ] Show inline error on the affected row when mutation fails (not a modal/toast)
-  - [ ] Retry button re-fires the toggle for the same task
-  - [ ] Dismiss clears the error and rolls back (optimistic rollback already applied by `onError`)
+- [x] **Task 4: Frontend — `TaskRow` component** (AC: AC1, AC2, AC3, AC4)
+  - [x] Create `frontend/src/components/TaskRow.tsx`
+  - [x] Renders a row with: checkbox, task title (strikethrough if complete), inline error area
+  - [x] Checkbox: native `<input type="checkbox">` (or Radix UI Checkbox primitive) with `aria-label="Mark [task title] as done"` / `aria-label="Mark [task title] as not done"` toggled by current state
+  - [x] Space key on focused row toggles completion (keyboard-native UX requirement)
+  - [x] Completed task title shows visual distinction: line-through + muted text color (use Tailwind `line-through text-gray-400`)
+  - [x] Show inline error on the affected row when mutation fails (not a modal/toast)
+  - [x] Retry button re-fires the toggle for the same task
+  - [x] Dismiss clears the error and rolls back (optimistic rollback already applied by `onError`)
 
-- [ ] **Task 5: Wire `TaskRow` into `TaskListPage`** (AC: AC1, AC2)
-  - [ ] Replace the bare `<li>` in `TaskListPage.tsx` with `<TaskRow task={task} />` per item
-  - [ ] Confirm `completedTasks` and `totalTasks` still derive from cache (`tasks.filter(t => t.isCompleted).length`) — no changes needed to `AppHeader` or `TaskCountDisplay`
-  - [ ] Task count display already has `aria-live="polite"` — no changes needed there
-  - [ ] Confirm `TaskCountDisplay` updates automatically because it reads from the same TanStack Query cache that `useToggleTask` mutates
+- [x] **Task 5: Wire `TaskRow` into `TaskListPage`** (AC: AC1, AC2)
+  - [x] Replace the bare `<li>` in `TaskListPage.tsx` with `<TaskRow task={task} />` per item
+  - [x] Confirm `completedTasks` and `totalTasks` still derive from cache (`tasks.filter(t => t.isCompleted).length`) — no changes needed to `AppHeader` or `TaskCountDisplay`
+  - [x] Task count display already has `aria-live="polite"` — no changes needed there
+  - [x] Confirm `TaskCountDisplay` updates automatically because it reads from the same TanStack Query cache that `useToggleTask` mutates
 
-- [ ] **Task 6: Tests** (AC: AC1, AC2, AC3, AC4)
-  - [ ] **Backend**: Extend `backend/test/routes/tasks.test.ts` with a new `describe('PATCH /api/tasks/:id/complete')` block and `describe('PATCH /api/tasks/:id/uncomplete')` block
-    - [ ] 401 when unauthenticated
-    - [ ] 404 when task not found or owned by another user
-    - [ ] 200 + correct `isCompleted: true` / `isCompleted: false` and `completedAt` set/null
-    - [ ] `updated_at` is updated (assert it changed from creation time)
-  - [ ] **Backend DB queries**: Extend `backend/test/db/queries/tasks.test.ts` with `completeTask` / `uncompleteTask` unit tests (Testcontainers, real DB)
-  - [ ] **Frontend**: Create `frontend/test/components/TaskRow.test.tsx`
-    - [ ] Renders task title; checkbox unchecked when `isCompleted = false`
-    - [ ] Checkbox checked and title has `line-through` class when `isCompleted = true`
-    - [ ] Clicking checkbox fires the toggle mutation (mock `useTasks.useToggleTask`)
-    - [ ] Space key on the row triggers toggle
-    - [ ] Shows inline error state and retry button when mutation fails
-    - [ ] Dismiss clears error
+- [x] **Task 6: Tests** (AC: AC1, AC2, AC3, AC4)
+  - [x] **Backend**: Extend `backend/test/routes/tasks.test.ts` with a new `describe('PATCH /api/tasks/:id/complete')` block and `describe('PATCH /api/tasks/:id/uncomplete')` block
+    - [x] 401 when unauthenticated
+    - [x] 404 when task not found or owned by another user
+    - [x] 200 + correct `isCompleted: true` / `isCompleted: false` and `completedAt` set/null
+    - [x] `updated_at` is updated (assert it changed from creation time)
+  - [x] **Backend DB queries**: Extend `backend/test/db/queries/tasks.test.ts` with `completeTask` / `uncompleteTask` unit tests (Testcontainers, real DB)
+  - [x] **Frontend**: Create `frontend/test/components/TaskRow.test.tsx`
+    - [x] Renders task title; checkbox unchecked when `isCompleted = false`
+    - [x] Checkbox checked and title has `line-through` class when `isCompleted = true`
+    - [x] Clicking checkbox fires the toggle mutation (mock `useTasks.useToggleTask`)
+    - [x] Space key on the row triggers toggle
+    - [x] Shows inline error state and retry button when mutation fails
+    - [x] Dismiss clears error
 
 ## Dev Notes
 
@@ -240,8 +240,31 @@ Claude Sonnet 4.6
 - Frontend needs a new `TaskRow.tsx` component (does not exist yet); `TaskListPage.tsx` currently renders bare `<li>` elements with no checkbox.
 - Optimistic mutation pattern follows `useCreateTask` blueprint exactly. `onSettled` invalidation is NOT used on success (High bug from 2.2 code review).
 - `TaskCountDisplay` is already `aria-live="polite"` and derives count from the same `['tasks']` cache — no changes needed to it or `AppHeader`.
+- **Implementation complete (2026-02-25):**
+  - Added `completeTask` and `uncompleteTask` to `backend/src/db/queries/tasks.ts` with correct SQL using `WHERE id = $taskId AND user_id = $userId RETURNING ...`, `updated_at = NOW()` explicit, and `completed_at = NULL` on uncomplete.
+  - Added `PATCH /api/tasks/:id/complete` and `PATCH /api/tasks/:id/uncomplete` routes to `backend/src/routes/tasks.ts` with TypeBox `Type.Number()` params schema for auto-coercion, auth guard, and 404 on ownership mismatch.
+  - Added `patch` method to `frontend/src/lib/api.ts`.
+  - Added `useToggleTask` mutation hook to `frontend/src/hooks/useTasks.ts` following `useCreateTask` canonical pattern: `onMutate` optimistic flip, `onError` rollback + `invalidateQueries`, `onSuccess` cache reconcile without invalidation.
+  - Created `frontend/src/components/TaskRow.tsx` with native checkbox, `aria-label` toggled by state, `line-through text-gray-400` on completion, inline error with Retry/Dismiss buttons, `motion-safe:transition-*` compliance.
+  - Updated `frontend/src/pages/TaskListPage.tsx` to replace bare `<li>` with `<TaskRow task={task} />`.
+  - All 60 backend tests pass, all 59 frontend tests pass (incl. 8 new TaskRow tests). No regressions. Frontend TypeScript clean. ESLint: zero new warnings/errors.
 
 ### File List
 
+**Modified:**
+- `backend/src/db/queries/tasks.ts`
+- `backend/src/routes/tasks.ts`
+- `backend/test/db/queries/tasks.test.ts`
+- `backend/test/routes/tasks.test.ts`
+- `frontend/src/hooks/useTasks.ts`
+- `frontend/src/lib/api.ts`
+- `frontend/src/pages/TaskListPage.tsx`
+
+**Created:**
+- `frontend/src/components/TaskRow.tsx`
+- `frontend/test/components/TaskRow.test.tsx`
+
 ### Change Log
+
+- 2026-02-25: Implemented Story 2.3 — Mark Task Complete/Un-complete with Live Task Count. Added `completeTask`/`uncompleteTask` DB query functions, `PATCH /api/tasks/:id/complete` and `PATCH /api/tasks/:id/uncomplete` routes, `useToggleTask` optimistic mutation hook, `TaskRow` component with checkbox + inline error + keyboard support, wired `TaskRow` into `TaskListPage`. Added 9 backend DB query tests, 10 backend route tests (5 per endpoint), and 8 frontend component tests.
 

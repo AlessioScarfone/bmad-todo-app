@@ -2,7 +2,7 @@ import fp from 'fastify-plugin'
 import type { FastifyPluginAsync } from 'fastify'
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
-import { getTasks, createTask } from '../db/queries/tasks.js'
+import { getTasks, createTask, completeTask, uncompleteTask } from '../db/queries/tasks.js'
 import { CreateTaskBodySchema } from '../types/tasks.js'
 
 const taskRoutes: FastifyPluginAsync = async fastify => {
@@ -50,6 +50,44 @@ const taskRoutes: FastifyPluginAsync = async fastify => {
 
       const task = await createTask(fastify.sql, userId, title)
       return reply.status(201).send(task)
+    },
+  )
+
+  f.patch(
+    '/tasks/:id/complete',
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        params: Type.Object({ id: Type.Number() }),
+      },
+    },
+    async (req, reply) => {
+      const userId = (req.user as { id: number }).id
+      const taskId = req.params.id
+      const task = await completeTask(fastify.sql, taskId, userId)
+      if (!task) {
+        return reply.status(404).send({ statusCode: 404, error: 'NOT_FOUND', message: 'Task not found' })
+      }
+      return reply.status(200).send(task)
+    },
+  )
+
+  f.patch(
+    '/tasks/:id/uncomplete',
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        params: Type.Object({ id: Type.Number() }),
+      },
+    },
+    async (req, reply) => {
+      const userId = (req.user as { id: number }).id
+      const taskId = req.params.id
+      const task = await uncompleteTask(fastify.sql, taskId, userId)
+      if (!task) {
+        return reply.status(404).send({ statusCode: 404, error: 'NOT_FOUND', message: 'Task not found' })
+      }
+      return reply.status(200).send(task)
     },
   )
 }

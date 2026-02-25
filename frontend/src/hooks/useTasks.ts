@@ -61,3 +61,49 @@ export function useCreateTask() {
     },
   })
 }
+
+type ToggleTaskContext = { previous: Task[] | undefined }
+
+export function useToggleTask() {
+  const queryClient = useQueryClient()
+
+  return useMutation<Task, Error, Task, ToggleTaskContext>({
+    mutationFn: (task: Task) => {
+      const endpoint = task.isCompleted
+        ? `/tasks/${task.id}/uncomplete`
+        : `/tasks/${task.id}/complete`
+      return api.patch<Task>(endpoint)
+    },
+
+    onMutate: async (task: Task) => {
+      // Cancel any in-flight refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: ['tasks'] })
+
+      const previous = queryClient.getQueryData<Task[]>(['tasks'])
+
+      // Optimistically flip isCompleted for the affected task
+      queryClient.setQueryData<Task[]>(['tasks'], old =>
+        old?.map(t => (t.id === task.id ? { ...t, isCompleted: !t.isCompleted } : t)) ?? [],
+      )
+
+      return { previous }
+    },
+
+    onError: (_err, _task, context) => {
+      // Rollback to previous state (AC4)
+      if (context?.previous !== undefined) {
+        queryClient.setQueryData<Task[]>(['tasks'], context.previous)
+      }
+      // Re-sync with server after failure to ensure cache consistency
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+    },
+
+    onSuccess: (serverTask) => {
+      // Replace task in cache with server-confirmed task to reconcile
+      // No invalidateQueries on success — avoids extra GET that violates <500ms requirement (AC2)
+      queryClient.setQueryData<Task[]>(['tasks'], old =>
+        old?.map(t => (t.id === serverTask.id ? serverTask : t)) ?? [serverTask],
+      )
+    },
+  })
+}

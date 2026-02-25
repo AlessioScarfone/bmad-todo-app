@@ -3,6 +3,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useTasks } from '../hooks/useTasks'
 import { EmptyState } from '../components/EmptyState'
 import { InlineTaskInput } from '../components/InlineTaskInput'
+import { TaskRow } from '../components/TaskRow'
 
 export default function TaskListPage() {
   const { user } = useAuth()
@@ -29,12 +30,7 @@ export default function TaskListPage() {
         ) : (
           <ul className="mt-4 space-y-1" aria-label="Task list">
             {tasks.map(task => (
-              <li
-                key={task.id}
-                className="px-3 py-2 border-l-2 border-[#2a2a2a] bg-[#1c1c1c] hover:border-l-[#00ff88] font-mono text-[13px] text-[#f0f0f0] motion-safe:transition-colors"
-              >
-                {task.title}
-              </li>
+              <TaskRow key={task.id} task={task} />
             ))}
           </ul>
         )}

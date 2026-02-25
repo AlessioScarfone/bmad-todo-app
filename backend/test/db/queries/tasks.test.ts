@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createTestDb } from '../../helpers/db.js'
-import { getTasks, createTask } from '../../../src/db/queries/tasks.js'
+import { getTasks, createTask, completeTask, uncompleteTask } from '../../../src/db/queries/tasks.js'
 
 describe('tasks schema + query', () => {
   let ctx: Awaited<ReturnType<typeof createTestDb>>
@@ -98,5 +98,107 @@ describe('tasks schema + query', () => {
     await createTask(ctx.sql, u1.id, 'Task for u1')
     const u2Tasks = await getTasks(ctx.sql, u2.id)
     expect(u2Tasks.every(t => t.title !== 'Task for u1')).toBe(true)
+  })
+})
+
+describe('completeTask / uncompleteTask queries', () => {
+  let ctx: Awaited<ReturnType<typeof createTestDb>>
+
+  beforeAll(async () => {
+    ctx = await createTestDb()
+  }, 60_000)
+
+  afterAll(async () => {
+    await ctx.sql.end()
+    await ctx.container.stop()
+  })
+
+  async function createUserAndTask(emailSuffix: string) {
+    const [u] = await ctx.sql<{ id: number }[]>`
+      INSERT INTO users (email, password_hash) VALUES (${`toggle-${emailSuffix}@test.com`}, 'hash') RETURNING id
+    `
+    const task = await createTask(ctx.sql, u.id, 'Toggle me')
+    return { userId: u.id, task }
+  }
+
+  it('completeTask marks task as completed and sets completedAt', async () => {
+    const { userId, task } = await createUserAndTask('1')
+    const result = await completeTask(ctx.sql, task.id, userId)
+    expect(result).toBeDefined()
+    expect(result!.isCompleted).toBe(true)
+    expect(result!.completedAt).not.toBeNull()
+    expect(result!.id).toBe(task.id)
+    expect(result!.userId).toBe(userId)
+  })
+
+  it('completeTask sets updated_at to a new value', async () => {
+    const { userId, task } = await createUserAndTask('2')
+    // Small delay so updated_at can differ
+    await new Promise(r => setTimeout(r, 10))
+    const result = await completeTask(ctx.sql, task.id, userId)
+    expect(result).toBeDefined()
+    const originalUpdated = new Date(task.updatedAt as string).getTime()
+    const newUpdated = new Date(result!.updatedAt as string).getTime()
+    expect(newUpdated).toBeGreaterThanOrEqual(originalUpdated)
+  })
+
+  it('completeTask returns undefined when task not found', async () => {
+    const { userId } = await createUserAndTask('3')
+    const result = await completeTask(ctx.sql, 999_999_999, userId)
+    expect(result).toBeUndefined()
+  })
+
+  it('completeTask returns undefined when task belongs to another user', async () => {
+    const { task } = await createUserAndTask('4')
+    const [other] = await ctx.sql<{ id: number }[]>`
+      INSERT INTO users (email, password_hash) VALUES ('toggle-4b@test.com', 'hash') RETURNING id
+    `
+    const result = await completeTask(ctx.sql, task.id, other.id)
+    expect(result).toBeUndefined()
+  })
+
+  it('uncompleteTask reverts completed task to incomplete and nulls completedAt', async () => {
+    const { userId, task } = await createUserAndTask('5')
+    await completeTask(ctx.sql, task.id, userId)
+    const result = await uncompleteTask(ctx.sql, task.id, userId)
+    expect(result).toBeDefined()
+    expect(result!.isCompleted).toBe(false)
+    expect(result!.completedAt).toBeNull()
+  })
+
+  it('uncompleteTask updates updated_at', async () => {
+    const { userId, task } = await createUserAndTask('6')
+    await completeTask(ctx.sql, task.id, userId)
+    await new Promise(r => setTimeout(r, 10))
+    const result = await uncompleteTask(ctx.sql, task.id, userId)
+    expect(result).toBeDefined()
+    const originalUpdated = new Date(task.updatedAt as string).getTime()
+    const newUpdated = new Date(result!.updatedAt as string).getTime()
+    expect(newUpdated).toBeGreaterThanOrEqual(originalUpdated)
+  })
+
+  it('uncompleteTask returns undefined when task not found', async () => {
+    const { userId } = await createUserAndTask('7')
+    const result = await uncompleteTask(ctx.sql, 999_999_999, userId)
+    expect(result).toBeUndefined()
+  })
+
+  it('uncompleteTask returns undefined when task belongs to another user', async () => {
+    const { task } = await createUserAndTask('8')
+    const [other] = await ctx.sql<{ id: number }[]>`
+      INSERT INTO users (email, password_hash) VALUES ('toggle-8b@test.com', 'hash') RETURNING id
+    `
+    const result = await uncompleteTask(ctx.sql, task.id, other.id)
+    expect(result).toBeUndefined()
+  })
+
+  it('completeTask returns correct column aliases (camelCase)', async () => {
+    const { userId, task } = await createUserAndTask('9')
+    const result = await completeTask(ctx.sql, task.id, userId)
+    expect(result).toBeDefined()
+    expect(typeof result!.id).toBe('number')
+    expect(typeof result!.userId).toBe('number')
+    expect(typeof result!.title).toBe('string')
+    expect(typeof result!.isCompleted).toBe('boolean')
   })
 })
