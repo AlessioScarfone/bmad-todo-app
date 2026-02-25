@@ -200,4 +200,5 @@ GPT-5.3-Codex
 ## Change Log
 
 - Story 2.2 (Create Task) implemented — `POST /api/tasks` endpoint, optimistic UI mutation, inline validation, retry/rollback UX, task count derived from cache. Frontend vitest test infrastructure added. (Date: 2026-02-25)
+- Code review performed — 5 issues fixed (1 High, 4 Medium): removed AC5-violating `onSettled` refetch, moved `invalidateQueries` to `onError` only; normalized whitespace-only 400 `error` field from `BAD_REQUEST` to `Bad Request`; AC5 test now spies on `api.get` and asserts no extra fetch; added AC1 test asserting optimistic task lands at index 0; `frontend/package-lock.json` documented in File List. Story marked done. (Date: 2026-02-25)
 - Code review performed — 5 issues fixed (1 High, 4 Medium): removed AC5-violating onSettled refetch, normalized error field casing, strengthened AC5 and AC1 test coverage, documented package-lock.json. Story marked done. (Date: 2026-02-25)

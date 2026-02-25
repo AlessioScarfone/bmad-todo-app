@@ -47,14 +47,14 @@ export function useCreateTask() {
       if (context?.previous !== undefined) {
         queryClient.setQueryData<Task[]>(['tasks'], context.previous)
       }
-      // Re-sync with server after failure to ensure cache consistency (AC4)
+      // Re-sync with server after failure to ensure cache consistency
       // On success we do NOT invalidate — count is derived from cache alone (AC5)
       queryClient.invalidateQueries({ queryKey: ['tasks'] })
     },
 
     onSuccess: (serverTask, _title, context) => {
       // Replace optimistic task with server-confirmed task (AC1, AC3)
-      // No invalidation here — avoids the extra GET /api/tasks call that would violate AC5
+      // No invalidation here — avoids extra GET /api/tasks that would violate AC5
       queryClient.setQueryData<Task[]>(['tasks'], old =>
         old?.map(t => (t.id === context?.tempId ? serverTask : t)) ?? [serverTask],
       )

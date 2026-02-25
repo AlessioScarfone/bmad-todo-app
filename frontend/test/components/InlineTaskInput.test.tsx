@@ -121,9 +121,7 @@ describe('InlineTaskInput', () => {
 
   it('optimistic task appears at top of list before server responds (AC1)', async () => {
     let resolveCreate!: (task: Task) => void
-    const deferred = new Promise<Task>(r => {
-      resolveCreate = r
-    })
+    const deferred = new Promise<Task>(r => { resolveCreate = r })
     vi.spyOn(apiModule.api, 'post').mockReturnValueOnce(deferred)
 
     const { queryClient } = renderWithQuery(<InlineTaskInput />)
@@ -140,7 +138,7 @@ describe('InlineTaskInput', () => {
       expect(tasks?.[1].title).toBe('Existing task')
     })
 
-    // Allow promise to settle cleanly
+    // Settle the deferred promise cleanly
     await act(async () => {
       resolveCreate(makeTask({ id: 99, title: 'New top task' }))
     })
