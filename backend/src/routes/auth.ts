@@ -37,7 +37,24 @@ const authRoutes: FastifyPluginAsync = async fastify => {
 
       try {
         const user = await createUser(fastify.sql, email, passwordHash)
-        return reply.status(201).send(user)
+
+        // Auto-login: sign a JWT and set the cookie so the user is immediately
+        // authenticated after registration (same cookie settings as POST /auth/login)
+        const token = fastify.jwt.sign(
+          { id: user.id, email: user.email },
+          { expiresIn: '30d' },
+        )
+
+        return reply
+          .setCookie('token', token, {
+            httpOnly: true,
+            sameSite: 'strict',
+            secure: process.env.NODE_ENV === 'production',
+            path: '/',
+            maxAge: 30 * 24 * 60 * 60,
+          })
+          .status(201)
+          .send(user)
       } catch (err) {
         if (err instanceof postgres.PostgresError && err.code === '23505') {
           return reply.status(409).send({
