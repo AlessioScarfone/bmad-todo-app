@@ -142,6 +142,17 @@ describe('TaskRow — inline edit mode (Story 2.4)', () => {
     expect(screen.getByRole('button', { name: /edit task title/i })).toBeInTheDocument()
   })
 
+  it('pressing Enter on the focused task row enters edit mode (AC1 keyboard-native path)', async () => {
+    const task = makeTask({ title: 'Row task' })
+    renderWithQuery(<TaskRow task={task} />, [task])
+    const row = screen.getByRole('listitem')
+    row.focus()
+    await userEvent.keyboard('{Enter}')
+    const input = screen.getByRole('textbox', { name: /edit task title: row task/i })
+    expect(input).toBeInTheDocument()
+    expect((input as HTMLInputElement).value).toBe('Row task')
+  })
+
   it('clicking edit icon enters edit mode — input appears with current title (AC1)', async () => {
     const task = makeTask({ title: 'My task' })
     renderWithQuery(<TaskRow task={task} />, [task])

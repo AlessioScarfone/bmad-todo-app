@@ -1,6 +1,6 @@
 # Story 2.4: Edit Task Title
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -375,3 +375,4 @@ Claude Sonnet 4.6
 ### Change Log
 
 - feat(2-4): implement edit task title — PATCH /api/tasks/:id endpoint, updateTaskTitle DB query, useUpdateTask mutation hook, inline edit mode in TaskRow (Date: 2026-02-25)
+- fix(2-4): code review fixes — tabIndex on li for AC1 keyboard path, ?? [] fallback in useUpdateTask.onSuccess, Type.Integer for route params, added Enter-on-row keyboard test (Date: 2026-02-25)

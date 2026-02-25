@@ -137,8 +137,10 @@ export function useUpdateTask() {
     onSuccess: (serverTask) => {
       // Replace task in cache with server-confirmed task
       // No invalidateQueries on success — avoids extra GET (AC2 optimistic requirement)
+      // Safe fallback: ?? [] (not ?? [serverTask]) — avoids replacing the whole list with one
+      // task when the cache is unexpectedly cold (established pattern from useToggleTask)
       queryClient.setQueryData<Task[]>(['tasks'], old =>
-        old?.map(t => (t.id === serverTask.id ? serverTask : t)) ?? [serverTask],
+        old?.map(t => (t.id === serverTask.id ? serverTask : t)) ?? [],
       )
     },
   })
