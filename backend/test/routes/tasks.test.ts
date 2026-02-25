@@ -560,3 +560,103 @@ describe('PATCH /api/tasks/:id (update title)', () => {
     expect(updated).toBeGreaterThan(created)
   })
 })
+
+describe('DELETE /api/tasks/:id (delete task)', () => {
+  let ctx: Awaited<ReturnType<typeof createTestDb>>
+  let app: ReturnType<typeof buildServer>
+
+  beforeAll(async () => {
+    ctx = await createTestDb()
+    app = buildServer('test-secret', ctx.sql)
+    await app.ready()
+  }, 60_000)
+
+  afterAll(async () => {
+    await app.close()
+    await ctx.sql.end()
+    await ctx.container.stop()
+  })
+
+  async function registerAndLogin(email: string) {
+    const passwordHash = await bcrypt.hash('password123', 12)
+    await ctx.sql`INSERT INTO users (email, password_hash) VALUES (${email}, ${passwordHash})`
+    const loginRes = await app.inject({
+      method: 'POST',
+      url: '/api/auth/login',
+      payload: { email, password: 'password123' },
+    })
+    const setCookie = loginRes.headers['set-cookie'] as string
+    return setCookie.split(';')[0]
+  }
+
+  async function createUserTask(email: string, title: string) {
+    const cookie = await registerAndLogin(email)
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/tasks',
+      payload: { title },
+      headers: { cookie },
+    })
+    return { cookie, task: res.json() }
+  }
+
+  it('returns 401 when unauthenticated (AC6)', async () => {
+    const res = await app.inject({
+      method: 'DELETE',
+      url: '/api/tasks/1',
+    })
+    expect(res.statusCode).toBe(401)
+  })
+
+  it('returns 204 and task is actually gone after deletion (AC2)', async () => {
+    const { cookie, task } = await createUserTask('delete-success@test.com', 'Task to delete')
+
+    const deleteRes = await app.inject({
+      method: 'DELETE',
+      url: `/api/tasks/${task.id}`,
+      headers: { cookie },
+    })
+    expect(deleteRes.statusCode).toBe(204)
+    expect(deleteRes.body).toBe('')
+
+    // Verify task is gone
+    const getRes = await app.inject({
+      method: 'GET',
+      url: '/api/tasks',
+      headers: { cookie },
+    })
+    expect(getRes.statusCode).toBe(200)
+    const tasks = getRes.json() as { id: number }[]
+    expect(tasks.find(t => t.id === task.id)).toBeUndefined()
+  })
+
+  it('returns 404 when task does not exist (AC6)', async () => {
+    const cookie = await registerAndLogin('delete-notfound@test.com')
+    const res = await app.inject({
+      method: 'DELETE',
+      url: '/api/tasks/999999999',
+      headers: { cookie },
+    })
+    expect(res.statusCode).toBe(404)
+    expect(res.json()).toMatchObject({ statusCode: 404, error: 'NOT_FOUND', message: 'Task not found' })
+  })
+
+  it('returns 404 when task belongs to another user — ownership isolation (AC6)', async () => {
+    const { task } = await createUserTask('delete-owner@test.com', 'Owner task')
+    const otherCookie = await registerAndLogin('delete-other@test.com')
+
+    const res = await app.inject({
+      method: 'DELETE',
+      url: `/api/tasks/${task.id}`,
+      headers: { cookie: otherCookie },
+    })
+    expect(res.statusCode).toBe(404)
+    expect(res.json()).toMatchObject({ statusCode: 404, error: 'NOT_FOUND' })
+
+    // Verify task still exists for the real owner
+    const ownerCookie = await registerAndLogin('delete-verify-owner@test.com')
+    // Retrieve using direct DB check instead to avoid polluting test state
+    const rows = await ctx.sql<{ id: number }[]>`SELECT id FROM tasks WHERE id = ${task.id}`
+    expect(rows).toHaveLength(1)
+  })
+})

@@ -54,7 +54,7 @@ development_status:
   2-2-create-task: done
   2-3-mark-task-complete-un-complete-with-live-task-count: done
   2-4-edit-task-title: done
-  2-5-delete-task: backlog
+  2-5-delete-task: in-progress
   epic-2-retrospective: optional
 
   # ─── Epic 3: Task Enrichment — Labels, Deadlines & Subtasks ────────────────

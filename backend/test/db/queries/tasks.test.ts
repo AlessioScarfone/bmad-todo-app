@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createTestDb } from '../../helpers/db.js'
-import { getTasks, createTask, completeTask, uncompleteTask, updateTaskTitle } from '../../../src/db/queries/tasks.js'
+import { getTasks, createTask, completeTask, uncompleteTask, updateTaskTitle, deleteTask } from '../../../src/db/queries/tasks.js'
 
 describe('tasks schema + query', () => {
   let ctx: Awaited<ReturnType<typeof createTestDb>>
@@ -261,5 +261,59 @@ describe('updateTaskTitle query', () => {
     expect(typeof result!.userId).toBe('number')
     expect(typeof result!.title).toBe('string')
     expect(typeof result!.isCompleted).toBe('boolean')
+  })
+})
+
+describe('deleteTask query', () => {
+  let ctx: Awaited<ReturnType<typeof createTestDb>>
+
+  beforeAll(async () => {
+    ctx = await createTestDb()
+  }, 60_000)
+
+  afterAll(async () => {
+    await ctx.sql.end()
+    await ctx.container.stop()
+  })
+
+  async function createUserAndTask(emailSuffix: string, title = 'Task to delete') {
+    const [u] = await ctx.sql<{ id: number }[]>`
+      INSERT INTO users (email, password_hash)
+      VALUES (${`delete-${emailSuffix}@test.com`}, 'hash')
+      RETURNING id
+    `
+    const task = await createTask(ctx.sql, u.id, title)
+    return { userId: u.id, task }
+  }
+
+  it('returns true when task is deleted successfully', async () => {
+    const { userId, task } = await createUserAndTask('1')
+    const result = await deleteTask(ctx.sql, task.id, userId)
+    expect(result).toBe(true)
+  })
+
+  it('task is actually removed from DB after deletion', async () => {
+    const { userId, task } = await createUserAndTask('2')
+    await deleteTask(ctx.sql, task.id, userId)
+    const rows = await ctx.sql<{ id: number }[]>`SELECT id FROM tasks WHERE id = ${task.id}`
+    expect(rows).toHaveLength(0)
+  })
+
+  it('returns false when taskId does not exist', async () => {
+    const { userId } = await createUserAndTask('3')
+    const result = await deleteTask(ctx.sql, 999_999_999, userId)
+    expect(result).toBe(false)
+  })
+
+  it('returns false when task belongs to a different userId — ownership isolation', async () => {
+    const { task } = await createUserAndTask('4')
+    const [other] = await ctx.sql<{ id: number }[]>`
+      INSERT INTO users (email, password_hash) VALUES ('delete-4b@test.com', 'hash') RETURNING id
+    `
+    const result = await deleteTask(ctx.sql, task.id, other.id)
+    expect(result).toBe(false)
+    // Task must still exist in DB
+    const rows = await ctx.sql<{ id: number }[]>`SELECT id FROM tasks WHERE id = ${task.id}`
+    expect(rows).toHaveLength(1)
   })
 })

@@ -70,6 +70,15 @@ export const uncompleteTask = async (sql: Sql, taskId: number, userId: number): 
   return rows[0]
 }
 
+export const deleteTask = async (sql: Sql, taskId: number, userId: number): Promise<boolean> => {
+  const rows = await sql`
+    DELETE FROM tasks
+    WHERE id = ${taskId} AND user_id = ${userId}
+    RETURNING id
+  `
+  return rows.length > 0
+}
+
 export const updateTaskTitle = async (sql: Sql, taskId: number, userId: number, title: string): Promise<Task | undefined> => {
   const rows = await sql<Task[]>`
     UPDATE tasks

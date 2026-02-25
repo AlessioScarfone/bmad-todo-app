@@ -2,7 +2,7 @@ import fp from 'fastify-plugin'
 import type { FastifyPluginAsync } from 'fastify'
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
-import { getTasks, createTask, completeTask, uncompleteTask, updateTaskTitle } from '../db/queries/tasks.js'
+import { getTasks, createTask, completeTask, uncompleteTask, updateTaskTitle, deleteTask } from '../db/queries/tasks.js'
 import { CreateTaskBodySchema, UpdateTaskBodySchema } from '../types/tasks.js'
 
 const taskRoutes: FastifyPluginAsync = async fastify => {
@@ -99,6 +99,25 @@ const taskRoutes: FastifyPluginAsync = async fastify => {
         return reply.status(404).send({ statusCode: 404, error: 'NOT_FOUND', message: 'Task not found' })
       }
       return reply.status(200).send(task)
+    },
+  )
+
+  f.delete(
+    '/tasks/:id',
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        params: Type.Object({ id: Type.Integer({ minimum: 1 }) }),
+      },
+    },
+    async (req, reply) => {
+      const userId = (req.user as { id: number }).id
+      const taskId = req.params.id
+      const deleted = await deleteTask(fastify.sql, taskId, userId)
+      if (!deleted) {
+        return reply.status(404).send({ statusCode: 404, error: 'NOT_FOUND', message: 'Task not found' })
+      }
+      return reply.status(204).send()
     },
   )
 
