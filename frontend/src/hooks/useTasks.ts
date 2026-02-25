@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import type { Task } from '../types/tasks'
 
+type DeleteTaskContext = { previous: Task[] | undefined }
+
 export function useTasks() {
   return useQuery<Task[]>({
     queryKey: ['tasks'],
@@ -142,6 +144,35 @@ export function useUpdateTask() {
       queryClient.setQueryData<Task[]>(['tasks'], old =>
         old?.map(t => (t.id === serverTask.id ? serverTask : t)) ?? [],
       )
+    },
+  })
+}
+
+export function useDeleteTask() {
+  const queryClient = useQueryClient()
+
+  return useMutation<void, Error, number, DeleteTaskContext>({
+    mutationFn: (id: number) => api.delete<void>(`/tasks/${id}`),
+
+    onMutate: async (id: number) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] })
+      const previous = queryClient.getQueryData<Task[]>(['tasks'])
+      queryClient.setQueryData<Task[]>(['tasks'], old =>
+        old?.filter(t => t.id !== id) ?? [],
+      )
+      return { previous }
+    },
+
+    onError: (_err, _id, context) => {
+      if (context?.previous !== undefined) {
+        queryClient.setQueryData<Task[]>(['tasks'], context.previous)
+      }
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+    },
+
+    onSuccess: () => {
+      // Task already removed optimistically — no cache update needed
+      // Do NOT call invalidateQueries on success (established pattern — avoids extra GET)
     },
   })
 }

@@ -1,6 +1,6 @@
 # Story 2.5: Delete Task
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -69,31 +69,31 @@ so that my list stays clean and relevant.
   - [x] **No body schema** — DELETE requests carry no request body
   - [x] Add `deleteTask` to the existing import from `../db/queries/tasks.js`
 
-- [ ] **Task 3: Frontend — `useDeleteTask` mutation hook** (AC: AC2, AC4, AC5)
+- [x] **Task 3: Frontend — `useDeleteTask` mutation hook** (AC: AC2, AC4, AC5)
   - [ ] Add `useDeleteTask()` to `frontend/src/hooks/useTasks.ts`
-  - [ ] `mutationFn`: `api.delete<void>('/tasks/${id}')` — `api.delete` already exists in `frontend/src/lib/api.ts`
-  - [ ] `onMutate`: cancel `['tasks']` queries, snapshot `previous`, remove the task from cache (`old?.filter(t => t.id !== id) ?? []`), return `{ previous }`
-  - [ ] `onError`: rollback to `context.previous`; then `queryClient.invalidateQueries({ queryKey: ['tasks'] })` to re-sync
-  - [ ] `onSuccess`: no additional cache update (task already removed optimistically); **no `invalidateQueries`** on success (established pattern)
-  - [ ] The mutation receives `id: number` as its variable (just the task ID — not the full Task object)
+  - [x] `mutationFn`: `api.delete<void>('/tasks/${id}')` — `api.delete` already exists in `frontend/src/lib/api.ts`
+  - [x] `onMutate`: cancel `['tasks']` queries, snapshot `previous`, remove the task from cache (`old?.filter(t => t.id !== id) ?? []`), return `{ previous }`
+  - [x] `onError`: rollback to `context.previous`; then `queryClient.invalidateQueries({ queryKey: ['tasks'] })` to re-sync
+  - [x] `onSuccess`: no additional cache update (task already removed optimistically); **no `invalidateQueries`** on success (established pattern)
+  - [x] The mutation receives `id: number` as its variable (just the task ID — not the full Task object)
 
-- [ ] **Task 4: Frontend — Extend `TaskRow.tsx` with two-step delete confirmation** (AC: AC1, AC2, AC3, AC4)
-  - [ ] `TaskRow.tsx` was created in Story 2.3 and extended in Story 2.4 — extend it further (do NOT re-create)
-  - [ ] Add `useDeleteTask` import alongside existing `useToggleTask` and `useUpdateTask`
-  - [ ] Add local state: `isConfirmingDelete: boolean` (default `false`) and `deleteError: string | null` (default `null`)
-  - [ ] **Step 1 (hover reveal)**: delete icon button, hidden by default, shown on hover via `opacity-0 group-hover:opacity-100` (same pattern as edit icon `✎`). Use `🗑` or `✕` character or an SVG; `aria-label="Delete task"`.
-  - [ ] **Click delete icon**: set `isConfirmingDelete(true)` — do NOT call mutation yet
-  - [ ] **Step 2 (confirm state)**: when `isConfirmingDelete === true`, render a confirmation inline area:
+- [x] **Task 4: Frontend — Extend `TaskRow.tsx` with two-step delete confirmation** (AC: AC1, AC2, AC3, AC4)
+  - [x] `TaskRow.tsx` was created in Story 2.3 and extended in Story 2.4 — extend it further (do NOT re-create)
+  - [x] Add `useDeleteTask` import alongside existing `useToggleTask` and `useUpdateTask`
+  - [x] Add local state: `isConfirmingDelete: boolean` (default `false`) and `deleteError: string | null` (default `null`)
+  - [x] **Step 1 (hover reveal)**: delete icon button, hidden by default, shown on hover via `opacity-0 group-hover:opacity-100` (same pattern as edit icon `✎`). Use `🗑` or `✕` character or an SVG; `aria-label="Delete task"`.
+  - [x] **Click delete icon**: set `isConfirmingDelete(true)` — do NOT call mutation yet
+  - [x] **Step 2 (confirm state)**: when `isConfirmingDelete === true`, render a confirmation inline area:
     - A brief "Delete?" label/text
     - A "Confirm" button (or "Delete" button) that calls `deleteTask.mutate(task.id)`
     - A "Cancel" button that calls `setIsConfirmingDelete(false)`
-  - [ ] **Optimistic removal**: once `mutate` is called, the task row disappears immediately (removed from cache in `onMutate`)
-  - [ ] **On error (AC4)**: `useDeleteTask`'s `onError` rolls back the cache (task reappears). `TaskRow` should also display `deleteError` inline with a Retry button that re-enters `isConfirmingDelete(true)`.
-  - [ ] **Do NOT break existing Story 2.3 / 2.4 features**: checkbox toggle, Space-key completion, inline edit, ARIA labels, error handling — all must remain intact
-  - [ ] Hide the edit icon (`✎`) when `isConfirmingDelete === true` (avoid conflicting UI states)
-  - [ ] ARIA: `aria-label="Delete task"` on the delete icon; `role="alert"` on inline delete error text; confirmation buttons need descriptive `aria-label` values
+  - [x] **Optimistic removal**: once `mutate` is called, the task row disappears immediately (removed from cache in `onMutate`)
+  - [x] **On error (AC4)**: `useDeleteTask`'s `onError` rolls back the cache (task reappears). `TaskRow` should also display `deleteError` inline with a Retry button that re-enters `isConfirmingDelete(true)`.
+  - [x] **Do NOT break existing Story 2.3 / 2.4 features**: checkbox toggle, Space-key completion, inline edit, ARIA labels, error handling — all must remain intact
+  - [x] Hide the edit icon (`✎`) when `isConfirmingDelete === true` (avoid conflicting UI states)
+  - [x] ARIA: `aria-label="Delete task"` on the delete icon; `role="alert"` on inline delete error text; confirmation buttons need descriptive `aria-label` values
 
-- [ ] **Task 5: Tests** (AC: AC1–AC6)
+- [x] **Task 5: Tests** (AC: AC1–AC6)
   - [x] **Backend route**: Add `describe('DELETE /api/tasks/:id (delete task)')` block to `backend/test/routes/tasks.test.ts`:
     - [x] 401 when unauthenticated
     - [x] 204 + task is actually gone (verify with a follow-up `GET /api/tasks`) on success
@@ -104,19 +104,19 @@ so that my list stays clean and relevant.
     - [x] Returns `false` when `taskId` doesn't exist
     - [x] Returns `false` when task belongs to a different `userId` (ownership isolation — the task remains in DB)
     - [x] Task is actually removed from DB after deletion (verify with a follow-up query)
-  - [ ] **Frontend hook**: Add `describe('useDeleteTask')` block to `frontend/test/hooks/useTasks.test.ts`:
-    - [ ] `onMutate` removes task from cache optimistically
-    - [ ] `onError` restores previous cache state
-    - [ ] `onSuccess` leaves cache in the already-optimistically-updated state (no extra items appear)
-  - [ ] **Frontend component**: Add `describe('TaskRow — delete with confirmation (Story 2.5)')` block to `frontend/test/components/TaskRow.test.tsx`:
-    - [ ] Delete icon is present in the DOM (verify `aria-label="Delete task"`)
-    - [ ] Clicking delete icon enters confirm state (renders "Cancel" button)
-    - [ ] Clicking "Cancel" exits confirm state without firing mutation
-    - [ ] Clicking "Confirm" fires `useDeleteTask` mutation with the task's ID
-    - [ ] Mutation failure shows inline delete error and Retry button
-    - [ ] Retry re-enters confirm state (`isConfirmingDelete === true`)
-    - [ ] Existing Story 2.3 tests still pass (checkbox, Space key toggle, toggle error state)
-    - [ ] Existing Story 2.4 tests still pass (edit icon, edit mode, keyboard interactions)
+  - [x] **Frontend hook**: Add `describe('useDeleteTask')` block to `frontend/test/hooks/useTasks.test.ts`:
+    - [x] `onMutate` removes task from cache optimistically
+    - [x] `onError` restores previous cache state
+    - [x] `onSuccess` leaves cache in the already-optimistically-updated state (no extra items appear)
+  - [x] **Frontend component**: Add `describe('TaskRow — delete with confirmation (Story 2.5)')` block to `frontend/test/components/TaskRow.test.tsx`:
+    - [x] Delete icon is present in the DOM (verify `aria-label="Delete task"`)
+    - [x] Clicking delete icon enters confirm state (renders "Cancel" button)
+    - [x] Clicking "Cancel" exits confirm state without firing mutation
+    - [x] Clicking "Confirm" fires `useDeleteTask` mutation with the task's ID
+    - [x] Mutation failure shows inline delete error and Retry button
+    - [x] Retry re-enters confirm state (`isConfirmingDelete === true`)
+    - [x] Existing Story 2.3 tests still pass (checkbox, Space key toggle, toggle error state)
+    - [x] Existing Story 2.4 tests still pass (edit icon, edit mode, keyboard interactions)
 
 ## Dev Notes
 
@@ -401,7 +401,10 @@ Claude Sonnet 4.6
 - **Backend tasks completed (2026-02-25)**: Implemented `deleteTask(sql, taskId, userId): Promise<boolean>` in `backend/src/db/queries/tasks.ts` — single `DELETE WHERE id AND user_id RETURNING id`, returns `rows.length > 0`.
 - Added `DELETE /api/tasks/:id` route in `backend/src/routes/tasks.ts` — `preHandler: [fastify.authenticate]`, params `Type.Integer({ minimum: 1 })`, returns `204 No Content` on success, `404 NOT_FOUND` when task not found or belongs to another user (established security pattern).
 - 8 new backend tests pass: 4 route integration tests (`401`, `204+verification`, `404 not-found`, `404 ownership`) and 4 DB query tests (`true on delete`, `row removed from DB`, `false when not-found`, `false+row-intact on wrong userId`). Full suite: **81/81 tests passed, 0 regressions**.
-- Frontend tasks (Tasks 3, 4, frontend part of Task 5) remain pending as per user instruction.
+- **Frontend tasks completed (2026-02-25)**: Fixed `request()` in `frontend/src/lib/api.ts` to return `undefined as T` for 204/no-body responses, preventing JSON parse errors on `DELETE /api/tasks/:id`.
+- Added `useDeleteTask()` to `frontend/src/hooks/useTasks.ts` — optimistic removal via `onMutate` (filter from cache), rollback + `invalidateQueries` in `onError`, no-op `onSuccess` (established pattern).
+- Extended `TaskRow.tsx` with two-step delete: hover-reveal `✕` icon (AC1), `isConfirmingDelete` state transitions to inline "Delete? / Confirm / Cancel" strip (AC2, AC3), `onError` shows inline error with Retry button that re-enters confirm state (AC4). Edit icon hidden during confirm state; delete icon hidden during edit mode (mutual exclusion). All existing Story 2.3/2.4 functionality preserved.
+- Added 3 `useDeleteTask` hook tests and 8 `TaskRow` delete component tests. **Frontend suite: 94/94 tests passed, 0 regressions** (up from 81).
 
 ### File List
 
@@ -409,5 +412,11 @@ Claude Sonnet 4.6
 - `backend/src/routes/tasks.ts` — added `DELETE /api/tasks/:id` route; updated import to include `deleteTask`
 - `backend/test/routes/tasks.test.ts` — added `describe('DELETE /api/tasks/:id (delete task)')` block (4 tests); added `createTask` import
 - `backend/test/db/queries/tasks.test.ts` — added `describe('deleteTask query')` block (4 tests); updated import to include `deleteTask`
+- `frontend/src/lib/api.ts` — added 204/no-body handling to `request()` to prevent JSON parse error on DELETE 204 response
+- `frontend/src/hooks/useTasks.ts` — added `useDeleteTask()` optimistic mutation hook
+- `frontend/src/components/TaskRow.tsx` — extended with `isConfirmingDelete`/`deleteError` state, delete icon (hover-reveal), confirmation strip, inline delete error with Retry
+- `frontend/test/hooks/useTasks.test.ts` — added `describe('useDeleteTask')` block (3 tests)
+- `frontend/test/components/TaskRow.test.tsx` — added `describe('TaskRow — delete with confirmation (Story 2.5)')` block (8 tests)
 
 - **2026-02-25**: Implemented backend tasks (Tasks 1, 2, 5-backend). Added `deleteTask` query, `DELETE /api/tasks/:id` route (204 No Content on success, 404 on not-found/wrong-user). Added 4 route integration tests and 4 DB query tests. All 81 backend tests pass. Frontend tasks (3, 4, 5-frontend) pending.
+- **2026-02-25**: Implemented frontend tasks (Tasks 3, 4, 5-frontend). Fixed `api.ts` for 204 handling. Added `useDeleteTask` hook with optimistic delete + rollback. Extended `TaskRow` with two-step delete confirmation UI (hover-reveal icon, confirm/cancel strip, inline error + Retry). All 94 frontend tests pass, 0 regressions. Story complete.

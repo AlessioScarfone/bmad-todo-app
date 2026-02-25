@@ -2,7 +2,7 @@ import { renderHook, act, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import React from 'react'
-import { useToggleTask, useCreateTask, useUpdateTask } from '../../src/hooks/useTasks'
+import { useToggleTask, useCreateTask, useUpdateTask, useDeleteTask } from '../../src/hooks/useTasks'
 import * as apiModule from '../../src/lib/api'
 import type { Task } from '../../src/types/tasks'
 
@@ -307,5 +307,81 @@ describe('useUpdateTask', () => {
     const cached = queryClient.getQueryData<Task[]>(['tasks'])
     expect(cached?.[0].title).toBe('Server confirmed')
     expect(cached?.[0].updatedAt).toBe('2026-02-25T15:00:00.000Z')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// useDeleteTask
+// ---------------------------------------------------------------------------
+
+describe('useDeleteTask', () => {
+  let queryClient: QueryClient
+
+  beforeEach(() => {
+    vi.restoreAllMocks()
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    })
+  })
+
+  it('onMutate removes task from cache optimistically', async () => {
+    const task1 = makeTask({ id: 30, title: 'Keep' })
+    const task2 = makeTask({ id: 31, title: 'Delete me' })
+    queryClient.setQueryData(['tasks'], [task1, task2])
+
+    // Slow API so we can inspect intermediate state
+    let resolveApi!: () => void
+    const pendingRes = new Promise<void>(r => { resolveApi = r })
+    vi.spyOn(apiModule.api, 'delete').mockReturnValue(pendingRes)
+
+    const { result } = renderHook(() => useDeleteTask(), { wrapper: createWrapper(queryClient) })
+
+    act(() => { result.current.mutate(31) })
+
+    await waitFor(() => {
+      const cached = queryClient.getQueryData<Task[]>(['tasks'])
+      expect(cached).toHaveLength(1)
+      expect(cached![0].id).toBe(30)
+    })
+
+    resolveApi()
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+  })
+
+  it('onError restores previous cache state', async () => {
+    const task1 = makeTask({ id: 32, title: 'Keep' })
+    const task2 = makeTask({ id: 33, title: 'Delete attempt' })
+    queryClient.setQueryData(['tasks'], [task1, task2])
+
+    vi.spyOn(apiModule.api, 'delete').mockRejectedValue(new Error('network error'))
+    vi.spyOn(apiModule.api, 'get').mockResolvedValue([task1, task2])
+
+    const { result } = renderHook(() => useDeleteTask(), { wrapper: createWrapper(queryClient) })
+    await act(async () => { result.current.mutate(33) })
+    await waitFor(() => expect(result.current.isError).toBe(true))
+
+    // onError rolls back to snapshot
+    await waitFor(() => {
+      const cached = queryClient.getQueryData<Task[]>(['tasks'])
+      expect(cached?.find(t => t.id === 33)).toBeDefined()
+    })
+  })
+
+  it('onSuccess leaves cache in the optimistically-updated state (no extra items)', async () => {
+    const task1 = makeTask({ id: 34, title: 'Remaining' })
+    const task2 = makeTask({ id: 35, title: 'To delete' })
+    queryClient.setQueryData(['tasks'], [task1, task2])
+
+    // Resolve immediately (simulate fast server)
+    vi.spyOn(apiModule.api, 'delete').mockResolvedValue(undefined)
+
+    const { result } = renderHook(() => useDeleteTask(), { wrapper: createWrapper(queryClient) })
+    await act(async () => { result.current.mutate(35) })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+
+    const cached = queryClient.getQueryData<Task[]>(['tasks'])
+    // Only task1 remains; no extra items added
+    expect(cached).toHaveLength(1)
+    expect(cached![0].id).toBe(34)
   })
 })

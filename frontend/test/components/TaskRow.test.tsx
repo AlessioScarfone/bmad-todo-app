@@ -250,3 +250,85 @@ describe('TaskRow — inline edit mode (Story 2.4)', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 })
+
+describe('TaskRow — delete with confirmation (Story 2.5)', () => {
+  beforeEach(() => vi.restoreAllMocks())
+
+  it('delete icon is present in the DOM with correct aria-label (AC1)', () => {
+    const task = makeTask({ title: 'My task' })
+    renderWithQuery(<TaskRow task={task} />, [task])
+    expect(screen.getByRole('button', { name: /delete task/i })).toBeInTheDocument()
+  })
+
+  it('clicking delete icon enters confirm state — Cancel button appears (AC1, AC3)', async () => {
+    const task = makeTask({ id: 60 })
+    renderWithQuery(<TaskRow task={task} />, [task])
+    await userEvent.click(screen.getByRole('button', { name: /delete task/i }))
+    expect(screen.getByRole('button', { name: /cancel delete/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /confirm delete/i })).toBeInTheDocument()
+  })
+
+  it('clicking Cancel exits confirm state without firing delete mutation (AC3)', async () => {
+    const task = makeTask({ id: 61 })
+    const spy = vi.spyOn(apiModule.api, 'delete')
+    renderWithQuery(<TaskRow task={task} />, [task])
+    await userEvent.click(screen.getByRole('button', { name: /delete task/i }))
+    await userEvent.click(screen.getByRole('button', { name: /cancel delete/i }))
+    expect(spy).not.toHaveBeenCalled()
+    // Confirm strip gone, delete icon visible again
+    expect(screen.queryByRole('button', { name: /cancel delete/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /delete task/i })).toBeInTheDocument()
+  })
+
+  it('clicking Confirm fires delete mutation with the task ID (AC2)', async () => {
+    const task = makeTask({ id: 62 })
+    const spy = vi.spyOn(apiModule.api, 'delete').mockResolvedValue(undefined)
+    const { queryClient } = renderWithQuery(<TaskRow task={task} />, [task])
+    // Remove task from cache so the component unmounts cleanly after delete
+    queryClient.setQueryData(['tasks'], [task])
+    await userEvent.click(screen.getByRole('button', { name: /delete task/i }))
+    await userEvent.click(screen.getByRole('button', { name: /confirm delete/i }))
+    expect(spy).toHaveBeenCalledWith('/tasks/62')
+  })
+
+  it('mutation failure shows inline delete error with Retry button (AC4)', async () => {
+    const task = makeTask({ id: 63 })
+    vi.spyOn(apiModule.api, 'delete').mockRejectedValue(new Error('server error'))
+    vi.spyOn(apiModule.api, 'get').mockResolvedValue([task])
+    renderWithQuery(<TaskRow task={task} />, [task])
+    await userEvent.click(screen.getByRole('button', { name: /delete task/i }))
+    await userEvent.click(screen.getByRole('button', { name: /confirm delete/i }))
+    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument())
+    expect(screen.getByRole('button', { name: /retry delete/i })).toBeInTheDocument()
+  })
+
+  it('Retry button re-enters confirm state (AC4)', async () => {
+    const task = makeTask({ id: 64 })
+    vi.spyOn(apiModule.api, 'delete').mockRejectedValue(new Error('fail'))
+    vi.spyOn(apiModule.api, 'get').mockResolvedValue([task])
+    renderWithQuery(<TaskRow task={task} />, [task])
+    await userEvent.click(screen.getByRole('button', { name: /delete task/i }))
+    await userEvent.click(screen.getByRole('button', { name: /confirm delete/i }))
+    await waitFor(() => screen.getByRole('button', { name: /retry delete/i }))
+    await userEvent.click(screen.getByRole('button', { name: /retry delete/i }))
+    // Confirm state re-entered
+    expect(screen.getByRole('button', { name: /confirm delete/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /cancel delete/i })).toBeInTheDocument()
+  })
+
+  it('existing Story 2.3 checkbox toggle still works (regression)', async () => {
+    const task = makeTask({ id: 65, isCompleted: false })
+    const spy = vi.spyOn(apiModule.api, 'patch').mockResolvedValueOnce({ ...task, isCompleted: true })
+    renderWithQuery(<TaskRow task={task} />, [task])
+    await userEvent.click(screen.getByRole('checkbox'))
+    expect(spy).toHaveBeenCalledWith('/tasks/65/complete')
+  })
+
+  it('existing Story 2.4 edit icon still works (regression)', async () => {
+    const task = makeTask({ id: 66, title: 'Edit me' })
+    renderWithQuery(<TaskRow task={task} />, [task])
+    await userEvent.click(screen.getByRole('button', { name: /edit task title/i }))
+    const input = screen.getByRole('textbox', { name: /edit task title: edit me/i })
+    expect(input).toBeInTheDocument()
+  })
+})

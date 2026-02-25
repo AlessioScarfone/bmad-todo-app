@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { useToggleTask, useUpdateTask } from '../hooks/useTasks'
+import { useToggleTask, useUpdateTask, useDeleteTask } from '../hooks/useTasks'
 import type { Task } from '../types/tasks'
 
 interface TaskRowProps {
@@ -9,6 +9,7 @@ interface TaskRowProps {
 export function TaskRow({ task }: TaskRowProps) {
   const toggleTask = useToggleTask()
   const updateTask = useUpdateTask()
+  const deleteTask = useDeleteTask()
 
   // Toggle error state
   const [toggleError, setToggleError] = useState<string | null>(null)
@@ -19,6 +20,10 @@ export function TaskRow({ task }: TaskRowProps) {
   const [editValue, setEditValue] = useState(task.title)
   const [editError, setEditError] = useState<string | null>(null)
   const [failedTitle, setFailedTitle] = useState<string | null>(null)
+
+  // Delete state
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -165,6 +170,43 @@ export function TaskRow({ task }: TaskRowProps) {
             ✎
           </button>
         )}
+
+        {/* Delete icon — shown on hover, hidden during edit or confirm state */}
+        {!isEditing && !isConfirmingDelete && (
+          <button
+            onClick={() => { setDeleteError(null); setIsConfirmingDelete(true) }}
+            aria-label="Delete task"
+            className="opacity-0 group-hover:opacity-100 text-[#888] hover:text-red-400 motion-safe:transition-opacity px-1"
+          >
+            ✕
+          </button>
+        )}
+
+        {/* Confirm delete strip */}
+        {isConfirmingDelete && (
+          <span className="flex items-center gap-2 ml-auto">
+            <span className="text-[11px] text-red-400">Delete?</span>
+            <button
+              onClick={() => {
+                setIsConfirmingDelete(false)
+                deleteTask.mutate(task.id, {
+                  onError: () => setDeleteError('Failed to delete task. Please try again.'),
+                })
+              }}
+              aria-label="Confirm delete task"
+              className="text-[11px] text-red-400 underline hover:text-red-300"
+            >
+              Confirm
+            </button>
+            <button
+              onClick={() => setIsConfirmingDelete(false)}
+              aria-label="Cancel delete"
+              className="text-[11px] text-[#888] underline hover:text-[#f0f0f0]"
+            >
+              Cancel
+            </button>
+          </span>
+        )}
       </div>
 
       {/* Edit validation / error */}
@@ -180,6 +222,20 @@ export function TaskRow({ task }: TaskRowProps) {
               Retry
             </button>
           )}
+        </div>
+      )}
+
+      {/* Delete error (inline, with Retry) */}
+      {deleteError && (
+        <div role="alert" className="mt-1 ml-6 text-[11px] text-red-400 flex items-center gap-2">
+          <span>{deleteError}</span>
+          <button
+            onClick={() => { setDeleteError(null); setIsConfirmingDelete(true) }}
+            className="underline hover:text-red-300"
+            aria-label="Retry delete"
+          >
+            Retry
+          </button>
         </div>
       )}
 
