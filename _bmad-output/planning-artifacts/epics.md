@@ -1,7 +1,7 @@
 ---
 stepsCompleted: [step-01-validate-prerequisites, step-02-design-epics, step-03-create-stories, step-04-final-validation]
-lastRevised: '2026-02-24'
-revisionSummary: 'Full regeneration from updated 29-FR PRD. Removed scoring/gamification (points, daily score, score history, seed task). Removed Epic 4 (Score History). Added task count display (FR21). Renumbered: old Epic 5→4, old Epic 6→5. Updated all stories and ARIA references.'
+lastRevised: '2026-02-25'
+revisionSummary: 'Full regeneration from updated 29-FR PRD. Removed scoring/gamification (points, daily score, score history, seed task). Removed Epic 4 (Score History). Added task count display (FR21). Renumbered: old Epic 5→4, old Epic 6→5. Updated all stories and ARIA references. Added Epic 6: Project Documentation with Stories 6.1 (README) and 6.2 (Developer Reference Docs).'
 inputDocuments:
   - '_bmad-output/planning-artifacts/prd.md'
   - '_bmad-output/planning-artifacts/architecture.md'
@@ -148,6 +148,10 @@ Authenticated users can filter their task list by label, completion status, or d
 Users receive inline error feedback with one-tap retry on any failed action; all state changes reflect within 1 second with no full page reload; every core flow is operable via keyboard alone. WCAG 2.1 AA compliance (zero critical violations). Test coverage requirements and E2E test targets are captured in the Definition of Done (see end of document).
 **FRs covered:** FR26, FR27, FR28, FR29
 **NFRs addressed:** NFR1–NFR17 (all performance, security, accessibility, reliability, and testing targets)
+
+### Epic 6: Project Documentation
+The project is documented with a well-written README and supporting reference material so that any developer can understand, set up, and contribute to the application. Documentation is generated using the `/bmad-bmm-document-project` workflow.
+**FRs covered:** N/A (non-functional, developer-facing)
 ---
 
 ## Epic 1: Project Foundation & Authentication
@@ -670,6 +674,64 @@ So that I can use the app regardless of how I interact with technology.
 **Given** color contrast is evaluated across the pixel-art theme
 **When** measured against WCAG AA thresholds
 **Then** all text and interactive element contrast ratios meet or exceed 4.5:1 (normal text) and 3:1 (large text / UI components)
+
+---
+
+## Epic 6: Project Documentation
+
+The project is documented with a well-written README and supporting developer reference material so that any developer can understand, set up, and contribute to the application without prior context.
+
+> **Execution note:** Run this epic using the `/bmad-bmm-document-project` workflow. Load 📊 Mary (Business Analyst) in a fresh context window — the workflow will analyze the existing codebase and produce documentation artifacts in the `docs/` folder. Alternatively, use the Write Document (`WD`) workflow with 📚 Paige (Technical Writer) for a focused single-document pass.
+
+### Story 6.1: Project README
+
+As a developer discovering this project,
+I want a well-structured README at the repository root,
+So that I can understand what the app does, set it up locally, and navigate the codebase without needing to read source code first.
+
+**Acceptance Criteria:**
+
+**Given** a developer visits the repository root
+**When** they open the README
+**Then** the document covers: project description, key feature list, technology stack (React + Vite, Fastify, PostgreSQL 16, Docker Compose), prerequisites, local setup steps (`docker-compose up --build`), environment variable reference (`.env.example` fields explained), and links to further docs in `docs/`
+
+**Given** the README references environment setup
+**When** a developer creates a `.env` from `.env.example` and runs `docker-compose up --build`
+**Then** the application starts with no additional manual steps required
+
+**Given** the README includes a project structure section
+**When** a developer reads it
+**Then** the purpose of each top-level directory is explained: `frontend/` (React SPA), `backend/` (Fastify API), `e2e/` (Playwright tests), `docs/` (developer reference), `_bmad-output/` (planning/implementation artifacts)
+
+**Given** the README describes the test strategy
+**When** a developer reads it
+**Then** it explains how to run backend unit tests (`vitest`), frontend tests, and E2E tests (`playwright`) including the Docker Compose prerequisite for E2E
+
+---
+
+### Story 6.2: Developer Reference Docs
+
+As a developer working on the codebase,
+I want concise architecture and API reference documents in the `docs/` folder,
+So that I can understand the system design and all available API endpoints without reading every source file.
+
+**Acceptance Criteria:**
+
+**Given** the `docs/` folder
+**When** a developer opens the architecture reference document
+**Then** it covers: a Mermaid system overview diagram showing the three services (web, api, db), service responsibilities, the auth flow (registration → JWT issued → httpOnly cookie → 30-day session), the key database tables (`users`, `tasks`, `labels`, `subtasks`), and the nginx reverse-proxy routing rule (`/api/*` → Fastify, `/*` → React SPA)
+
+**Given** the `docs/` folder
+**When** a developer opens the API endpoint reference
+**Then** every REST endpoint is listed with: HTTP method, path, authentication requirement, request body schema, and response shape — covering all auth routes (`/api/auth/*`), task routes (`/api/tasks/*`), subtask routes, and label routes
+
+**Given** the API reference document
+**When** a developer checks the authentication section
+**Then** it documents the JWT cookie mechanism: `Authorization` is handled via the `bmad_todo_session` httpOnly cookie, set on login/register and cleared on logout; all `/api/tasks/*` routes require a valid session
+
+**Given** the `docs/` folder
+**When** a developer needs to understand data models
+**Then** the architecture doc includes the PostgreSQL schema (tables, columns, constraints) and explains the `WHERE user_id = $userId` data-isolation pattern enforced on all task queries
 
 ---
 
