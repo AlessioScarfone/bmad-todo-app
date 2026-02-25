@@ -52,7 +52,7 @@ development_status:
   epic-2: in-progress
   2-1-task-list-view-database-foundation: done
   2-2-create-task: done
-  2-3-mark-task-complete-un-complete-with-live-task-count: backlog
+  2-3-mark-task-complete-un-complete-with-live-task-count: ready-for-dev
   2-4-edit-task-title: backlog
   2-5-delete-task: backlog
   epic-2-retrospective: optional
