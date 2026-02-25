@@ -109,3 +109,37 @@ export function useToggleTask() {
     },
   })
 }
+
+type UpdateTaskContext = { previous: Task[] | undefined }
+
+export function useUpdateTask() {
+  const queryClient = useQueryClient()
+
+  return useMutation<Task, Error, { id: number; title: string }, UpdateTaskContext>({
+    mutationFn: ({ id, title }) => api.patch<Task>(`/tasks/${id}`, { title }),
+
+    onMutate: async ({ id, title }) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] })
+      const previous = queryClient.getQueryData<Task[]>(['tasks'])
+      queryClient.setQueryData<Task[]>(['tasks'], old =>
+        old?.map(t => (t.id === id ? { ...t, title } : t)) ?? [],
+      )
+      return { previous }
+    },
+
+    onError: (_err, _vars, context) => {
+      if (context?.previous !== undefined) {
+        queryClient.setQueryData<Task[]>(['tasks'], context.previous)
+      }
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+    },
+
+    onSuccess: (serverTask) => {
+      // Replace task in cache with server-confirmed task
+      // No invalidateQueries on success — avoids extra GET (AC2 optimistic requirement)
+      queryClient.setQueryData<Task[]>(['tasks'], old =>
+        old?.map(t => (t.id === serverTask.id ? serverTask : t)) ?? [serverTask],
+      )
+    },
+  })
+}

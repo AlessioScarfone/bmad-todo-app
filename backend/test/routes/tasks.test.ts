@@ -420,3 +420,143 @@ describe('PATCH /api/tasks/:id/uncomplete', () => {
     expect(Array.isArray(body)).toBe(false)
   })
 })
+
+describe('PATCH /api/tasks/:id (update title)', () => {
+  let ctx: Awaited<ReturnType<typeof createTestDb>>
+  let app: ReturnType<typeof buildServer>
+
+  beforeAll(async () => {
+    ctx = await createTestDb()
+    app = buildServer('test-secret', ctx.sql)
+    await app.ready()
+  }, 60_000)
+
+  afterAll(async () => {
+    await app.close()
+    await ctx.sql.end()
+    await ctx.container.stop()
+  })
+
+  async function registerAndLogin(email: string) {
+    const passwordHash = await bcrypt.hash('password123', 12)
+    await ctx.sql`INSERT INTO users (email, password_hash) VALUES (${email}, ${passwordHash})`
+    const loginRes = await app.inject({
+      method: 'POST',
+      url: '/api/auth/login',
+      payload: { email, password: 'password123' },
+    })
+    const setCookie = loginRes.headers['set-cookie'] as string
+    return setCookie.split(';')[0]
+  }
+
+  async function createUserTask(email: string, title: string) {
+    const cookie = await registerAndLogin(email)
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/tasks',
+      payload: { title },
+      headers: { cookie },
+    })
+    return { cookie, task: res.json() }
+  }
+
+  it('returns 401 when unauthenticated', async () => {
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/api/tasks/1',
+      payload: { title: 'New title' },
+    })
+    expect(res.statusCode).toBe(401)
+  })
+
+  it('returns 400 when body title is missing', async () => {
+    const cookie = await registerAndLogin('patch-title-noBody@test.com')
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/api/tasks/1',
+      payload: {},
+      headers: { cookie },
+    })
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('returns 400 when body title is empty string (AC5)', async () => {
+    const { cookie, task } = await createUserTask('patch-title-empty@test.com', 'Original title')
+    const res = await app.inject({
+      method: 'PATCH',
+      url: `/api/tasks/${task.id}`,
+      payload: { title: '' },
+      headers: { cookie },
+    })
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('returns 400 when body title is whitespace only (AC5)', async () => {
+    const { cookie, task } = await createUserTask('patch-title-whitespace@test.com', 'Original title')
+    const res = await app.inject({
+      method: 'PATCH',
+      url: `/api/tasks/${task.id}`,
+      payload: { title: '   ' },
+      headers: { cookie },
+    })
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('returns 404 when task not found (AC4)', async () => {
+    const cookie = await registerAndLogin('patch-title-notfound@test.com')
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/api/tasks/999999999',
+      payload: { title: 'New title' },
+      headers: { cookie },
+    })
+    expect(res.statusCode).toBe(404)
+    expect(res.json()).toMatchObject({ statusCode: 404, error: 'NOT_FOUND' })
+  })
+
+  it('returns 404 when task belongs to another user (AC4)', async () => {
+    const { task } = await createUserTask('patch-title-owner@test.com', 'Owner task')
+    const otherCookie = await registerAndLogin('patch-title-other@test.com')
+    const res = await app.inject({
+      method: 'PATCH',
+      url: `/api/tasks/${task.id}`,
+      payload: { title: 'Stolen title' },
+      headers: { cookie: otherCookie },
+    })
+    expect(res.statusCode).toBe(404)
+  })
+
+  it('returns 200 with updated task object and new title (AC2)', async () => {
+    const { cookie, task } = await createUserTask('patch-title-success@test.com', 'Old title')
+    const res = await app.inject({
+      method: 'PATCH',
+      url: `/api/tasks/${task.id}`,
+      payload: { title: 'New title' },
+      headers: { cookie },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(body.title).toBe('New title')
+    expect(body.id).toBe(task.id)
+    expect(body.isCompleted).toBe(false)
+    expect(typeof body.userId).toBe('number')
+    expect(typeof body.createdAt).toBe('string')
+    expect(typeof body.updatedAt).toBe('string')
+    expect(Array.isArray(body)).toBe(false)
+  })
+
+  it('updatedAt is strictly greater than createdAt after update (AC2)', async () => {
+    const { cookie, task } = await createUserTask('patch-title-updtdat@test.com', 'Original')
+    await new Promise(r => setTimeout(r, 10))
+    const res = await app.inject({
+      method: 'PATCH',
+      url: `/api/tasks/${task.id}`,
+      payload: { title: 'Updated' },
+      headers: { cookie },
+    })
+    expect(res.statusCode).toBe(200)
+    const created = new Date(task.createdAt).getTime()
+    const updated = new Date(res.json().updatedAt).getTime()
+    expect(updated).toBeGreaterThan(created)
+  })
+})

@@ -2,8 +2,8 @@ import fp from 'fastify-plugin'
 import type { FastifyPluginAsync } from 'fastify'
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
-import { getTasks, createTask, completeTask, uncompleteTask } from '../db/queries/tasks.js'
-import { CreateTaskBodySchema } from '../types/tasks.js'
+import { getTasks, createTask, completeTask, uncompleteTask, updateTaskTitle } from '../db/queries/tasks.js'
+import { CreateTaskBodySchema, UpdateTaskBodySchema } from '../types/tasks.js'
 
 const taskRoutes: FastifyPluginAsync = async fastify => {
   const f = fastify.withTypeProvider<TypeBoxTypeProvider>()
@@ -50,6 +50,36 @@ const taskRoutes: FastifyPluginAsync = async fastify => {
 
       const task = await createTask(fastify.sql, userId, title)
       return reply.status(201).send(task)
+    },
+  )
+
+  f.patch(
+    '/tasks/:id',
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        params: Type.Object({ id: Type.Number() }),
+        body: UpdateTaskBodySchema,
+      },
+    },
+    async (req, reply) => {
+      const userId = (req.user as { id: number }).id
+      const taskId = req.params.id
+      const title = req.body.title.trim()
+
+      if (title.length === 0) {
+        return reply.status(400).send({
+          statusCode: 400,
+          error: 'Bad Request',
+          message: 'Title must not be empty or blank',
+        })
+      }
+
+      const task = await updateTaskTitle(fastify.sql, taskId, userId, title)
+      if (!task) {
+        return reply.status(404).send({ statusCode: 404, error: 'NOT_FOUND', message: 'Task not found' })
+      }
+      return reply.status(200).send(task)
     },
   )
 

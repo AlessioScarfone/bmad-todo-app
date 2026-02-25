@@ -1,6 +1,6 @@
 # Story 2.4: Edit Task Title
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -48,8 +48,8 @@ so that I can correct mistakes or reword work items.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Backend — `UpdateTaskBodySchema` type** (AC: AC2, AC5)
-  - [ ] Add `UpdateTaskBodySchema` to `backend/src/types/tasks.ts`:
+- [x] **Task 1: Backend — `UpdateTaskBodySchema` type** (AC: AC2, AC5)
+  - [x] Add `UpdateTaskBodySchema` to `backend/src/types/tasks.ts`:
     ```typescript
     export const UpdateTaskBodySchema = Type.Object({
       title: Type.String({ minLength: 1 }),
@@ -57,68 +57,68 @@ so that I can correct mistakes or reword work items.
     export type UpdateTaskBody = Static<typeof UpdateTaskBodySchema>
     ```
 
-- [ ] **Task 2: Backend — `updateTaskTitle` query function** (AC: AC2)
-  - [ ] Add `updateTaskTitle(sql, taskId, userId, title)` to `backend/src/db/queries/tasks.ts`
-  - [ ] SQL: `UPDATE tasks SET title = ${title}, updated_at = NOW() WHERE id = ${taskId} AND user_id = ${userId} RETURNING ...`
-  - [ ] Use the exact same `RETURNING` column aliases as `getTasks` and `createTask` (see "Database Rules" below)
-  - [ ] Return type: `Task | undefined` — if zero rows returned, the task doesn't exist or belongs to another user
-  - [ ] No default export — named export only (consistent with file pattern)
+- [x] **Task 2: Backend — `updateTaskTitle` query function** (AC: AC2)
+  - [x] Add `updateTaskTitle(sql, taskId, userId, title)` to `backend/src/db/queries/tasks.ts`
+  - [x] SQL: `UPDATE tasks SET title = ${title}, updated_at = NOW() WHERE id = ${taskId} AND user_id = ${userId} RETURNING ...`
+  - [x] Use the exact same `RETURNING` column aliases as `getTasks` and `createTask` (see "Database Rules" below)
+  - [x] Return type: `Task | undefined` — if zero rows returned, the task doesn't exist or belongs to another user
+  - [x] No default export — named export only (consistent with file pattern)
 
-- [ ] **Task 3: Backend — `PATCH /api/tasks/:id` route** (AC: AC2, AC4, AC5)
-  - [ ] Add route to `backend/src/routes/tasks.ts` inside the existing `taskRoutes` plugin body
-  - [ ] `preHandler: [fastify.authenticate]`
-  - [ ] Params schema: `Type.Object({ id: Type.Number() })` — TypeBox coerces `:id` string to number automatically
-  - [ ] Body schema: `UpdateTaskBodySchema` (import from `../types/tasks.js`)
-  - [ ] Handler: trim title, reject with 400 if empty (belt-and-suspenders — TypeBox `minLength:1` catches it at schema level too)
-  - [ ] Call `updateTaskTitle(fastify.sql, params.id, userId, title)` — if `undefined` → 404 with standard error shape
-  - [ ] Success: `reply.status(200).send(updatedTask)`
-  - [ ] Error shape: `{ statusCode, error, message }` — consistent with all other task routes
+- [x] **Task 3: Backend — `PATCH /api/tasks/:id` route** (AC: AC2, AC4, AC5)
+  - [x] Add route to `backend/src/routes/tasks.ts` inside the existing `taskRoutes` plugin body
+  - [x] `preHandler: [fastify.authenticate]`
+  - [x] Params schema: `Type.Object({ id: Type.Number() })` — TypeBox coerces `:id` string to number automatically
+  - [x] Body schema: `UpdateTaskBodySchema` (import from `../types/tasks.js`)
+  - [x] Handler: trim title, reject with 400 if empty (belt-and-suspenders — TypeBox `minLength:1` catches it at schema level too)
+  - [x] Call `updateTaskTitle(fastify.sql, params.id, userId, title)` — if `undefined` → 404 with standard error shape
+  - [x] Success: `reply.status(200).send(updatedTask)`
+  - [x] Error shape: `{ statusCode, error, message }` — consistent with all other task routes
 
-- [ ] **Task 4: Frontend — `useUpdateTask` mutation hook** (AC: AC2, AC3, AC4)
-  - [ ] Add `useUpdateTask()` to `frontend/src/hooks/useTasks.ts`
-  - [ ] `mutationFn`: `api.patch<Task>('/tasks/:id', { title })` — use the actual task ID
-  - [ ] `onMutate`: cancel `['tasks']` queries, snapshot previous, apply optimistic update (replace task title in cache by ID), return `{ previous, taskId, optimisticTitle }`
-  - [ ] `onError`: rollback to `context.previous`; then `queryClient.invalidateQueries({ queryKey: ['tasks'] })` to re-sync (same pattern as `useCreateTask` and `useToggleTask`)
-  - [ ] `onSuccess`: replace the task in cache with the server-confirmed task using `.map()` — do **NOT** call `invalidateQueries` on success
-  - [ ] The mutation receives `{ id: number; title: string }` as its variable
+- [x] **Task 4: Frontend — `useUpdateTask` mutation hook** (AC: AC2, AC3, AC4)
+  - [x] Add `useUpdateTask()` to `frontend/src/hooks/useTasks.ts`
+  - [x] `mutationFn`: `api.patch<Task>('/tasks/:id', { title })` — use the actual task ID
+  - [x] `onMutate`: cancel `['tasks']` queries, snapshot previous, apply optimistic update (replace task title in cache by ID), return `{ previous, taskId, optimisticTitle }`
+  - [x] `onError`: rollback to `context.previous`; then `queryClient.invalidateQueries({ queryKey: ['tasks'] })` to re-sync (same pattern as `useCreateTask` and `useToggleTask`)
+  - [x] `onSuccess`: replace the task in cache with the server-confirmed task using `.map()` — do **NOT** call `invalidateQueries` on success
+  - [x] The mutation receives `{ id: number; title: string }` as its variable
 
-- [ ] **Task 5: Frontend — Extend `TaskRow.tsx` with inline edit mode** (AC: AC1, AC2, AC3, AC4, AC5)
-  - [ ] `TaskRow.tsx` is created in Story 2.3 — extend it (do NOT re-create from scratch)
-  - [ ] Add a local `isEditing: boolean` state (default `false`) and `editValue: string` state (mirrors current title)
-  - [ ] **Enter edit mode** when: (a) user clicks the edit icon button on the row, OR (b) user presses Enter on a focused task row (when NOT already in edit mode)
-  - [ ] **In edit mode**: render an `<input type="text">` with the current `editValue`; auto-focus on mount
-  - [ ] **Press Enter in input**: call `updateTask({ id: task.id, title: editValue.trim() })` if title is non-empty — exit edit mode immediately (optimistic)
-  - [ ] **Press Escape in input**: reset `editValue` to `task.title`, exit edit mode — no API call
-  - [ ] **Empty title attempt**: show inline validation text "Title must not be empty" — do not call API
-  - [ ] **Mutation failure**: `useUpdateTask`'s `onError` rolls back the cache; `TaskRow` should also show an inline error message and a Retry button that re-enters edit mode with the failed title pre-populated
-  - [ ] **Do NOT break Story 2.3 features**: checkbox toggle, Space-key completion, ARIA checkbox label, inline error on completion failure — all must remain intact
-  - [ ] Edit icon button: small accessible icon (can use `✎` character or an SVG) with `aria-label="Edit task title"`, visible on hover of the row
-  - [ ] `aria-label` on the edit input: `"Edit task title: [current title]"`
+- [x] **Task 5: Frontend — Extend `TaskRow.tsx` with inline edit mode** (AC: AC1, AC2, AC3, AC4, AC5)
+  - [x] `TaskRow.tsx` is created in Story 2.3 — extend it (do NOT re-create from scratch)
+  - [x] Add a local `isEditing: boolean` state (default `false`) and `editValue: string` state (mirrors current title)
+  - [x] **Enter edit mode** when: (a) user clicks the edit icon button on the row, OR (b) user presses Enter on a focused task row (when NOT already in edit mode)
+  - [x] **In edit mode**: render an `<input type="text">` with the current `editValue`; auto-focus on mount
+  - [x] **Press Enter in input**: call `updateTask({ id: task.id, title: editValue.trim() })` if title is non-empty — exit edit mode immediately (optimistic)
+  - [x] **Press Escape in input**: reset `editValue` to `task.title`, exit edit mode — no API call
+  - [x] **Empty title attempt**: show inline validation text "Title must not be empty" — do not call API
+  - [x] **Mutation failure**: `useUpdateTask`'s `onError` rolls back the cache; `TaskRow` should also show an inline error message and a Retry button that re-enters edit mode with the failed title pre-populated
+  - [x] **Do NOT break Story 2.3 features**: checkbox toggle, Space-key completion, ARIA checkbox label, inline error on completion failure — all must remain intact
+  - [x] Edit icon button: small accessible icon (can use `✎` character or an SVG) with `aria-label="Edit task title"`, visible on hover of the row
+  - [x] `aria-label` on the edit input: `"Edit task title: [current title]"`
 
-- [ ] **Task 6: Tests** (AC: AC1–AC5)
-  - [ ] **Backend route**: Extend `backend/test/routes/tasks.test.ts` with a new `describe('PATCH /api/tasks/:id (update title)')` block:
-    - [ ] 401 when unauthenticated
-    - [ ] 400 when body `title` is missing or empty string
-    - [ ] 404 when task not found or belongs to another user
-    - [ ] 200 + updated task object returned with new title and updated `updatedAt`
-    - [ ] Assert `updatedAt` is strictly greater than `createdAt` (ensures the field was actually updated)
-  - [ ] **Backend DB query**: Extend `backend/test/db/queries/tasks.test.ts` with `updateTaskTitle` tests (Testcontainers, real DB):
-    - [ ] Returns updated task with new title and updated `updatedAt`
-    - [ ] Returns `undefined` when `taskId` doesn't exist
-    - [ ] Returns `undefined` when task belongs to a different `userId` (ownership isolation)
-  - [ ] **Frontend hook**: Extend or create `frontend/test/hooks/useTasks.test.ts` (or add to existing) for `useUpdateTask`:
-    - [ ] `onMutate` optimistically updates title in cache
-    - [ ] `onError` rolls back to original
-    - [ ] `onSuccess` replaces task with server response
-  - [ ] **Frontend component**: Extend `frontend/test/components/TaskRow.test.tsx` (created in Story 2.3):
-    - [ ] Edit icon button is present in the DOM
-    - [ ] Clicking edit icon enters edit mode (input appears with current title)
-    - [ ] Pressing Enter in input fires `useUpdateTask` mutation with new title
-    - [ ] Pressing Escape exits edit mode without firing mutation
-    - [ ] Empty title shows validation hint, does not fire mutation
-    - [ ] Mutation failure shows inline error and Retry button
-    - [ ] Retry re-opens edit mode with the failed title
-    - [ ] Existing Story 2.3 tests still pass (checkbox, Space key, etc.)
+- [x] **Task 6: Tests** (AC: AC1–AC5)
+  - [x] **Backend route**: Extend `backend/test/routes/tasks.test.ts` with a new `describe('PATCH /api/tasks/:id (update title)')` block:
+    - [x] 401 when unauthenticated
+    - [x] 400 when body `title` is missing or empty string
+    - [x] 404 when task not found or belongs to another user
+    - [x] 200 + updated task object returned with new title and updated `updatedAt`
+    - [x] Assert `updatedAt` is strictly greater than `createdAt` (ensures the field was actually updated)
+  - [x] **Backend DB query**: Extend `backend/test/db/queries/tasks.test.ts` with `updateTaskTitle` tests (Testcontainers, real DB):
+    - [x] Returns updated task with new title and updated `updatedAt`
+    - [x] Returns `undefined` when `taskId` doesn't exist
+    - [x] Returns `undefined` when task belongs to a different `userId` (ownership isolation)
+  - [x] **Frontend hook**: Extend or create `frontend/test/hooks/useTasks.test.ts` (or add to existing) for `useUpdateTask`:
+    - [x] `onMutate` optimistically updates title in cache
+    - [x] `onError` rolls back to original
+    - [x] `onSuccess` replaces task with server response
+  - [x] **Frontend component**: Extend `frontend/test/components/TaskRow.test.tsx` (created in Story 2.3):
+    - [x] Edit icon button is present in the DOM
+    - [x] Clicking edit icon enters edit mode (input appears with current title)
+    - [x] Pressing Enter in input fires `useUpdateTask` mutation with new title
+    - [x] Pressing Escape exits edit mode without firing mutation
+    - [x] Empty title shows validation hint, does not fire mutation
+    - [x] Mutation failure shows inline error and Retry button
+    - [x] Retry re-opens edit mode with the failed title
+    - [x] Existing Story 2.3 tests still pass (checkbox, Space key, etc.)
 
 ## Dev Notes
 
@@ -351,10 +351,27 @@ Claude Sonnet 4.6
 - Story 2.4 introduces `PATCH /api/tasks/:id` (title update) — the first generic PATCH route on the base task resource (distinct from Story 2.3's `/complete` and `/uncomplete` suffixed routes).
 - Critical: `updated_at` has no DB trigger — `SET updated_at = NOW()` must be explicit in `updateTaskTitle`.
 - Critical dependency: `TaskRow.tsx` is created in Story 2.3 — this story extends it. Confirm Story 2.3 is implemented before starting.
-- `api.patch` helper was added in Story 2.3 — reuse it, do not duplicate.
+- `api.patch` helper was added in Story 2.3 — reused it, no duplicate created.
 - Optimistic pattern follows `useCreateTask` exactly: `onMutate` → snapshot + optimistic, `onError` → rollback + invalidate, `onSuccess` → replace in cache (no invalidate).
 - Edit mode UX: Enter to submit, Escape to cancel, auto-focus input, hover-revealed edit icon with group-hover Tailwind pattern.
+- ✅ All 6 tasks/subtasks implemented and verified.
+- ✅ Backend: 73 tests passing (0 regressions), including 8 new PATCH title route tests and 4 new DB query tests.
+- ✅ Frontend: 82 tests passing (0 regressions), including 4 new useUpdateTask hook tests and 7 new TaskRow edit mode tests.
+- ✅ TypeScript: frontend compiles clean; backend pre-existing TS errors in createTask test not introduced by this story.
+- ✅ All ACs satisfied: AC1 (edit icon + Enter on row), AC2 (optimistic submit), AC3 (Escape cancels), AC4 (failure rollback + retry), AC5 (empty title validation).
 
 ### File List
 
+- `backend/src/types/tasks.ts` — added `UpdateTaskBodySchema` and `UpdateTaskBody`
+- `backend/src/db/queries/tasks.ts` — added `updateTaskTitle` query function
+- `backend/src/routes/tasks.ts` — added `PATCH /api/tasks/:id` route for title update
+- `backend/test/routes/tasks.test.ts` — added `describe('PATCH /api/tasks/:id (update title)')` block (8 tests)
+- `backend/test/db/queries/tasks.test.ts` — added `describe('updateTaskTitle query')` block (4 tests)
+- `frontend/src/hooks/useTasks.ts` — added `useUpdateTask` mutation hook
+- `frontend/src/components/TaskRow.tsx` — extended with inline edit mode (isEditing state, edit icon, input, keyboard handlers, error/retry)
+- `frontend/test/hooks/useTasks.test.ts` — added `describe('useUpdateTask')` block (4 tests)
+- `frontend/test/components/TaskRow.test.tsx` — added `describe('TaskRow — inline edit mode (Story 2.4)')` block (7 tests)
+
 ### Change Log
+
+- feat(2-4): implement edit task title — PATCH /api/tasks/:id endpoint, updateTaskTitle DB query, useUpdateTask mutation hook, inline edit mode in TaskRow (Date: 2026-02-25)

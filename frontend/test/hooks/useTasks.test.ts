@@ -2,7 +2,7 @@ import { renderHook, act, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import React from 'react'
-import { useToggleTask, useCreateTask } from '../../src/hooks/useTasks'
+import { useToggleTask, useCreateTask, useUpdateTask } from '../../src/hooks/useTasks'
 import * as apiModule from '../../src/lib/api'
 import type { Task } from '../../src/types/tasks'
 
@@ -231,5 +231,81 @@ describe('useCreateTask', () => {
     await waitFor(() => expect(result.current.isError).toBe(true))
 
     expect(result.current.error?.message).toBe('network error')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// useUpdateTask
+// ---------------------------------------------------------------------------
+
+describe('useUpdateTask', () => {
+  let queryClient: QueryClient
+
+  beforeEach(() => {
+    vi.restoreAllMocks()
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    })
+  })
+
+  it('calls PATCH /tasks/:id with the new title', async () => {
+    const task = makeTask({ id: 20, title: 'Original' })
+    queryClient.setQueryData(['tasks'], [task])
+    const spy = vi.spyOn(apiModule.api, 'patch').mockResolvedValue({ ...task, title: 'Updated' })
+
+    const { result } = renderHook(() => useUpdateTask(), { wrapper: createWrapper(queryClient) })
+    await act(async () => { result.current.mutate({ id: 20, title: 'Updated' }) })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+
+    expect(spy).toHaveBeenCalledWith('/tasks/20', { title: 'Updated' })
+  })
+
+  it('onMutate optimistically updates title in cache', async () => {
+    const task = makeTask({ id: 21, title: 'Old title' })
+    queryClient.setQueryData(['tasks'], [task])
+
+    let resolveApi!: (v: Task) => void
+    const pendingRes = new Promise<Task>(r => { resolveApi = r })
+    vi.spyOn(apiModule.api, 'patch').mockReturnValue(pendingRes)
+
+    const { result } = renderHook(() => useUpdateTask(), { wrapper: createWrapper(queryClient) })
+    act(() => { result.current.mutate({ id: 21, title: 'New title' }) })
+
+    await waitFor(() => {
+      const cached = queryClient.getQueryData<Task[]>(['tasks'])
+      expect(cached?.[0].title).toBe('New title')
+    })
+
+    resolveApi({ ...task, title: 'New title' })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+  })
+
+  it('onError rolls back to original cache', async () => {
+    const task = makeTask({ id: 22, title: 'Original' })
+    queryClient.setQueryData(['tasks'], [task])
+    vi.spyOn(apiModule.api, 'patch').mockRejectedValue(new Error('fail'))
+    vi.spyOn(apiModule.api, 'get').mockResolvedValue([task])
+
+    const { result } = renderHook(() => useUpdateTask(), { wrapper: createWrapper(queryClient) })
+    await act(async () => { result.current.mutate({ id: 22, title: 'Bad title' }) })
+    await waitFor(() => expect(result.current.isError).toBe(true))
+
+    const cached = queryClient.getQueryData<Task[]>(['tasks'])
+    expect(cached?.[0].title).toBe('Original')
+  })
+
+  it('onSuccess replaces task in cache with server response', async () => {
+    const task = makeTask({ id: 23, title: 'Local' })
+    const serverTask: Task = { ...task, title: 'Server confirmed', updatedAt: '2026-02-25T15:00:00.000Z' }
+    queryClient.setQueryData(['tasks'], [task])
+    vi.spyOn(apiModule.api, 'patch').mockResolvedValue(serverTask)
+
+    const { result } = renderHook(() => useUpdateTask(), { wrapper: createWrapper(queryClient) })
+    await act(async () => { result.current.mutate({ id: 23, title: 'Local' }) })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+
+    const cached = queryClient.getQueryData<Task[]>(['tasks'])
+    expect(cached?.[0].title).toBe('Server confirmed')
+    expect(cached?.[0].updatedAt).toBe('2026-02-25T15:00:00.000Z')
   })
 })

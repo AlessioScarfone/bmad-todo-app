@@ -69,3 +69,21 @@ export const uncompleteTask = async (sql: Sql, taskId: number, userId: number): 
   `
   return rows[0]
 }
+
+export const updateTaskTitle = async (sql: Sql, taskId: number, userId: number, title: string): Promise<Task | undefined> => {
+  const rows = await sql<Task[]>`
+    UPDATE tasks
+    SET title = ${title}, updated_at = NOW()
+    WHERE id = ${taskId} AND user_id = ${userId}
+    RETURNING
+      id,
+      user_id AS "userId",
+      title,
+      is_completed AS "isCompleted",
+      completed_at AS "completedAt",
+      deadline,
+      created_at AS "createdAt",
+      updated_at AS "updatedAt"
+  `
+  return rows[0]
+}
