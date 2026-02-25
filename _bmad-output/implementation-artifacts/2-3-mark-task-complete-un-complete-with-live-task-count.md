@@ -1,6 +1,6 @@
 # Story 2.3: Mark Task Complete & Un-complete with Live Task Count
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -259,6 +259,9 @@ Claude Sonnet 4.6
 - `frontend/src/hooks/useTasks.ts`
 - `frontend/src/lib/api.ts`
 - `frontend/src/pages/TaskListPage.tsx`
+- `frontend/src/components/TaskRow.tsx` *(also modified in code review: disabled prop)*
+- `backend/src/routes/tasks.ts` *(also modified in code review: Type.Integer)*
+- `frontend/src/hooks/useTasks.ts` *(also modified in code review: onSuccess fallback)*
 
 **Created:**
 - `frontend/src/components/TaskRow.tsx`
@@ -267,4 +270,11 @@ Claude Sonnet 4.6
 ### Change Log
 
 - 2026-02-25: Implemented Story 2.3 — Mark Task Complete/Un-complete with Live Task Count. Added `completeTask`/`uncompleteTask` DB query functions, `PATCH /api/tasks/:id/complete` and `PATCH /api/tasks/:id/uncomplete` routes, `useToggleTask` optimistic mutation hook, `TaskRow` component with checkbox + inline error + keyboard support, wired `TaskRow` into `TaskListPage`. Added 9 backend DB query tests, 10 backend route tests (5 per endpoint), and 8 frontend component tests.
+- 2026-02-25: AI Code Review (Claude Sonnet 4.6) — 7 issues found (1 High, 4 Medium, 2 Low). Fixed all HIGH + MEDIUM:
+  - [H1] Added `disabled={toggleTask.isPending}` to `TaskRow.tsx` checkbox to prevent concurrent mutation race.
+  - [M1] Changed `toBeGreaterThanOrEqual` → `toBeGreaterThan` for `updated_at` assertions in both backend test files (4 instances) — assertion now actually proves the value changed.
+  - [M2] Changed `Type.Number()` → `Type.Integer({ minimum: 1 })` for `:id` params schema in both PATCH routes — rejects decimals/negatives at schema layer.
+  - [M3] Added missing `response is direct task object (no wrapper)` test to `/uncomplete` describe block — symmetry with `/complete` block.
+  - [M4] Changed `?? [serverTask]` → `?? []` in both `useCreateTask` and `useToggleTask` `onSuccess` handlers — prevents task list wipe on cold cache.
+  - Low issues (L1 Content-Type header, L2 non-idempotent complete) left as known trade-offs.
 

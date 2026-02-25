@@ -55,8 +55,9 @@ export function useCreateTask() {
     onSuccess: (serverTask, _title, context) => {
       // Replace optimistic task with server-confirmed task (AC1, AC3)
       // No invalidation here — avoids extra GET /api/tasks that would violate AC5
+      // Fallback to [] (not [serverTask]) to avoid wiping the task list if cache is cold
       queryClient.setQueryData<Task[]>(['tasks'], old =>
-        old?.map(t => (t.id === context?.tempId ? serverTask : t)) ?? [serverTask],
+        old?.map(t => (t.id === context?.tempId ? serverTask : t)) ?? [],
       )
     },
   })
@@ -101,8 +102,9 @@ export function useToggleTask() {
     onSuccess: (serverTask) => {
       // Replace task in cache with server-confirmed task to reconcile
       // No invalidateQueries on success — avoids extra GET that violates <500ms requirement (AC2)
+      // Fallback to [] (not [serverTask]) to avoid wiping the task list if cache is cold
       queryClient.setQueryData<Task[]>(['tasks'], old =>
-        old?.map(t => (t.id === serverTask.id ? serverTask : t)) ?? [serverTask],
+        old?.map(t => (t.id === serverTask.id ? serverTask : t)) ?? [],
       )
     },
   })

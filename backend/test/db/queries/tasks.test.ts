@@ -139,7 +139,7 @@ describe('completeTask / uncompleteTask queries', () => {
     expect(result).toBeDefined()
     const originalUpdated = new Date(task.updatedAt as string).getTime()
     const newUpdated = new Date(result!.updatedAt as string).getTime()
-    expect(newUpdated).toBeGreaterThanOrEqual(originalUpdated)
+    expect(newUpdated).toBeGreaterThan(originalUpdated)
   })
 
   it('completeTask returns undefined when task not found', async () => {
@@ -174,7 +174,7 @@ describe('completeTask / uncompleteTask queries', () => {
     expect(result).toBeDefined()
     const originalUpdated = new Date(task.updatedAt as string).getTime()
     const newUpdated = new Date(result!.updatedAt as string).getTime()
-    expect(newUpdated).toBeGreaterThanOrEqual(originalUpdated)
+    expect(newUpdated).toBeGreaterThan(originalUpdated)
   })
 
   it('uncompleteTask returns undefined when task not found', async () => {

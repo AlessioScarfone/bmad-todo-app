@@ -288,7 +288,7 @@ describe('PATCH /api/tasks/:id/complete', () => {
     expect(res.statusCode).toBe(200)
     const original = new Date(task.updatedAt).getTime()
     const updated = new Date(res.json().updatedAt).getTime()
-    expect(updated).toBeGreaterThanOrEqual(original)
+    expect(updated).toBeGreaterThan(original)
   })
 
   it('response is direct task object (no wrapper) (AC1)', async () => {
@@ -403,6 +403,20 @@ describe('PATCH /api/tasks/:id/uncomplete', () => {
     expect(res.statusCode).toBe(200)
     const original = new Date(task.updatedAt).getTime()
     const updated = new Date(res.json().updatedAt).getTime()
-    expect(updated).toBeGreaterThanOrEqual(original)
+    expect(updated).toBeGreaterThan(original)
+  })
+
+  it('response is direct task object (no wrapper) (AC3)', async () => {
+    const { cookie, task } = await createAndCompleteTask('uncomplete-nowrapper@test.com', 'Direct task uncomplete')
+    const res = await app.inject({
+      method: 'PATCH',
+      url: `/api/tasks/${task.id}/uncomplete`,
+      headers: { cookie },
+    })
+    const body = res.json()
+    expect(typeof body.id).toBe('number')
+    expect(typeof body.title).toBe('string')
+    expect(typeof body.isCompleted).toBe('boolean')
+    expect(Array.isArray(body)).toBe(false)
   })
 })

@@ -45,8 +45,9 @@ export function TaskRow({ task }: TaskRowProps) {
           type="checkbox"
           checked={task.isCompleted}
           onChange={handleToggle}
+          disabled={toggleTask.isPending}
           aria-label={ariaLabel}
-          className="accent-[#00ff88] motion-safe:transition-all cursor-pointer"
+          className="accent-[#00ff88] motion-safe:transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         />
         <span
           className={

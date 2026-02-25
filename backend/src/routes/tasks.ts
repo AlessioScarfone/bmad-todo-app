@@ -58,7 +58,7 @@ const taskRoutes: FastifyPluginAsync = async fastify => {
     {
       preHandler: [fastify.authenticate],
       schema: {
-        params: Type.Object({ id: Type.Number() }),
+        params: Type.Object({ id: Type.Integer({ minimum: 1 }) }),
       },
     },
     async (req, reply) => {
@@ -77,7 +77,7 @@ const taskRoutes: FastifyPluginAsync = async fastify => {
     {
       preHandler: [fastify.authenticate],
       schema: {
-        params: Type.Object({ id: Type.Number() }),
+        params: Type.Object({ id: Type.Integer({ minimum: 1 }) }),
       },
     },
     async (req, reply) => {
