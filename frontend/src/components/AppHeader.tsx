@@ -3,12 +3,15 @@ import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { clearSavedEmail } from '../lib/auth'
 import { api } from '../lib/api'
+import { TaskCountDisplay } from './TaskCountDisplay'
 
 interface AppHeaderProps {
   userEmail?: string
+  completedTasks: number
+  totalTasks: number
 }
 
-export function AppHeader({ userEmail }: AppHeaderProps) {
+export function AppHeader({ userEmail, completedTasks, totalTasks }: AppHeaderProps) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [isLoggingOut, setIsLoggingOut] = useState(false)
@@ -40,7 +43,7 @@ export function AppHeader({ userEmail }: AppHeaderProps) {
             {userEmail}
           </span>
         )}
-        {/* TODO Story 2.3: <TaskCountDisplay /> goes here */}
+        <TaskCountDisplay completed={completedTasks} total={totalTasks} />
         <button
           onClick={handleLogout}
           disabled={isLoggingOut}

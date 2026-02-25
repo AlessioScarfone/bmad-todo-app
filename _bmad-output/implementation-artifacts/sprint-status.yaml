@@ -49,8 +49,8 @@ development_status:
   epic-1-retrospective: optional
 
   # ─── Epic 2: Core Task Management & Task Count Display ─────────────────────
-  epic-2: backlog
-  2-1-task-list-view-database-foundation: backlog
+  epic-2: in-progress
+  2-1-task-list-view-database-foundation: done
   2-2-create-task: backlog
   2-3-mark-task-complete-un-complete-with-live-task-count: backlog
   2-4-edit-task-title: backlog

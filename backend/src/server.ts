@@ -10,6 +10,7 @@ import { getSqlClient } from './db/client.js'
 import { runMigrations } from './db/migrate.js'
 import dbPlugin from './plugins/db.js'
 import authRoutes from './routes/auth.js'
+import taskRoutes from './routes/tasks.js'
 
 const PORT = parseInt(process.env.PORT ?? '3001', 10)
 const NODE_ENV = process.env.NODE_ENV ?? 'production'
@@ -55,11 +56,8 @@ export function buildServer(jwtSecret: string, sqlOverride?: Sql) {
     sql: dbSql,
   })
 
-  fastify.register(authRoutes, {
-    prefix: '/api',
-  })
-
   // ─── Decorators ────────────────────────────────────────────────────────────
+  // Must be declared before any route plugin that uses fastify.authenticate
 
   fastify.decorate(
     'authenticate',
@@ -75,6 +73,14 @@ export function buildServer(jwtSecret: string, sqlOverride?: Sql) {
       }
     },
   )
+
+  fastify.register(authRoutes, {
+    prefix: '/api',
+  })
+
+  fastify.register(taskRoutes, {
+    prefix: '/api',
+  })
 
   return fastify
 }
