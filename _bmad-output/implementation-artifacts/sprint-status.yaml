@@ -61,7 +61,7 @@ development_status:
   epic-3: in-progress
   3-1-labels-attach-and-remove: done
   3-2-deadline-set-and-remove: done
-  3-3-subtasks-add-complete-and-delete: ready-for-dev
+  3-3-subtasks-add-complete-and-delete: review
   epic-3-retrospective: optional
 
   # ─── Epic 4: Task Filtering & Sorting ──────────────────────────────────────

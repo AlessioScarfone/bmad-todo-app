@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api'
-import type { Task } from '../types/tasks'
+import type { Task, Subtask } from '../types/tasks'
 
 interface Label {
   id: number
@@ -312,5 +312,111 @@ export function useSetDeadline() {
         ) ?? [],
       )
     },
+  })
+}
+
+// ─── Subtask hooks ────────────────────────────────────────────────────────────
+
+export function useSubtasks(taskId: number) {
+  return useQuery<Subtask[]>({
+    queryKey: ['subtasks', taskId],
+    queryFn: () => api.get<Subtask[]>(`/tasks/${taskId}/subtasks`),
+    staleTime: 30_000,
+  })
+}
+
+type CreateSubtaskContext = { previous: Subtask[] | undefined }
+
+export function useCreateSubtask(taskId: number) {
+  const queryClient = useQueryClient()
+
+  return useMutation<Subtask, Error, { title: string }, CreateSubtaskContext>({
+    mutationFn: ({ title }) => api.post<Subtask>(`/tasks/${taskId}/subtasks`, { title }),
+
+    onMutate: async ({ title }) => {
+      await queryClient.cancelQueries({ queryKey: ['subtasks', taskId] })
+      const previous = queryClient.getQueryData<Subtask[]>(['subtasks', taskId])
+      const optimistic: Subtask = {
+        id: -Date.now(), // negative temp ID — guaranteed not to collide with real DB IDs
+        taskId,
+        title,
+        isCompleted: false,
+        createdAt: new Date().toISOString(),
+      }
+      queryClient.setQueryData<Subtask[]>(['subtasks', taskId], old => [...(old ?? []), optimistic])
+      return { previous }
+    },
+
+    onError: (_err, _vars, context) => {
+      if (context?.previous !== undefined) {
+        queryClient.setQueryData<Subtask[]>(['subtasks', taskId], context.previous)
+      }
+    },
+
+    onSuccess: (serverSubtask) => {
+      // Replace the temporary optimistic entry (negative id) with the server-confirmed subtask
+      queryClient.setQueryData<Subtask[]>(['subtasks', taskId], old =>
+        old?.map(s => (s.id < 0 && s.title === serverSubtask.title ? serverSubtask : s)) ?? [serverSubtask],
+      )
+    },
+  })
+}
+
+type ToggleSubtaskContext = { previous: Subtask[] | undefined }
+
+export function useToggleSubtask(taskId: number) {
+  const queryClient = useQueryClient()
+
+  return useMutation<Subtask, Error, { subId: number; isCompleted: boolean }, ToggleSubtaskContext>({
+    mutationFn: ({ subId, isCompleted }) =>
+      api.patch<Subtask>(`/tasks/${taskId}/subtasks/${subId}`, { isCompleted }),
+
+    onMutate: async ({ subId, isCompleted }) => {
+      await queryClient.cancelQueries({ queryKey: ['subtasks', taskId] })
+      const previous = queryClient.getQueryData<Subtask[]>(['subtasks', taskId])
+      queryClient.setQueryData<Subtask[]>(['subtasks', taskId], old =>
+        old?.map(s => (s.id === subId ? { ...s, isCompleted } : s)) ?? [],
+      )
+      return { previous }
+    },
+
+    onError: (_err, _vars, context) => {
+      if (context?.previous !== undefined) {
+        queryClient.setQueryData<Subtask[]>(['subtasks', taskId], context.previous)
+      }
+    },
+
+    onSuccess: (serverSubtask) => {
+      // NO auto-complete logic here — FR20: completing all subtasks does NOT complete the parent
+      queryClient.setQueryData<Subtask[]>(['subtasks', taskId], old =>
+        old?.map(s => (s.id === serverSubtask.id ? serverSubtask : s)) ?? [],
+      )
+    },
+  })
+}
+
+type DeleteSubtaskContext = { previous: Subtask[] | undefined }
+
+export function useDeleteSubtask(taskId: number) {
+  const queryClient = useQueryClient()
+
+  return useMutation<void, Error, { subId: number }, DeleteSubtaskContext>({
+    mutationFn: ({ subId }) => api.delete<void>(`/tasks/${taskId}/subtasks/${subId}`),
+
+    onMutate: async ({ subId }) => {
+      await queryClient.cancelQueries({ queryKey: ['subtasks', taskId] })
+      const previous = queryClient.getQueryData<Subtask[]>(['subtasks', taskId])
+      queryClient.setQueryData<Subtask[]>(['subtasks', taskId], old =>
+        old?.filter(s => s.id !== subId) ?? [],
+      )
+      return { previous }
+    },
+
+    onError: (_err, _vars, context) => {
+      if (context?.previous !== undefined) {
+        queryClient.setQueryData<Subtask[]>(['subtasks', taskId], context.previous)
+      }
+    },
+    // No onSuccess needed: item already removed from cache optimistically
   })
 }

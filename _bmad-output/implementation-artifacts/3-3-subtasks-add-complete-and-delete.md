@@ -1,6 +1,6 @@
 # Story 3.3: Subtasks — Add, Complete, and Delete
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -76,7 +76,7 @@ so that I can track the steps needed to finish a larger piece of work.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Backend — TypeBox schemas for Subtask** (AC: AC2, AC3, AC5, AC6)
+- [x] **Task 1: Backend — TypeBox schemas for Subtask** (AC: AC2, AC3, AC5, AC6)
   - [ ] Create `backend/src/types/subtasks.ts`:
     ```typescript
     import { Type, Static } from '@sinclair/typebox'
@@ -102,7 +102,7 @@ so that I can track the steps needed to finish a larger piece of work.
     ```
   - [ ] Follow the established naming convention: `PascalCase` + `Schema` suffix for schemas, `PascalCase` type via `Static<>`
 
-- [ ] **Task 2: Backend — DB query functions in `backend/src/db/queries/subtasks.ts`** (AC: AC1, AC2, AC3, AC5, AC6, AC9)
+- [x] **Task 2: Backend — DB query functions in `backend/src/db/queries/subtasks.ts`** (AC: AC1, AC2, AC3, AC5, AC6, AC9)
   - [ ] Create `backend/src/db/queries/subtasks.ts` with named exports only (no default export, per project rules):
     ```typescript
     import type { Sql } from 'postgres'
@@ -193,7 +193,7 @@ so that I can track the steps needed to finish a larger piece of work.
   - [ ] **No `updated_at` in subtasks table** — the schema from `003_enrichment.sql` doesn't include an `updated_at` column; do NOT add one and do NOT try to `SET updated_at = NOW()` (that would cause a runtime error)
   - [ ] **Alternative to `sql.unsafe()`:** If `sql.unsafe()` feels risky, just inline the column list: `RETURNING id, task_id AS "taskId", title, is_completed AS "isCompleted", created_at AS "createdAt"` in each query directly
 
-- [ ] **Task 3: Backend — Subtask routes plugin `backend/src/routes/subtasks.ts`** (AC: AC1–AC9)
+- [x] **Task 3: Backend — Subtask routes plugin `backend/src/routes/subtasks.ts`** (AC: AC1–AC9)
   - [ ] Create `backend/src/routes/subtasks.ts`:
     ```typescript
     import fp from 'fastify-plugin'
@@ -264,7 +264,7 @@ so that I can track the steps needed to finish a larger piece of work.
   - [ ] **Route pattern follows established conventions:** `fp()` wrapped, `fastify.withTypeProvider<TypeBoxTypeProvider>()`, `preHandler: [fastify.authenticate]`, `(req.user as { id: number }).id` for user extraction
   - [ ] **Error response shape `{ statusCode, error, message }`** — used consistently on all 4xx responses, matching the rest of the API
 
-- [ ] **Task 4: Backend — Register subtaskRoutes in `server.ts`** (AC: all backend ACs)
+- [x] **Task 4: Backend — Register subtaskRoutes in `server.ts`** (AC: all backend ACs)
   - [ ] In `backend/src/server.ts`, add:
     ```typescript
     import subtaskRoutes from './routes/subtasks.js'
@@ -277,7 +277,7 @@ so that I can track the steps needed to finish a larger piece of work.
     ```
   - [ ] **CRITICAL:** Add import using `.js` extension — ESM rule for backend TypeScript source
 
-- [ ] **Task 5: Frontend — Add `Subtask` interface to `frontend/src/types/tasks.ts`** (AC: AC1–AC8)
+- [x] **Task 5: Frontend — Add `Subtask` interface to `frontend/src/types/tasks.ts`** (AC: AC1–AC8)
   - [ ] Append to `frontend/src/types/tasks.ts`:
     ```typescript
     export interface Subtask {
@@ -290,7 +290,7 @@ so that I can track the steps needed to finish a larger piece of work.
     ```
   - [ ] **No `updatedAt` field** — the `subtasks` table has no `updated_at` column; mirroring the actual backend shape
 
-- [ ] **Task 6: Frontend — Add subtask hooks to `frontend/src/hooks/useTasks.ts`** (AC: AC1–AC8)
+- [x] **Task 6: Frontend — Add subtask hooks to `frontend/src/hooks/useTasks.ts`** (AC: AC1–AC8)
   - [ ] **`useSubtasks`** — fetches subtasks when panel opens:
     ```typescript
     export function useSubtasks(taskId: number) {
@@ -407,7 +407,7 @@ so that I can track the steps needed to finish a larger piece of work.
   - [ ] **Query key `['subtasks', taskId]`** — array form, task-scoped; separate from `['tasks']` so task list cache is never invalidated by subtask mutations
   - [ ] **NO auto-complete logic** — `useToggleSubtask.onSuccess` must NOT check "are all subtasks complete?" and must NOT call any task completion mutation. Explicitly forbidden by FR20.
 
-- [ ] **Task 7: Frontend — Create `SubtaskPanel.tsx`** (AC: AC1–AC8)
+- [x] **Task 7: Frontend — Create `SubtaskPanel.tsx`** (AC: AC1–AC8)
   - [ ] Create `frontend/src/components/SubtaskPanel.tsx`:
     ```typescript
     import { useState, useRef } from 'react'
@@ -521,7 +521,7 @@ so that I can track the steps needed to finish a larger piece of work.
   - [ ] **`aria-expanded` not needed on SubtaskPanel itself** — it lives only when rendered; `aria-expanded` goes on the toggle button in `TaskRow.tsx`
   - [ ] **`prefers-reduced-motion`** — if any open/close animation is added, wrap it in `motion-safe:` Tailwind variant
 
-- [ ] **Task 8: Frontend — Extend `TaskRow.tsx` with subtask toggle + panel** (AC: AC1, AC4, AC7)
+- [x] **Task 8: Frontend — Extend `TaskRow.tsx` with subtask toggle + panel** (AC: AC1, AC4, AC7)
   - [ ] **`TaskRow.tsx` was created in Story 2.3 and extended in Stories 2.4, 2.5, 3.1, and 3.2 — EXTEND IT, DO NOT re-create**
   - [ ] Add import: `import { SubtaskPanel } from './SubtaskPanel'`
   - [ ] Add local state: `const [subtasksOpen, setSubtasksOpen] = useState(false)`
@@ -543,7 +543,7 @@ so that I can track the steps needed to finish a larger piece of work.
   - [ ] **`aria-expanded` on the toggle button** is per UX spec: `aria-expanded` must be on the subtask panel trigger
   - [ ] **NEVER add auto-complete logic** — do not listen for subtask count changes and trigger task completion. This is explicitly forbidden by FR20. The `SubtaskPanel` is purely a subtask manager.
 
-- [ ] **Task 9: Backend unit/integration tests** (NFR16 — ≥70% coverage target)
+- [x] **Task 9: Backend unit/integration tests** (NFR16 — ≥70% coverage target)
   - [ ] Create `backend/test/db/queries/subtasks.test.ts` using Testcontainers (`createTestDb()`):
     - Test: `createSubtask` inserts a row and returns the subtask
     - Test: `createSubtask` returns `undefined` when task belongs to another user (user isolation)
@@ -561,7 +561,7 @@ so that I can track the steps needed to finish a larger piece of work.
     - Test: `DELETE /api/tasks/:id/subtasks/:subId` — 204
   - [ ] **Run backend tests with:** `TESTCONTAINERS_RYUK_DISABLED=true DOCKER_HOST=unix://$HOME/.colima/default/docker.sock npx vitest run` (pre-configured in `backend/package.json`)
 
-- [ ] **Task 10: Frontend unit tests** (NFR16 — ≥70% coverage target)
+- [x] **Task 10: Frontend unit tests** (NFR16 — ≥70% coverage target)
   - [ ] Create `frontend/test/components/SubtaskPanel.test.tsx`:
     - Mock `useTasks` hooks at module level (`vi.mock('../../../src/hooks/useTasks')`)
     - Test: renders subtask list from `useSubtasks`
@@ -572,7 +572,7 @@ so that I can track the steps needed to finish a larger piece of work.
     - Test: shows `role="alert"` error on create failure
   - [ ] **Test file location:** `frontend/test/components/SubtaskPanel.test.tsx` — mirrors `src/components/SubtaskPanel.tsx`
 
-- [ ] **Task 11: E2E tests — enable skipped subtask tests** (NFR17 — min 5 Playwright E2E tests)
+- [x] **Task 11: E2E tests — enable skipped subtask tests** (NFR17 — min 5 Playwright E2E tests)
   - [ ] Rewrite `e2e/tests/subtasks.spec.ts` to replace the skipped stubs with actual tests:
     - Test: creates a user, creates a task, opens subtask panel, adds a subtask, verifies it appears
     - Test: marks a subtask as complete independently, verifies parent task checkbox remains unchecked (FR20)
@@ -642,6 +642,12 @@ so that I can track the steps needed to finish a larger piece of work.
 - E2E subtask stubs to implement: [e2e/tests/subtasks.spec.ts](e2e/tests/subtasks.spec.ts)
 - UX spec (aria-expanded, SubtaskPanel trigger, role="alert"): [Source: \_bmad-output/planning-artifacts/epics.md — Additional Requirements from UX Design]
 
+## Change Log
+
+| Date | Changes |
+|---|---|
+| 2026-02-26 | Implemented complete subtask feature: TypeBox schemas, DB queries, Fastify routes (with fp() encapsulate fix), React hooks (optimistic), SubtaskPanel component, TaskRow toggle, unit tests, E2E tests |
+
 ## Dev Agent Record
 
 ### Agent Model Used
@@ -650,11 +656,34 @@ Claude Sonnet 4.6
 
 ### Debug Log References
 
+- **Bug fix:** `subtaskRoutes` was exported as `fp(subtaskRoutes)` without `encapsulate: true`, causing routes to be registered in the parent scope and lose the `/api` prefix. Fixed to match `labelRoutes` pattern: `fp(subtaskRoutes, { name: 'subtask-routes', dependencies: ['db-plugin'], encapsulate: true })`.
+
 ### Completion Notes List
 
 - Story created via BMAD create-story workflow (2026-02-26)
-- Comprehensive context generated from epics, architecture, project-context, and previous stories (3.1, 3.2) analysis
 - No migration required — subtasks table scaffolded in Story 3.1 via 003_enrichment.sql
-- FR20 (no auto-complete) and FR19 (no nesting) are explicitly called out in every relevant task
+- FR20 (no auto-complete) and FR19 (no nesting) enforced at every layer (DB queries, routes, React hooks, components, E2E tests)
+- **Bug fixed:** `fp()` without `encapsulate: true` caused subtask routes to lose `/api` prefix. Fixed by adding `{ name: 'subtask-routes', dependencies: ['db-plugin'], encapsulate: true }` matching the established `labelRoutes` pattern.
+- All 4 backend route endpoints (GET, POST, PATCH, DELETE) pass 14/14 route tests and 12/12 DB query tests
+- All 10 `SubtaskPanel.test.tsx` frontend unit tests pass
+- All 3 E2E subtask tests pass (add, complete independently, delete)
+- Full regression suite: 130/130 frontend unit tests, 36/47 E2E tests (11 skipped are pre-existing story 4.x filter stubs)
+- 5 pre-existing backend deadline format failures (Story 3.2 regression, not introduced by this story)
 
 ### File List
+
+**New files:**
+- backend/src/types/subtasks.ts
+- backend/src/db/queries/subtasks.ts
+- backend/src/routes/subtasks.ts
+- frontend/src/components/SubtaskPanel.tsx
+- backend/test/db/queries/subtasks.test.ts
+- backend/test/routes/subtasks.test.ts
+- frontend/test/components/SubtaskPanel.test.tsx
+- e2e/tests/subtasks.spec.ts
+
+**Modified files:**
+- backend/src/server.ts (added subtaskRoutes import and registration)
+- frontend/src/types/tasks.ts (added Subtask interface)
+- frontend/src/hooks/useTasks.ts (added useSubtasks, useCreateSubtask, useToggleSubtask, useDeleteSubtask)
+- frontend/src/components/TaskRow.tsx (added subtasksOpen state, toggle button, conditional SubtaskPanel render)

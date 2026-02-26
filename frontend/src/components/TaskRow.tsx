@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useLabels } from '../hooks/useLabels'
 import { useAttachLabel, useToggleTask, useUpdateTask, useDeleteTask, useRemoveLabel, useSetDeadline } from '../hooks/useTasks'
 import type { Task } from '../types/tasks'
+import { SubtaskPanel } from './SubtaskPanel'
 
 interface TaskRowProps {
   task: Task
@@ -46,6 +47,9 @@ export function TaskRow({ task }: TaskRowProps) {
   const [showDeadlinePicker, setShowDeadlinePicker] = useState(false)
   const [deadlineError, setDeadlineError] = useState<string | null>(null)
   const [lastDeadlineArgs, setLastDeadlineArgs] = useState<{ id: number; deadline: string | null } | null>(null)
+
+  // Subtask panel state
+  const [subtasksOpen, setSubtasksOpen] = useState(false)
 
   // Label state
   const [isAddingLabel, setIsAddingLabel] = useState(false)
@@ -553,6 +557,22 @@ export function TaskRow({ task }: TaskRowProps) {
           </button>
         </div>
       )}
+
+      {/* Subtask toggle button */}
+      <div className="mt-1 ml-6">
+        <button
+          type="button"
+          onClick={() => setSubtasksOpen(open => !open)}
+          aria-expanded={subtasksOpen}
+          aria-label={`${subtasksOpen ? 'Collapse' : 'Expand'} subtasks for "${task.title}"`}
+          className="text-[11px] text-[#555] hover:text-[#00ff88] font-mono"
+        >
+          {subtasksOpen ? '▲ Subtasks' : '▼ Subtasks'}
+        </button>
+      </div>
+
+      {/* Subtask panel — NO auto-complete logic (FR20) */}
+      {subtasksOpen && <SubtaskPanel taskId={task.id} />}
     </li>
   )
 }
