@@ -1,6 +1,6 @@
 # Test Automation Summary
 
-**Last Updated**: 2026-02-26  
+**Last Updated**: 2026-02-26 (Story 4.1 update)  
 **Project**: bmad-todo-app  
 **Workflow**: QA — Generate E2E / Automated Tests  
 **Frameworks**: Playwright (E2E), Vitest + React Testing Library (frontend), Vitest + Testcontainers (backend)
@@ -9,7 +9,15 @@
 
 ## Generated Tests
 
-### E2E Tests — 2026-02-26 (new)
+### E2E Tests — Story 4.1 (filters)
+
+- [x] [e2e/tests/filters.spec.ts](../../../e2e/tests/filters.spec.ts) — Filter by label, status, deadline, reset on reload (Story 4.1) — 4 tests
+
+### Frontend Component Tests — Story 4.1 (filters)
+
+- [x] [frontend/test/components/FilterBar.test.tsx](../../../frontend/test/components/FilterBar.test.tsx) — FilterBar renders all groups, button clicks, aria-pressed states, deselect, label sort — 15 tests, ✅ all pass
+
+### E2E Tests — 2026-02-26 (prior)
 
 - [x] [e2e/tests/labels.spec.ts](../../../e2e/tests/labels.spec.ts) — Label attach and remove user workflows (Story 3.1) — 3 tests, ✅ all pass
 - [x] [e2e/tests/deadlines.spec.ts](../../../e2e/tests/deadlines.spec.ts) — Deadline set, remove, and persistence (Story 3.2) — 3 tests, ✅ all pass
@@ -62,7 +70,8 @@
 | Labels attach / remove | ✅ **labels.spec.ts** *(new 2026-02-26)* |
 | Deadline set / remove / persist | ✅ **deadlines.spec.ts** *(new 2026-02-26)* |
 | Subtasks add / complete / delete | ✅ subtasks.spec.ts |
-| Filters & sorting | ⏭ skipped (Epic 4 — backlog) |
+| Filters (label, status, deadline) | ✅ **filters.spec.ts** *(new 2026-02-26 Story 4.1)* |
+| Sorting | ⏭ skipped (Epic 4, Story 4.2 — backlog) |
 
 ## Frontend Unit Coverage
 
@@ -77,6 +86,7 @@
 | `ProtectedRoute` | ✅ ProtectedRoute.test.tsx |
 | `SubtaskPanel` | ✅ SubtaskPanel.test.tsx |
 | `TaskCountDisplay` | ✅ TaskCountDisplay.test.tsx |
+| `FilterBar` | ✅ **FilterBar.test.tsx** *(new 2026-02-26 Story 4.1)* |
 | `TaskRow` | ✅ TaskRow.test.tsx |
 | `LoginPage` | ✅ LoginPage.test.tsx |
 | `RegisterPage` | ✅ RegisterPage.test.tsx |
