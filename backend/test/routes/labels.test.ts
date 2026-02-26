@@ -239,4 +239,17 @@ describe('DELETE /api/labels/:id', () => {
     expect(delRes.statusCode).toBe(403)
     expect(delRes.json()).toMatchObject({ statusCode: 403, error: 'FORBIDDEN' })
   })
+
+  it('returns 404 when label does not exist', async () => {
+    const cookie = await registerAndLogin('labels-delete-missing@test.com')
+
+    const delRes = await app.inject({
+      method: 'DELETE',
+      url: '/api/labels/999999',
+      headers: { cookie },
+    })
+
+    expect(delRes.statusCode).toBe(404)
+    expect(delRes.json()).toMatchObject({ statusCode: 404, error: 'NOT_FOUND' })
+  })
 })

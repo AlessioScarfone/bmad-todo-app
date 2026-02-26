@@ -7,6 +7,10 @@ interface TaskRowProps {
   task: Task
 }
 
+type FailedLabelAction
+  = { type: 'attach'; name: string }
+  | { type: 'remove'; labelId: number }
+
 export function TaskRow({ task }: TaskRowProps) {
   const toggleTask = useToggleTask()
   const updateTask = useUpdateTask()
@@ -32,6 +36,7 @@ export function TaskRow({ task }: TaskRowProps) {
   const [isAddingLabel, setIsAddingLabel] = useState(false)
   const [labelInput, setLabelInput] = useState('')
   const [labelError, setLabelError] = useState<string | null>(null)
+  const [failedLabelAction, setFailedLabelAction] = useState<FailedLabelAction | null>(null)
   const { data: allLabels = [] } = useLabels(isAddingLabel)
 
   const inputRef = useRef<HTMLInputElement>(null)
@@ -130,11 +135,13 @@ export function TaskRow({ task }: TaskRowProps) {
 
   const handleRemoveLabel = (labelId: number) => {
     setLabelError(null)
+    setFailedLabelAction(null)
     removeLabel.mutate(
       { taskId: task.id, labelId },
       {
         onError: () => {
           setLabelError('Failed to remove label. Please try again.')
+          setFailedLabelAction({ type: 'remove', labelId })
         },
       },
     )
@@ -148,6 +155,7 @@ export function TaskRow({ task }: TaskRowProps) {
     }
 
     setLabelError(null)
+    setFailedLabelAction(null)
     attachLabel.mutate(
       { taskId: task.id, name: trimmed },
       {
@@ -157,6 +165,42 @@ export function TaskRow({ task }: TaskRowProps) {
         },
         onError: () => {
           setLabelError('Failed to attach label. Please try again.')
+          setFailedLabelAction({ type: 'attach', name: trimmed })
+        },
+      },
+    )
+  }
+
+  const handleRetryLabel = () => {
+    if (!failedLabelAction) return
+
+    setLabelError(null)
+
+    if (failedLabelAction.type === 'attach') {
+      attachLabel.mutate(
+        { taskId: task.id, name: failedLabelAction.name },
+        {
+          onSuccess: () => {
+            setFailedLabelAction(null)
+            setLabelInput('')
+            setIsAddingLabel(false)
+          },
+          onError: () => {
+            setLabelError('Failed to attach label. Please try again.')
+          },
+        },
+      )
+      return
+    }
+
+    removeLabel.mutate(
+      { taskId: task.id, labelId: failedLabelAction.labelId },
+      {
+        onSuccess: () => {
+          setFailedLabelAction(null)
+        },
+        onError: () => {
+          setLabelError('Failed to remove label. Please try again.')
         },
       },
     )
@@ -391,8 +435,16 @@ export function TaskRow({ task }: TaskRowProps) {
       )}
 
       {labelError && (
-        <div role="alert" className="mt-1 ml-6 text-[11px] text-red-400">
-          {labelError}
+        <div role="alert" className="mt-1 ml-6 text-[11px] text-red-400 flex items-center gap-2">
+          <span>{labelError}</span>
+          <button
+            type="button"
+            onClick={handleRetryLabel}
+            aria-label="Retry label action"
+            className="underline hover:text-red-300"
+          >
+            Retry
+          </button>
         </div>
       )}
     </li>

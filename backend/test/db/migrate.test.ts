@@ -89,6 +89,14 @@ describe('migrate.ts', () => {
 })
 
 describe('003_enrichment.sql migration', () => {
+  it('records 003_enrichment.sql in _migrations', async () => {
+    const result = await sql<{ filename: string }[]>`
+      SELECT filename FROM _migrations WHERE filename = '003_enrichment.sql'
+    `
+    expect(result).toHaveLength(1)
+    expect(result[0].filename).toBe('003_enrichment.sql')
+  })
+
   it('creates the labels table', async () => {
     const result = await sql<{ exists: boolean }[]>`
       SELECT EXISTS (

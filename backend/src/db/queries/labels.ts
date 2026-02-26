@@ -31,12 +31,23 @@ export const attachLabelToTask = async (
   const [task] = await sql`SELECT id FROM tasks WHERE id = ${taskId} AND user_id = ${userId}`
   if (!task) throw new Error('TASK_NOT_FOUND')
 
-  // 2. Upsert label (create or retrieve existing)
+  // 2. Insert label if missing, otherwise fetch existing
   const [label] = await sql<LabelWithCreated[]>`
-    INSERT INTO labels (user_id, name)
-    VALUES (${userId}, ${labelName})
-    ON CONFLICT (user_id, name) DO UPDATE SET name = EXCLUDED.name
-    RETURNING id, user_id AS "userId", name, (xmax = 0) AS created
+    WITH inserted AS (
+      INSERT INTO labels (user_id, name)
+      VALUES (${userId}, ${labelName})
+      ON CONFLICT (user_id, name) DO NOTHING
+      RETURNING id, user_id AS "userId", name, true AS created
+    )
+    SELECT id, "userId", name, created
+    FROM inserted
+    UNION ALL
+    SELECT id, user_id AS "userId", name, false AS created
+    FROM labels
+    WHERE user_id = ${userId}
+      AND name = ${labelName}
+      AND NOT EXISTS (SELECT 1 FROM inserted)
+    LIMIT 1
   `
 
   // 3. Attach to task (ignore if already attached)

@@ -1,6 +1,6 @@
 # Story 3.1: Labels — Attach and Remove
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -183,6 +183,14 @@ so that I can visually categorise my work (e.g., "Client", "Backend", "Admin").
       - Typing in label input and pressing Enter calls `useAttachLabel` with correct taskId and label name
       - Pressing Escape closes label input without mutation
       - Existing Stories 2.3, 2.4, 2.5 tests still pass (no regression)
+
+    ### Review Follow-ups (AI)
+
+    - [x] [AI-Review][HIGH] Add explicit retry affordance for label attach/remove failures in `TaskRow` (AC6 requires inline error + retry affordance, currently label errors render text only). [frontend/src/components/TaskRow.tsx]
+    - [x] [AI-Review][HIGH] Add missing route test for `DELETE /api/labels/:id` not-found path (`404`) while task item is marked complete. [backend/test/routes/labels.test.ts]
+    - [x] [AI-Review][MEDIUM] Align label upsert strategy with story requirement (`ON CONFLICT ... DO NOTHING`) or update story/task text to match implemented `DO UPDATE` behavior. [backend/src/db/queries/labels.ts]
+    - [x] [AI-Review][MEDIUM] Add migration assertion that `003_enrichment.sql` is recorded in `_migrations` to fully cover AC7 claims. [backend/test/db/migrate.test.ts]
+    - [x] [AI-Review][MEDIUM] Reconcile Dev Agent File List vs git working tree evidence by executing a concrete fix pass that produced verifiable source/test changes in this run.
 
 ## Dev Notes
 
@@ -460,3 +468,44 @@ GPT-5.3-Codex
 ### Change Log
 
 - 2026-02-26: Completed Story 3.1 labels attach/remove implementation across backend and frontend, added comprehensive tests, and advanced story status to `review`.
+- 2026-02-26: Applied AI code-review fixes (all HIGH/MEDIUM findings): added label retry affordance + tests, aligned SQL conflict strategy with story (`DO NOTHING` path while preserving `created` behavior), added missing migration and route assertions, re-validated focused backend/frontend suites.
+
+### Senior Developer Review (AI)
+
+**Reviewer:** Alessio  
+**Date:** 2026-02-26  
+**Outcome:** Changes Requested
+
+#### Summary
+
+- AC coverage is mostly implemented across backend and frontend (attach/remove flows, label aggregation in `GET /api/tasks`, migration tables present).
+- During this review run, git working tree had no modified/staged files, so story File List claims could not be corroborated via local diff evidence.
+- Identified 5 issues total: 2 High, 3 Medium.
+
+#### Findings
+
+1. **[HIGH] AC6 retry affordance gap for label errors**  
+  `TaskRow` shows inline label error text, but unlike toggle/edit/delete errors it does not provide an explicit retry control for label attach/remove failures. AC6 asks for inline error + retry affordance on the affected row.
+
+2. **[HIGH] Incomplete test coverage claim in completed Task 8 route checklist**  
+  `backend/test/routes/labels.test.ts` covers 401/204/403 for `DELETE /api/labels/:id`, but does not assert explicit `404` behavior for non-existent labels while Task 8 is marked complete.
+
+3. **[MEDIUM] SQL strategy mismatch with story text**  
+  Story AC/task text calls out `ON CONFLICT (user_id, name) DO NOTHING`, while implementation currently uses `DO UPDATE SET name = EXCLUDED.name`. This works functionally but diverges from the stated contract and should be aligned or documented.
+
+4. **[MEDIUM] AC7 verification gap in migration tests**  
+  Migration tests validate table existence/constraints for `003_enrichment.sql`, but do not assert the migration filename entry is present in `_migrations` for 003 specifically.
+
+5. **[MEDIUM] Git-vs-story traceability discrepancy**  
+  Story File List references many changed files, but this review run observed a clean git tree (`git status --porcelain`, `git diff --name-only`, `git diff --cached --name-only` all empty). Evidence traceability is incomplete in current workspace state.
+
+#### Re-Review (Post-Fix)
+
+- All HIGH and MEDIUM findings from this review round were fixed and verified by focused tests.
+- Focused test evidence:
+  - `backend`: `test/db/migrate.test.ts`, `test/routes/labels.test.ts`, `test/db/queries/labels.test.ts` → passing
+  - `frontend`: `test/components/TaskRow.test.tsx` → passing
+
+#### Decision
+
+- Story status moved to `done`.

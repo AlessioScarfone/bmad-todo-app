@@ -458,4 +458,66 @@ describe('Story 3.1 — label management', () => {
     expect(screen.queryByRole('combobox', { name: 'Add label' })).not.toBeInTheDocument()
     expect(postSpy).not.toHaveBeenCalled()
   })
+
+  it('shows inline label error with retry affordance when attach fails', async () => {
+    const task = makeTask({ id: 85 })
+    vi.spyOn(apiModule.api, 'get').mockResolvedValue([])
+    vi.spyOn(apiModule.api, 'post').mockRejectedValueOnce(new Error('fail'))
+
+    renderWithQuery(<TaskRow task={task} />, [task])
+
+    await userEvent.click(screen.getByRole('button', { name: 'Add label' }))
+    const input = screen.getByRole('combobox', { name: 'Add label' })
+    await userEvent.type(input, 'Urgent')
+    await userEvent.keyboard('{Enter}')
+
+    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument())
+    expect(screen.getByRole('button', { name: 'Retry label action' })).toBeInTheDocument()
+  })
+
+  it('retry on failed attach attempts the same attach again', async () => {
+    const task = makeTask({ id: 86 })
+    vi.spyOn(apiModule.api, 'get').mockResolvedValue([])
+    const postSpy = vi
+      .spyOn(apiModule.api, 'post')
+      .mockRejectedValueOnce(new Error('fail'))
+      .mockResolvedValueOnce({ id: 77, name: 'Urgent' })
+
+    renderWithQuery(<TaskRow task={task} />, [task])
+
+    await userEvent.click(screen.getByRole('button', { name: 'Add label' }))
+    const input = screen.getByRole('combobox', { name: 'Add label' })
+    await userEvent.type(input, 'Urgent')
+    await userEvent.keyboard('{Enter}')
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Retry label action' })).toBeInTheDocument())
+    await userEvent.click(screen.getByRole('button', { name: 'Retry label action' }))
+
+    expect(postSpy).toHaveBeenCalledTimes(2)
+    expect(postSpy).toHaveBeenNthCalledWith(1, '/tasks/86/labels', { name: 'Urgent' })
+    expect(postSpy).toHaveBeenNthCalledWith(2, '/tasks/86/labels', { name: 'Urgent' })
+  })
+
+  it('retry on failed remove attempts the same remove again', async () => {
+    const task = makeTask({
+      id: 87,
+      labels: [{ id: 12, name: 'Client' }],
+    })
+    vi.spyOn(apiModule.api, 'get').mockResolvedValue([])
+    const delSpy = vi
+      .spyOn(apiModule.api, 'delete')
+      .mockRejectedValueOnce(new Error('fail'))
+      .mockResolvedValueOnce(undefined)
+
+    renderWithQuery(<TaskRow task={task} />, [task])
+
+    await userEvent.click(screen.getByRole('button', { name: /remove label client/i }))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Retry label action' })).toBeInTheDocument())
+
+    await userEvent.click(screen.getByRole('button', { name: 'Retry label action' }))
+
+    expect(delSpy).toHaveBeenCalledTimes(2)
+    expect(delSpy).toHaveBeenNthCalledWith(1, '/tasks/87/labels/12')
+    expect(delSpy).toHaveBeenNthCalledWith(2, '/tasks/87/labels/12')
+  })
 })
