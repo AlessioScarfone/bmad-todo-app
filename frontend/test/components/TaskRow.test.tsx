@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -556,6 +556,20 @@ describe('Story 3.2 — deadline management', () => {
     await userEvent.click(screen.getByRole('button', { name: /set deadline for/i }))
     // In jsdom, input[type="date"] does not get role "textbox" — query directly
     expect(document.querySelector('input[type="date"]')).toBeInTheDocument()
+  })
+
+  it('selecting a date in the picker calls useSetDeadline with the date value and closes picker (AC1)', async () => {
+    const task = makeTask({ id: 96, deadline: null })
+    const spy = vi.spyOn(apiModule.api, 'patch').mockResolvedValue({ ...task, deadline: '2026-03-15', labels: [] })
+    renderWithQuery(<TaskRow task={task} />, [task])
+    await userEvent.click(screen.getByRole('button', { name: /set deadline for/i }))
+    const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement
+    expect(dateInput).toBeInTheDocument()
+    // fireEvent.change is used because userEvent doesn’t interact with native date inputs in jsdom
+    fireEvent.change(dateInput, { target: { value: '2026-03-15' } })
+    await waitFor(() => expect(spy).toHaveBeenCalledWith('/tasks/96', { deadline: '2026-03-15' }))
+    // picker must close after a valid date is selected
+    expect(document.querySelector('input[type="date"]')).not.toBeInTheDocument()
   })
 
   it('pressing Escape on date input closes picker without mutation (AC1)', async () => {

@@ -160,11 +160,11 @@ so that I can track time-sensitive work at a glance.
     ```
   - [x] Follow established pattern from `useUpdateTask` and `useToggleTask` — no `invalidateQueries` on success (avoids extra GET)
 
-- [ ] **Task 5: Frontend — Extend `TaskRow.tsx` with deadline display + inline date input** (AC: AC1, AC2, AC3, AC4)
-  - [ ] **`TaskRow.tsx` was created in Story 2.3 and extended in Stories 2.4, 2.5, and 3.1 — EXTEND IT, DO NOT re-create**
-  - [ ] Import `useSetDeadline` from `../hooks/useTasks`
-  - [ ] Add local state: `const [showDeadlinePicker, setShowDeadlinePicker] = useState(false)`
-  - [ ] **Deadline display section** (below label pills, above task actions):
+- [x] **Task 5: Frontend — Extend `TaskRow.tsx` with deadline display + inline date input** (AC: AC1, AC2, AC3, AC4)
+  - [x] **`TaskRow.tsx` was created in Story 2.3 and extended in Stories 2.4, 2.5, and 3.1 — EXTEND IT, DO NOT re-create**
+  - [x] Import `useSetDeadline` from `../hooks/useTasks`
+  - [x] Add local state: `const [showDeadlinePicker, setShowDeadlinePicker] = useState(false)`
+  - [x] **Deadline display section** (below label pills, above task actions):
     - If `task.deadline` is set, display it in human-readable format + a clear (×) button:
       ```tsx
       {task.deadline && (
@@ -181,7 +181,7 @@ so that I can track time-sensitive work at a glance.
         </div>
       )}
       ```
-  - [ ] **Date formatting helper** (`formatDeadline`):
+  - [x] **Date formatting helper** (`formatDeadline`):
     ```typescript
     function formatDeadline(isoDate: string): string {
       // Append T12:00:00 to avoid UTC/local timezone boundary issues
@@ -194,27 +194,27 @@ so that I can track time-sensitive work at a glance.
     }
     ```
     - **CRITICAL timezone note:** Do NOT use `new Date("2026-03-15")` — this is parsed as UTC midnight and may display as the previous day in timezones west of UTC. Always append `T12:00:00` (local noon).
-  - [ ] **Inline date picker affordance** (when no deadline is set, show a "Set date" button):
+  - [x] **Inline date picker affordance** (when no deadline is set, show a "Set date" button):
     - Small calendar icon button (`aria-label="Set deadline for [task.title]"`) toggles `showDeadlinePicker`
     - When `showDeadlinePicker` is true, render `<input type="date" />` inline
     - `onChange` handler: `setDeadline.mutate({ id: task.id, deadline: e.target.value }); setShowDeadlinePicker(false)`
     - `onKeyDown` Escape: `setShowDeadlinePicker(false)` (no mutation)
     - Close picker on blur (`onBlur`)
-  - [ ] **Inline error state** on deadline set/remove failure:
+  - [x] **Inline error state** on deadline set/remove failure:
     - Show error text inline on the task row (e.g., "Deadline update failed")
     - Include an explicit **retry button** (consistent with AC4 and Story 3.1 AC6 retry requirement): clicking retry re-calls the last attempted mutation
     - Error uses `role="alert"` (consistent with label error ARIA pattern)
-  - [ ] **ARIA:** `aria-label="Set deadline for {task.title}"` on the date trigger; `aria-label="Remove deadline"` on the × button
-  - [ ] **DO NOT break** Stories 2.3/2.4/2.5/3.1 features: checkbox toggle, Space-key completion, inline title edit, two-step delete, label pills — all must remain intact
+  - [x] **ARIA:** `aria-label="Set deadline for {task.title}"` on the date trigger; `aria-label="Remove deadline"` on the × button
+  - [x] **DO NOT break** Stories 2.3/2.4/2.5/3.1 features: checkbox toggle, Space-key completion, inline title edit, two-step delete, label pills — all must remain intact
 
-- [ ] **Task 6: Tests** (AC: AC1–AC6)
-  - [ ] **Backend query tests — add to `backend/test/db/queries/tasks.test.ts`** (Testcontainers):
+- [x] **Task 6: Tests** (AC: AC1–AC6)
+  - [x] **Backend query tests — add to `backend/test/db/queries/tasks.test.ts`** (Testcontainers):
     - `describe('updateTaskDeadline')`:
       - Sets a valid DATE string (`"2026-03-15"`) on a task — returned task has `deadline: "2026-03-15"`
       - Clears deadline to null — returned task has `deadline: null`
       - Returns `undefined` for a task belonging to another user (ownership enforced)
       - Preserves all other task fields (title, isCompleted, etc.) unchanged
-  - [ ] **Backend route tests — add to `backend/test/routes/tasks.test.ts`**:
+  - [x] **Backend route tests — add to `backend/test/routes/tasks.test.ts`**:
     - `describe('PATCH /api/tasks/:id — deadline extension')`:
       - `401` when not authenticated (deadline body)
       - `200` sets deadline: body `{ deadline: "2026-03-15" }` → `deadline: "2026-03-15"` in response
@@ -223,13 +223,13 @@ so that I can track time-sensitive work at a glance.
       - **Regression:** body `{ title: "New title" }` still updates title correctly — `deadline` field unchanged
       - **Regression:** body `{ title: "New title", deadline: "2026-03-15" }` (both fields) — both are updated (title changes + deadline changes)
       - `400` when body is empty `{}` (no updatable fields)
-  - [ ] **Frontend hook tests — add to `frontend/test/hooks/useTasks.test.ts`**:
+  - [x] **Frontend hook tests — add to `frontend/test/hooks/useTasks.test.ts`**:
     - `describe('useSetDeadline')`:
       - `onMutate` optimistically sets `deadline` on the target task in the cache
       - `onMutate` optimistically sets `deadline: null` when clearing
       - `onError` restores previous cache state
       - `onSuccess` updates cache with server-confirmed deadline value, preserving labels
-  - [ ] **Frontend component tests — add to `frontend/test/components/TaskRow.test.tsx`**:
+  - [x] **Frontend component tests — add to `frontend/test/components/TaskRow.test.tsx`**:
     - `describe('Story 3.2 — deadline management')`:
       - Deadline is displayed when `task.deadline` is set (formatted as readable string)
       - Clicking the × button calls `useSetDeadline` with `{ id, deadline: null }`
@@ -418,8 +418,32 @@ Claude Sonnet 4.6
 
 ### Debug Log References
 
+_No debug sessions required._
+
 ### Completion Notes List
+
+- All 6 tasks implemented across 9 existing files — no new files created.
+- `UpdateTaskBodySchema` extended with `Type.Partial` + `additionalProperties: false`; deadline field uses `Type.Union([Type.String({ pattern: '^\\d{4}-\\d{2}-\\d{2}$' }), Type.Null()])` for stricter validation than story spec.
+- Route handler uses `'deadline' in req.body` guard (not `!== undefined`) to correctly handle explicit `null` clearing.
+- `useSetDeadline` follows established optimistic pattern: no `invalidateQueries` on success, labels merged from cache on `onSuccess`.
+- Code review (AI) fixed two bugs post-implementation: `onBlur` picker closure (was conditional on `!e.relatedTarget`; now unconditional) and missing `disabled` pending state on × and 📅 buttons.
+- E2E coverage is not included in this story — tracked as follow-up (M2).
 
 ### File List
 
+- `backend/src/types/tasks.ts` — extended `UpdateTaskBodySchema` with `deadline` field via `Type.Partial`
+- `backend/src/db/queries/tasks.ts` — added `updateTaskDeadline` query function
+- `backend/src/routes/tasks.ts` — extended `PATCH /api/tasks/:id` to branch on title/deadline presence
+- `frontend/src/hooks/useTasks.ts` — added `useSetDeadline` mutation hook
+- `frontend/src/components/TaskRow.tsx` — extended with deadline display, clear button, inline date picker, error/retry state; fixed `onBlur` and pending `disabled` (code review)
+- `backend/test/db/queries/tasks.test.ts` — added `updateTaskDeadline` describe block (4 tests)
+- `backend/test/routes/tasks.test.ts` — added deadline extension + regression tests (7 tests)
+- `frontend/test/hooks/useTasks.test.ts` — added `useSetDeadline` describe block (4 tests)
+- `frontend/test/components/TaskRow.test.tsx` — added Story 3.2 describe block (7 tests)
+
 ### Change Log
+
+| Date | Change | Author |
+|---|---|---|
+| 2026-02-26 | Implemented all 6 tasks; all ACs covered | Claude Sonnet 4.6 (dev) |
+| 2026-02-26 | Code review: fixed `onBlur` picker bug (H3/L1), added pending `disabled` state (M3) | Claude Sonnet 4.6 (review) |

@@ -362,56 +362,6 @@ export function TaskRow({ task }: TaskRowProps) {
         )}
       </div>
 
-      {/* Deadline section */}
-      <div className="mt-1 ml-6 flex flex-wrap items-center gap-2 text-[11px]">
-        {task.deadline && (
-          <div className="flex items-center gap-1 text-[#aaa]">
-            <span aria-label={`Deadline: ${formatDeadline(task.deadline)}`}>
-              📅 {formatDeadline(task.deadline)}
-            </span>
-            <button
-              type="button"
-              aria-label="Remove deadline"
-              onClick={() => handleSetDeadline(null)}
-              className="text-[#666] hover:text-red-400"
-            >
-              ×
-            </button>
-          </div>
-        )}
-        {!task.deadline && !showDeadlinePicker && (
-          <button
-            type="button"
-            aria-label={`Set deadline for ${task.title}`}
-            onClick={() => setShowDeadlinePicker(true)}
-            className="text-[#666] hover:text-[#f0f0f0]"
-          >
-            📅
-          </button>
-        )}
-        {showDeadlinePicker && (
-          <input
-            type="date"
-            aria-label={`Set deadline for ${task.title}`}
-            autoFocus
-            className="border border-[#2a2a2a] bg-[#1c1c1c] px-1 py-0.5 text-[11px] text-[#f0f0f0] outline-none focus:border-[#00ff88]"
-            onChange={e => {
-              if (e.target.value) {
-                handleSetDeadline(e.target.value)
-                setShowDeadlinePicker(false)
-              }
-            }}
-            onKeyDown={e => {
-              if (e.key === 'Escape') {
-                e.preventDefault()
-                setShowDeadlinePicker(false)
-              }
-            }}
-            onBlur={() => setShowDeadlinePicker(false)}
-          />
-        )}
-      </div>
-
       <div className="mt-2 ml-6 flex flex-wrap items-center gap-2">
         {task.labels.map(label => (
           <span
@@ -467,6 +417,58 @@ export function TaskRow({ task }: TaskRowProps) {
               Add
             </button>
           </div>
+        )}
+      </div>
+
+      {/* Deadline section */}
+      <div className="mt-1 ml-6 flex flex-wrap items-center gap-2 text-[11px]">
+        {task.deadline && (
+          <div className="flex items-center gap-1 text-[#aaa]">
+            <span aria-label={`Deadline: ${formatDeadline(task.deadline)}`}>
+              📅 {formatDeadline(task.deadline)}
+            </span>
+            <button
+              type="button"
+              aria-label="Remove deadline"
+              onClick={() => handleSetDeadline(null)}
+              disabled={setDeadline.isPending}
+              className="text-[#666] hover:text-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              ×
+            </button>
+          </div>
+        )}
+        {!task.deadline && !showDeadlinePicker && (
+          <button
+            type="button"
+            aria-label={`Set deadline for ${task.title}`}
+            onClick={() => setShowDeadlinePicker(true)}
+            disabled={setDeadline.isPending}
+            className="text-[#666] hover:text-[#f0f0f0] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            📅
+          </button>
+        )}
+        {showDeadlinePicker && (
+          <input
+            type="date"
+            aria-label={`Set deadline for ${task.title}`}
+            autoFocus
+            className="border border-[#2a2a2a] bg-[#1c1c1c] px-1 py-0.5 text-[11px] text-[#f0f0f0] outline-none focus:border-[#00ff88]"
+            onChange={e => {
+              if (e.target.value) {
+                handleSetDeadline(e.target.value)
+                setShowDeadlinePicker(false)
+              }
+            }}
+            onKeyDown={e => {
+              if (e.key === 'Escape') {
+                e.preventDefault()
+                setShowDeadlinePicker(false)
+              }
+            }}
+            onBlur={() => setShowDeadlinePicker(false)}
+          />
         )}
       </div>
 

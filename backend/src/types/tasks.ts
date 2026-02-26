@@ -23,7 +23,7 @@ export type CreateTaskBody = Static<typeof CreateTaskBodySchema>
 export const UpdateTaskBodySchema = Type.Partial(
   Type.Object({
     title:    Type.String({ minLength: 1 }),
-    deadline: Type.Union([Type.String(), Type.Null()]),
+    deadline: Type.Union([Type.String({ pattern: '^\\d{4}-\\d{2}-\\d{2}$' }), Type.Null()]),
   }),
   { additionalProperties: false },
 )
