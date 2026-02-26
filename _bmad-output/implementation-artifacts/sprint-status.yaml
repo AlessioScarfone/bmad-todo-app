@@ -58,7 +58,7 @@ development_status:
   epic-2-retrospective: optional
 
   # ─── Epic 3: Task Enrichment — Labels, Deadlines & Subtasks ────────────────
-  epic-3: in-progress
+  epic-3: done
   3-1-labels-attach-and-remove: done
   3-2-deadline-set-and-remove: done
   3-3-subtasks-add-complete-and-delete: done
