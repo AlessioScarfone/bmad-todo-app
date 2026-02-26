@@ -1,6 +1,6 @@
 # Story 3.3: Subtasks — Add, Complete, and Delete
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -647,6 +647,7 @@ so that I can track the steps needed to finish a larger piece of work.
 | Date | Changes |
 |---|---|
 | 2026-02-26 | Implemented complete subtask feature: TypeBox schemas, DB queries, Fastify routes (with fp() encapsulate fix), React hooks (optimistic), SubtaskPanel component, TaskRow toggle, unit tests, E2E tests |
+| 2026-02-26 | Code review (AI): Fixed AC8 violation — added per-row `role="alert"` error UI with Retry for toggle/delete failures in SubtaskPanel; activated dead `inputRef` via `useEffect` auto-focus; added 2 new test cases (12→12 total). Status → done |
 
 ## Dev Agent Record
 
@@ -686,4 +687,20 @@ Claude Sonnet 4.6
 - backend/src/server.ts (added subtaskRoutes import and registration)
 - frontend/src/types/tasks.ts (added Subtask interface)
 - frontend/src/hooks/useTasks.ts (added useSubtasks, useCreateSubtask, useToggleSubtask, useDeleteSubtask)
-- frontend/src/components/TaskRow.tsx (added subtasksOpen state, toggle button, conditional SubtaskPanel render)
+- frontend/src/components/TaskRow.tsx (added subtasksOpen state, toggle button, conditional SubtaskPanel render)- frontend/src/components/SubtaskPanel.tsx (code review fix: added toggle/delete error state, auto-focus via useEffect)
+- frontend/test/components/SubtaskPanel.test.tsx (code review fix: added toggle/delete error tests; updated mutate assertions for 2-arg calls)
+
+## Senior Developer Review (AI)
+
+**Reviewer:** Alessio (AI) — 2026-02-26
+**Outcome:** Changes Requested → Fixed → ✅ Approved
+
+### Findings & Resolutions
+
+| # | Sev | Issue | Resolution |
+|---|---|---|---|
+| 1 | MEDIUM | **AC8 violation** — `toggleSubtask.mutate` and `deleteSubtask.mutate` had no `onError` callbacks in `SubtaskPanel.tsx`, so failures silently rolled back the cache with no user-visible error or retry affordance. AC8 explicitly requires `role="alert"` inline error on every mutation failure. | Added `toggleErrors: Record<number, string>` and `deleteErrors: Record<number, string>` per-subtask error state. Each mutate call now passes `onError` that sets the error. Row renders an inline `role="alert"` div with a Retry button when an error exists for that subtask. |
+| 2 | MEDIUM | **Dead `inputRef`** — `useRef<HTMLInputElement>` was created and assigned but `.focus()` was never called. Panel opened without auto-focusing the input, requiring a manual click to type. | Added `useEffect(() => { inputRef.current?.focus() }, [])` to focus the new-subtask input on mount. |
+| 3 | LOW | **Test coverage gap** — no tests for toggle/delete failure UI (consequence of issue #1). | Added 2 new tests: `shows role="alert" error on toggle failure` and `shows role="alert" error on delete failure`. Also updated toggle and delete happy-path assertions to expect the second callback argument (`expect.any(Object)`). |
+
+**Final test counts:** 26/26 backend ✅ · 12/12 frontend unit ✅ · 3/3 E2E ✅

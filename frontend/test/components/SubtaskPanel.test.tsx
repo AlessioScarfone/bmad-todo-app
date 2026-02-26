@@ -119,7 +119,7 @@ describe('SubtaskPanel', () => {
     const checkbox = screen.getByRole('checkbox', { name: /mark subtask "toggle me" as complete/i })
     fireEvent.click(checkbox)
 
-    expect(mutateFn).toHaveBeenCalledWith({ subId: 5, isCompleted: true })
+    expect(mutateFn).toHaveBeenCalledWith({ subId: 5, isCompleted: true }, expect.any(Object))
   })
 
   it('calls useDeleteSubtask.mutate on delete button click', async () => {
@@ -133,7 +133,7 @@ describe('SubtaskPanel', () => {
     const deleteBtn = screen.getByRole('button', { name: /delete subtask "delete me"/i })
     fireEvent.click(deleteBtn)
 
-    expect(mutateFn).toHaveBeenCalledWith({ subId: 7 })
+    expect(mutateFn).toHaveBeenCalledWith({ subId: 7 }, expect.any(Object))
   })
 
   it('shows role="alert" error on create failure', async () => {
@@ -163,14 +163,52 @@ describe('SubtaskPanel', () => {
     expect(title.className).toMatch(/line-through/)
   })
 
+  it('shows role="alert" error on toggle failure', async () => {
+    const subtask = makeSubtask({ id: 9, title: 'Toggle fail subtask', isCompleted: false })
+    setupMocks([subtask])
+    const mutateFn = vi.fn((_vars: unknown, callbacks: { onError?: (err: Error) => void }) => {
+      callbacks.onError?.(new Error('Toggle failed'))
+    })
+    vi.mocked(useTasks.useToggleSubtask).mockReturnValue(makeMutation({ mutate: mutateFn }) as ReturnType<typeof useTasks.useToggleSubtask>)
+
+    render(<SubtaskPanel taskId={10} />)
+
+    const checkbox = screen.getByRole('checkbox', { name: /mark subtask "toggle fail subtask" as complete/i })
+    fireEvent.click(checkbox)
+
+    const alert = screen.getByRole('alert')
+    expect(alert).toBeInTheDocument()
+    expect(alert.textContent).toMatch(/toggle failed/i)
+    expect(screen.getByRole('button', { name: /retry toggling subtask/i })).toBeInTheDocument()
+  })
+
   it('does not render any subtask expand controls (no nesting — FR19)', () => {
     const subtask = makeSubtask({ id: 1, title: 'Flat subtask' })
     setupMocks([subtask])
 
     render(<SubtaskPanel taskId={10} />)
 
-    // Only one input should exist (the "add new subtask" input — no subtask-level expand)
+    // Only one textbox should exist (the "add new subtask" input — no subtask-level expand)
     const inputs = screen.getAllByRole('textbox')
-    expect(inputs).toHaveLength(1) // only the new subtask input
+    expect(inputs).toHaveLength(1)
+  })
+
+  it('shows role="alert" error on delete failure', async () => {
+    const subtask = makeSubtask({ id: 11, title: 'Delete fail subtask' })
+    setupMocks([subtask])
+    const mutateFn = vi.fn((_vars: unknown, callbacks: { onError?: (err: Error) => void }) => {
+      callbacks.onError?.(new Error('Delete failed'))
+    })
+    vi.mocked(useTasks.useDeleteSubtask).mockReturnValue(makeMutation({ mutate: mutateFn }) as ReturnType<typeof useTasks.useDeleteSubtask>)
+
+    render(<SubtaskPanel taskId={10} />)
+
+    const deleteBtn = screen.getByRole('button', { name: /delete subtask "delete fail subtask"/i })
+    fireEvent.click(deleteBtn)
+
+    const alert = screen.getByRole('alert')
+    expect(alert).toBeInTheDocument()
+    expect(alert.textContent).toMatch(/delete failed/i)
+    expect(screen.getByRole('button', { name: /retry deleting subtask/i })).toBeInTheDocument()
   })
 })
