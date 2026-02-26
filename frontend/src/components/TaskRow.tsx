@@ -458,8 +458,10 @@ export function TaskRow({ task }: TaskRowProps) {
             onChange={e => {
               if (e.target.value) {
                 handleSetDeadline(e.target.value)
-                setShowDeadlinePicker(false)
               }
+              // Close picker on any change event (including clear): avoids picker staying
+              // open indefinitely when the user clears the input via keyboard (M3 fix)
+              setShowDeadlinePicker(false)
             }}
             onKeyDown={e => {
               if (e.key === 'Escape') {

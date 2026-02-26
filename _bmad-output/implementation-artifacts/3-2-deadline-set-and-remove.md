@@ -1,6 +1,6 @@
 # Story 3.2: Deadline — Set and Remove
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -432,12 +432,12 @@ _No debug sessions required._
 ### File List
 
 - `backend/src/types/tasks.ts` — extended `UpdateTaskBodySchema` with `deadline` field via `Type.Partial`
-- `backend/src/db/queries/tasks.ts` — added `updateTaskDeadline` query function
-- `backend/src/routes/tasks.ts` — extended `PATCH /api/tasks/:id` to branch on title/deadline presence
+- `backend/src/db/queries/tasks.ts` — added `updateTaskDeadline` and `updateTaskTitleAndDeadline` query functions
+- `backend/src/routes/tasks.ts` — extended `PATCH /api/tasks/:id` to branch on title/deadline presence; uses `updateTaskTitleAndDeadline` for atomic dual-field update (H1 fix)
 - `frontend/src/hooks/useTasks.ts` — added `useSetDeadline` mutation hook
-- `frontend/src/components/TaskRow.tsx` — extended with deadline display, clear button, inline date picker, error/retry state; fixed `onBlur` and pending `disabled` (code review)
-- `backend/test/db/queries/tasks.test.ts` — added `updateTaskDeadline` describe block (4 tests)
-- `backend/test/routes/tasks.test.ts` — added deadline extension + regression tests (7 tests)
+- `frontend/src/components/TaskRow.tsx` — extended with deadline display, clear button, inline date picker, error/retry state; fixed `onBlur`, pending `disabled`, and date picker close-on-empty-input
+- `backend/test/db/queries/tasks.test.ts` — added `updateTaskDeadline` describe block (4 tests) and `updateTaskTitleAndDeadline` describe block (3 tests)
+- `backend/test/routes/tasks.test.ts` — added deadline extension + regression tests (7 tests); strengthened assertions for POST deadline:null and both-fields response
 - `frontend/test/hooks/useTasks.test.ts` — added `useSetDeadline` describe block (4 tests)
 - `frontend/test/components/TaskRow.test.tsx` — added Story 3.2 describe block (7 tests)
 
@@ -447,3 +447,4 @@ _No debug sessions required._
 |---|---|---|
 | 2026-02-26 | Implemented all 6 tasks; all ACs covered | Claude Sonnet 4.6 (dev) |
 | 2026-02-26 | Code review: fixed `onBlur` picker bug (H3/L1), added pending `disabled` state (M3) | Claude Sonnet 4.6 (review) |
+| 2026-02-26 | Code review 2: fixed H1 (added `updateTaskTitleAndDeadline` for atomic dual-field update), M1 (assert body.title in both-fields route test), M2 (assert deadline:null in POST test), M3 (close date picker on empty input change); 3 new query tests added; story marked done | Claude Sonnet 4.6 (review) |

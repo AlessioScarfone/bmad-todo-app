@@ -200,6 +200,7 @@ describe('POST /api/tasks', () => {
     expect(task.title).toBe('Buy groceries')
     expect(task.isCompleted).toBe(false)
     expect(task.completedAt).toBeNull()
+    expect(task.deadline).toBeNull()
     expect(typeof task.id).toBe('number')
     expect(typeof task.userId).toBe('number')
     expect(typeof task.createdAt).toBe('string')
@@ -878,10 +879,11 @@ describe('PATCH /api/tasks/:id \u2014 deadline extension (Story 3.2)', () => {
       payload: { title: 'New title', deadline: '2026-06-20' },
     })
     expect(res.statusCode).toBe(200)
-    // When both are provided, deadline is the last update so response shows deadline
+    // Single atomic UPDATE returns both fields correctly
     const body = res.json()
+    expect(body.title).toBe('New title')
     expect(body.deadline).toBe('2026-06-20')
-    // title updated — verify via GET
+    // Also verify via GET for full consistency check
     const getRes = await app.inject({ method: 'GET', url: '/api/tasks', headers: { cookie } })
     const tasks = getRes.json() as { id: number; title: string; deadline: string | null }[]
     const updated = tasks.find(t => t.id === task.id)

@@ -2,7 +2,7 @@ import fp from 'fastify-plugin'
 import type { FastifyPluginAsync } from 'fastify'
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
-import { getTasks, createTask, completeTask, uncompleteTask, updateTaskTitle, updateTaskDeadline, deleteTask } from '../db/queries/tasks.js'
+import { getTasks, createTask, completeTask, uncompleteTask, updateTaskTitle, updateTaskDeadline, updateTaskTitleAndDeadline, deleteTask } from '../db/queries/tasks.js'
 import { CreateTaskBodySchema, UpdateTaskBodySchema } from '../types/tasks.js'
 
 const taskRoutes: FastifyPluginAsync = async fastify => {
@@ -65,24 +65,34 @@ const taskRoutes: FastifyPluginAsync = async fastify => {
     async (req, reply) => {
       const userId = (req.user as { id: number }).id
       const taskId = req.params.id
-      let task: import('../types/tasks.js').Task | undefined
+      const hasTitle = req.body.title !== undefined
+      const hasDeadline = 'deadline' in req.body
 
-      if (req.body.title !== undefined) {
-        const title = req.body.title.trim()
+      if (!hasTitle && !hasDeadline) {
+        return reply.status(400).send({ statusCode: 400, error: 'Bad Request', message: 'No updatable fields provided' })
+      }
+
+      if (hasTitle) {
+        const title = req.body.title!.trim()
         if (title.length === 0) {
           return reply.status(400).send({ statusCode: 400, error: 'Bad Request', message: 'Title must not be empty or blank' })
         }
-        task = await updateTaskTitle(fastify.sql, taskId, userId, title)
-        if (!task) return reply.status(404).send({ statusCode: 404, error: 'NOT_FOUND', message: 'Task not found' })
       }
 
-      if ('deadline' in req.body) {
+      let task: import('../types/tasks.js').Task | undefined
+
+      if (hasTitle && hasDeadline) {
+        // Both fields present — use a single atomic UPDATE to avoid partial-update inconsistency
+        const title = req.body.title!.trim()
+        const deadline = req.body.deadline ?? null
+        task = await updateTaskTitleAndDeadline(fastify.sql, taskId, userId, title, deadline)
+        if (!task) return reply.status(404).send({ statusCode: 404, error: 'NOT_FOUND', message: 'Task not found' })
+      } else if (hasTitle) {
+        task = await updateTaskTitle(fastify.sql, taskId, userId, req.body.title!.trim())
+        if (!task) return reply.status(404).send({ statusCode: 404, error: 'NOT_FOUND', message: 'Task not found' })
+      } else {
         task = await updateTaskDeadline(fastify.sql, taskId, userId, req.body.deadline ?? null)
         if (!task) return reply.status(404).send({ statusCode: 404, error: 'NOT_FOUND', message: 'Task not found' })
-      }
-
-      if (!task) {
-        return reply.status(400).send({ statusCode: 400, error: 'Bad Request', message: 'No updatable fields provided' })
       }
 
       return reply.status(200).send(task)
