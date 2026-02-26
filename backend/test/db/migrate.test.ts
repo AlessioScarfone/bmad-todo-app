@@ -87,3 +87,106 @@ describe('migrate.ts', () => {
     expect(parseInt(result[0].count)).toBe(1)
   })
 })
+
+describe('003_enrichment.sql migration', () => {
+  it('creates the labels table', async () => {
+    const result = await sql<{ exists: boolean }[]>`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public'
+          AND table_name = 'labels'
+      ) AS exists
+    `
+    expect(result[0].exists).toBe(true)
+  })
+
+  it('creates the task_labels table', async () => {
+    const result = await sql<{ exists: boolean }[]>`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public'
+          AND table_name = 'task_labels'
+      ) AS exists
+    `
+    expect(result[0].exists).toBe(true)
+  })
+
+  it('creates the subtasks table', async () => {
+    const result = await sql<{ exists: boolean }[]>`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public'
+          AND table_name = 'subtasks'
+      ) AS exists
+    `
+    expect(result[0].exists).toBe(true)
+  })
+
+  it('enforces UNIQUE(user_id, name) constraint on labels', async () => {
+    // Insert a test user
+    const [user] = await sql<{ id: number }[]>`
+      INSERT INTO users (email, password_hash)
+      VALUES ('label-test@test.com', 'hash')
+      RETURNING id
+    `
+
+    // Insert first label should succeed
+    await sql`
+      INSERT INTO labels (user_id, name)
+      VALUES (${user.id}, 'Backend')
+    `
+
+    // Insert duplicate label for same user should fail
+    await expect(
+      sql`
+        INSERT INTO labels (user_id, name)
+        VALUES (${user.id}, 'Backend')
+      `
+    ).rejects.toThrow()
+  })
+
+  it('CASCADE deletes task_labels when label is deleted', async () => {
+    // Create user and task
+    const [user] = await sql<{ id: number }[]>`
+      INSERT INTO users (email, password_hash)
+      VALUES ('cascade-test@test.com', 'hash')
+      RETURNING id
+    `
+
+    const [task] = await sql<{ id: number }[]>`
+      INSERT INTO tasks (user_id, title)
+      VALUES (${user.id}, 'Test task')
+      RETURNING id
+    `
+
+    // Create label and attach to task
+    const [label] = await sql<{ id: number }[]>`
+      INSERT INTO labels (user_id, name)
+      VALUES (${user.id}, 'TestLabel')
+      RETURNING id
+    `
+
+    await sql`
+      INSERT INTO task_labels (task_id, label_id)
+      VALUES (${task.id}, ${label.id})
+    `
+
+    // Verify link exists
+    const beforeDelete = await sql`
+      SELECT * FROM task_labels
+      WHERE task_id = ${task.id} AND label_id = ${label.id}
+    `
+    expect(beforeDelete).toHaveLength(1)
+
+    // Delete label
+    await sql`DELETE FROM labels WHERE id = ${label.id}`
+
+    // Verify task_labels row is gone (CASCADE)
+    const afterDelete = await sql`
+      SELECT * FROM task_labels
+      WHERE task_id = ${task.id} AND label_id = ${label.id}
+    `
+    expect(afterDelete).toHaveLength(0)
+  })
+})
+

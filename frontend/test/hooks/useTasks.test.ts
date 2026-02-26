@@ -2,7 +2,7 @@ import { renderHook, act, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import React from 'react'
-import { useToggleTask, useCreateTask, useUpdateTask, useDeleteTask } from '../../src/hooks/useTasks'
+import { useToggleTask, useCreateTask, useUpdateTask, useDeleteTask, useAttachLabel, useRemoveLabel } from '../../src/hooks/useTasks'
 import * as apiModule from '../../src/lib/api'
 import type { Task } from '../../src/types/tasks'
 
@@ -16,6 +16,7 @@ function makeTask(overrides: Partial<Task> = {}): Task {
     deadline: null,
     createdAt: '2026-02-25T10:00:00.000Z',
     updatedAt: '2026-02-25T10:00:00.000Z',
+    labels: [],
     ...overrides,
   }
 }
@@ -383,5 +384,111 @@ describe('useDeleteTask', () => {
     // Only task1 remains; no extra items added
     expect(cached).toHaveLength(1)
     expect(cached![0].id).toBe(34)
+  })
+})
+
+describe('useAttachLabel', () => {
+  let queryClient: QueryClient
+
+  beforeEach(() => {
+    vi.restoreAllMocks()
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    })
+  })
+
+  it('onMutate adds optimistic label with negative id and onError restores cache', async () => {
+    const task = makeTask({ id: 90, labels: [] })
+    queryClient.setQueryData(['tasks'], [task])
+    let rejectApi!: (reason?: unknown) => void
+    const pending = new Promise<never>((_, reject) => {
+      rejectApi = reject
+    })
+    vi.spyOn(apiModule.api, 'post').mockReturnValue(pending)
+    vi.spyOn(apiModule.api, 'get').mockResolvedValue([task])
+
+    const { result } = renderHook(() => useAttachLabel(), { wrapper: createWrapper(queryClient) })
+
+    act(() => {
+      result.current.mutate({ taskId: 90, name: 'Backend' })
+    })
+
+    await waitFor(() => {
+      const cached = queryClient.getQueryData<Task[]>(['tasks'])
+      expect(cached?.[0].labels).toHaveLength(1)
+      expect(cached?.[0].labels[0].id).toBeLessThan(0)
+      expect(cached?.[0].labels[0].name).toBe('Backend')
+    })
+
+    rejectApi(new Error('fail'))
+
+    await waitFor(() => expect(result.current.isError).toBe(true))
+
+    const rolledBack = queryClient.getQueryData<Task[]>(['tasks'])
+    expect(rolledBack?.[0].labels).toEqual([])
+  })
+
+  it('onSuccess invalidates tasks and labels queries', async () => {
+    const task = makeTask({ id: 91, labels: [] })
+    queryClient.setQueryData(['tasks'], [task])
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries')
+    vi.spyOn(apiModule.api, 'post').mockResolvedValue({ id: 2, name: 'Client' })
+
+    const { result } = renderHook(() => useAttachLabel(), { wrapper: createWrapper(queryClient) })
+
+    await act(async () => {
+      result.current.mutate({ taskId: 91, name: 'Client' })
+    })
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['tasks'] })
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['labels'] })
+  })
+})
+
+describe('useRemoveLabel', () => {
+  let queryClient: QueryClient
+
+  beforeEach(() => {
+    vi.restoreAllMocks()
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    })
+  })
+
+  it('onMutate removes label from cache and onError restores previous cache', async () => {
+    const task = makeTask({
+      id: 92,
+      labels: [
+        { id: 10, name: 'Backend' },
+        { id: 11, name: 'Admin' },
+      ],
+    })
+    queryClient.setQueryData(['tasks'], [task])
+    let rejectApi!: (reason?: unknown) => void
+    const pending = new Promise<never>((_, reject) => {
+      rejectApi = reject
+    })
+    vi.spyOn(apiModule.api, 'delete').mockReturnValue(pending)
+    vi.spyOn(apiModule.api, 'get').mockResolvedValue([task])
+
+    const { result } = renderHook(() => useRemoveLabel(), { wrapper: createWrapper(queryClient) })
+
+    act(() => {
+      result.current.mutate({ taskId: 92, labelId: 10 })
+    })
+
+    await waitFor(() => {
+      const cached = queryClient.getQueryData<Task[]>(['tasks'])
+      expect(cached?.[0].labels).toHaveLength(1)
+      expect(cached?.[0].labels[0].id).toBe(11)
+    })
+
+    rejectApi(new Error('fail'))
+
+    await waitFor(() => expect(result.current.isError).toBe(true))
+
+    const rolledBack = queryClient.getQueryData<Task[]>(['tasks'])
+    expect(rolledBack?.[0].labels).toHaveLength(2)
   })
 })

@@ -15,6 +15,7 @@ function makeTask(overrides: Partial<Task> = {}): Task {
     deadline: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    labels: [],
     ...overrides,
   }
 }
@@ -375,5 +376,86 @@ describe('TaskRow — delete with confirmation (Story 2.5)', () => {
     expect(screen.getByRole('button', { name: /confirm delete/i })).toBeInTheDocument()
     // No patch call (not in edit mode)
     expect(spy).not.toHaveBeenCalled()
+  })
+})
+
+describe('Story 3.1 — label management', () => {
+  beforeEach(() => vi.restoreAllMocks())
+
+  it('renders label pills for tasks with labels', () => {
+    const task = makeTask({
+      id: 80,
+      labels: [
+        { id: 1, name: 'Backend' },
+        { id: 2, name: 'Admin' },
+      ],
+    })
+    vi.spyOn(apiModule.api, 'get').mockResolvedValue([])
+
+    renderWithQuery(<TaskRow task={task} />, [task])
+
+    expect(screen.getByText('Backend')).toBeInTheDocument()
+    expect(screen.getByText('Admin')).toBeInTheDocument()
+    expect(screen.getByLabelText('Label: Backend')).toBeInTheDocument()
+  })
+
+  it('clicking a label remove button calls remove label endpoint with taskId and labelId', async () => {
+    const task = makeTask({
+      id: 81,
+      labels: [{ id: 10, name: 'Client' }],
+    })
+    const delSpy = vi.spyOn(apiModule.api, 'delete').mockResolvedValue(undefined)
+    vi.spyOn(apiModule.api, 'get').mockResolvedValue([])
+
+    renderWithQuery(<TaskRow task={task} />, [task])
+    await userEvent.click(screen.getByRole('button', { name: /remove label client/i }))
+
+    expect(delSpy).toHaveBeenCalledWith('/tasks/81/labels/10')
+  })
+
+  it('shows add label affordance and opens input when clicked', async () => {
+    const task = makeTask({ id: 82 })
+    vi.spyOn(apiModule.api, 'get').mockResolvedValue([])
+
+    renderWithQuery(<TaskRow task={task} />, [task])
+
+    const addButton = screen.getByRole('button', { name: 'Add label' })
+    expect(addButton).toBeInTheDocument()
+
+    await userEvent.click(addButton)
+
+    const input = screen.getByRole('combobox', { name: 'Add label' })
+    expect(input).toBeInTheDocument()
+  })
+
+  it('typing label and pressing Enter calls attach label endpoint with taskId and name', async () => {
+    const task = makeTask({ id: 83 })
+    vi.spyOn(apiModule.api, 'get').mockResolvedValue([])
+    const postSpy = vi.spyOn(apiModule.api, 'post').mockResolvedValue({ id: 50, name: 'Ops' })
+
+    renderWithQuery(<TaskRow task={task} />, [task])
+
+    await userEvent.click(screen.getByRole('button', { name: 'Add label' }))
+    const input = screen.getByRole('combobox', { name: 'Add label' })
+    await userEvent.type(input, 'Ops')
+    await userEvent.keyboard('{Enter}')
+
+    expect(postSpy).toHaveBeenCalledWith('/tasks/83/labels', { name: 'Ops' })
+  })
+
+  it('pressing Escape closes label input without mutation', async () => {
+    const task = makeTask({ id: 84 })
+    vi.spyOn(apiModule.api, 'get').mockResolvedValue([])
+    const postSpy = vi.spyOn(apiModule.api, 'post')
+
+    renderWithQuery(<TaskRow task={task} />, [task])
+
+    await userEvent.click(screen.getByRole('button', { name: 'Add label' }))
+    const input = screen.getByRole('combobox', { name: 'Add label' })
+    await userEvent.type(input, 'Will cancel')
+    await userEvent.keyboard('{Escape}')
+
+    expect(screen.queryByRole('combobox', { name: 'Add label' })).not.toBeInTheDocument()
+    expect(postSpy).not.toHaveBeenCalled()
   })
 })

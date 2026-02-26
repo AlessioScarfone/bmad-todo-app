@@ -2,6 +2,15 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import type { Task } from '../types/tasks'
 
+interface Label {
+  id: number
+  name: string
+}
+
+interface TaskMutationResponse extends Omit<Task, 'labels'> {
+  labels?: Label[]
+}
+
 type DeleteTaskContext = { previous: Task[] | undefined }
 
 export function useTasks() {
@@ -17,8 +26,8 @@ type CreateTaskContext = { previous: Task[] | undefined; tempId: number }
 export function useCreateTask() {
   const queryClient = useQueryClient()
 
-  return useMutation<Task, Error, string, CreateTaskContext>({
-    mutationFn: (title: string) => api.post<Task>('/tasks', { title }),
+  return useMutation<TaskMutationResponse, Error, string, CreateTaskContext>({
+    mutationFn: (title: string) => api.post<TaskMutationResponse>('/tasks', { title }),
 
     onMutate: async (title: string) => {
       // Cancel any in-flight refetches so they don't overwrite our optimistic update
@@ -36,6 +45,7 @@ export function useCreateTask() {
         deadline: null,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        labels: [],
       }
 
       // Optimistic insert at the top of the list (AC1, AC5)
@@ -59,7 +69,7 @@ export function useCreateTask() {
       // No invalidation here — avoids extra GET /api/tasks that would violate AC5
       // Fallback to [] (not [serverTask]) to avoid wiping the task list if cache is cold
       queryClient.setQueryData<Task[]>(['tasks'], old =>
-        old?.map(t => (t.id === context?.tempId ? serverTask : t)) ?? [],
+        old?.map(t => (t.id === context?.tempId ? { ...serverTask, labels: serverTask.labels ?? [] } : t)) ?? [],
       )
     },
   })
@@ -70,12 +80,12 @@ type ToggleTaskContext = { previous: Task[] | undefined }
 export function useToggleTask() {
   const queryClient = useQueryClient()
 
-  return useMutation<Task, Error, Task, ToggleTaskContext>({
+  return useMutation<TaskMutationResponse, Error, Task, ToggleTaskContext>({
     mutationFn: (task: Task) => {
       const endpoint = task.isCompleted
         ? `/tasks/${task.id}/uncomplete`
         : `/tasks/${task.id}/complete`
-      return api.patch<Task>(endpoint)
+      return api.patch<TaskMutationResponse>(endpoint)
     },
 
     onMutate: async (task: Task) => {
@@ -106,7 +116,14 @@ export function useToggleTask() {
       // No invalidateQueries on success — avoids extra GET that violates <500ms requirement (AC2)
       // Fallback to [] (not [serverTask]) to avoid wiping the task list if cache is cold
       queryClient.setQueryData<Task[]>(['tasks'], old =>
-        old?.map(t => (t.id === serverTask.id ? serverTask : t)) ?? [],
+        old?.map(t => (
+          t.id === serverTask.id
+            ? {
+                ...serverTask,
+                labels: serverTask.labels ?? t.labels,
+              }
+            : t
+        )) ?? [],
       )
     },
   })
@@ -117,8 +134,8 @@ type UpdateTaskContext = { previous: Task[] | undefined }
 export function useUpdateTask() {
   const queryClient = useQueryClient()
 
-  return useMutation<Task, Error, { id: number; title: string }, UpdateTaskContext>({
-    mutationFn: ({ id, title }) => api.patch<Task>(`/tasks/${id}`, { title }),
+  return useMutation<TaskMutationResponse, Error, { id: number; title: string }, UpdateTaskContext>({
+    mutationFn: ({ id, title }) => api.patch<TaskMutationResponse>(`/tasks/${id}`, { title }),
 
     onMutate: async ({ id, title }) => {
       await queryClient.cancelQueries({ queryKey: ['tasks'] })
@@ -142,8 +159,91 @@ export function useUpdateTask() {
       // Safe fallback: ?? [] (not ?? [serverTask]) — avoids replacing the whole list with one
       // task when the cache is unexpectedly cold (established pattern from useToggleTask)
       queryClient.setQueryData<Task[]>(['tasks'], old =>
-        old?.map(t => (t.id === serverTask.id ? serverTask : t)) ?? [],
+        old?.map(t => (
+          t.id === serverTask.id
+            ? {
+                ...serverTask,
+                labels: serverTask.labels ?? t.labels,
+              }
+            : t
+        )) ?? [],
       )
+    },
+  })
+}
+
+type AttachLabelContext = { previous: Task[] | undefined; taskId: number }
+
+export function useAttachLabel() {
+  const queryClient = useQueryClient()
+
+  return useMutation<Label, Error, { taskId: number; name: string }, AttachLabelContext>({
+    mutationFn: ({ taskId, name }) => api.post<Label>(`/tasks/${taskId}/labels`, { name }),
+
+    onMutate: async ({ taskId, name }) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] })
+      const previous = queryClient.getQueryData<Task[]>(['tasks'])
+      const optimisticLabel: Label = { id: -Date.now(), name }
+
+      queryClient.setQueryData<Task[]>(['tasks'], old =>
+        old?.map(task => (
+          task.id === taskId
+            ? {
+                ...task,
+                labels: [...task.labels, optimisticLabel],
+              }
+            : task
+        )) ?? [],
+      )
+
+      return { previous, taskId }
+    },
+
+    onError: (_error, _vars, context) => {
+      if (context?.previous !== undefined) {
+        queryClient.setQueryData<Task[]>(['tasks'], context.previous)
+      }
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+    },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      queryClient.invalidateQueries({ queryKey: ['labels'] })
+    },
+  })
+}
+
+type RemoveLabelContext = { previous: Task[] | undefined }
+
+export function useRemoveLabel() {
+  const queryClient = useQueryClient()
+
+  return useMutation<void, Error, { taskId: number; labelId: number }, RemoveLabelContext>({
+    mutationFn: ({ taskId, labelId }) => api.delete<void>(`/tasks/${taskId}/labels/${labelId}`),
+
+    onMutate: async ({ taskId, labelId }) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] })
+      const previous = queryClient.getQueryData<Task[]>(['tasks'])
+
+      queryClient.setQueryData<Task[]>(['tasks'], old =>
+        old?.map(task => (
+          task.id === taskId
+            ? {
+                ...task,
+                labels: task.labels.filter(label => label.id !== labelId),
+              }
+            : task
+        )) ?? [],
+      )
+
+      return { previous }
+    },
+
+    onError: (_error, _vars, context) => {
+      if (context?.previous !== undefined) {
+        queryClient.setQueryData<Task[]>(['tasks'], context.previous)
+      }
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
     },
   })
 }

@@ -31,6 +31,80 @@ describe('GET /api/tasks', () => {
     return setCookie.split(';')[0] // extracts "token=..."
   }
 
+  describe('GET /api/tasks labels regression (Story 3.1)', () => {
+    let ctx: Awaited<ReturnType<typeof createTestDb>>
+    let app: ReturnType<typeof buildServer>
+
+    beforeAll(async () => {
+      ctx = await createTestDb()
+      app = buildServer('test-secret', ctx.sql)
+      await app.ready()
+    }, 60_000)
+
+    afterAll(async () => {
+      await app.close()
+      await ctx.sql.end()
+      await ctx.container.stop()
+    })
+
+    async function registerAndLogin(email: string) {
+      const passwordHash = await bcrypt.hash('password123', 12)
+      await ctx.sql`INSERT INTO users (email, password_hash) VALUES (${email}, ${passwordHash})`
+      const loginRes = await app.inject({
+        method: 'POST',
+        url: '/api/auth/login',
+        payload: { email, password: 'password123' },
+      })
+      const setCookie = loginRes.headers['set-cookie'] as string
+      return setCookie.split(';')[0]
+    }
+
+    it('includes labels: [] for tasks without labels', async () => {
+      const cookie = await registerAndLogin('tasks-labels-empty@test.com')
+
+      await app.inject({
+        method: 'POST',
+        url: '/api/tasks',
+        headers: { cookie },
+        payload: { title: 'No labels yet' },
+      })
+
+      const res = await app.inject({ method: 'GET', url: '/api/tasks', headers: { cookie } })
+      expect(res.statusCode).toBe(200)
+
+      const tasks = res.json() as Array<{ title: string; labels: Array<{ id: number; name: string }> }>
+      expect(tasks[0].title).toBe('No labels yet')
+      expect(tasks[0].labels).toEqual([])
+    })
+
+    it('includes attached labels in the labels array', async () => {
+      const cookie = await registerAndLogin('tasks-labels-attached@test.com')
+
+      const createRes = await app.inject({
+        method: 'POST',
+        url: '/api/tasks',
+        headers: { cookie },
+        payload: { title: 'Task with labels' },
+      })
+
+      const task = createRes.json() as { id: number }
+
+      await app.inject({
+        method: 'POST',
+        url: `/api/tasks/${task.id}/labels`,
+        headers: { cookie },
+        payload: { name: 'Backend' },
+      })
+
+      const res = await app.inject({ method: 'GET', url: '/api/tasks', headers: { cookie } })
+      expect(res.statusCode).toBe(200)
+
+      const tasks = res.json() as Array<{ id: number; labels: Array<{ id: number; name: string }> }>
+      const loaded = tasks.find(t => t.id === task.id)
+      expect(loaded?.labels).toHaveLength(1)
+      expect(loaded?.labels[0].name).toBe('Backend')
+    })
+  })
   it('returns 401 when not authenticated', async () => {
     const res = await app.inject({ method: 'GET', url: '/api/tasks' })
     expect(res.statusCode).toBe(401)

@@ -10,6 +10,7 @@ import { getSqlClient } from './db/client.js'
 import { runMigrations } from './db/migrate.js'
 import dbPlugin from './plugins/db.js'
 import authRoutes from './routes/auth.js'
+import labelRoutes from './routes/labels.js'
 import taskRoutes from './routes/tasks.js'
 
 const PORT = parseInt(process.env.PORT ?? '3001', 10)
@@ -79,6 +80,10 @@ export function buildServer(jwtSecret: string, sqlOverride?: Sql) {
   })
 
   fastify.register(taskRoutes, {
+    prefix: '/api',
+  })
+
+  fastify.register(labelRoutes, {
     prefix: '/api',
   })
 

@@ -4,17 +4,26 @@ import type { Task } from '../../types/tasks.js'
 export const getTasks = (sql: Sql, userId: number): Promise<Task[]> =>
   sql<Task[]>`
     SELECT
-      id,
-      user_id AS "userId",
-      title,
-      is_completed AS "isCompleted",
-      completed_at AS "completedAt",
-      deadline,
-      created_at AS "createdAt",
-      updated_at AS "updatedAt"
-    FROM tasks
-    WHERE user_id = ${userId}
-    ORDER BY created_at DESC
+      t.id,
+      t.user_id AS "userId",
+      t.title,
+      t.is_completed AS "isCompleted",
+      t.completed_at AS "completedAt",
+      t.deadline,
+      t.created_at AS "createdAt",
+      t.updated_at AS "updatedAt",
+      COALESCE(
+        json_agg(
+          json_build_object('id', l.id, 'name', l.name)
+        ) FILTER (WHERE l.id IS NOT NULL),
+        '[]'::json
+      ) AS labels
+    FROM tasks t
+    LEFT JOIN task_labels tl ON tl.task_id = t.id
+    LEFT JOIN labels l ON l.id = tl.label_id
+    WHERE t.user_id = ${userId}
+    GROUP BY t.id
+    ORDER BY t.created_at DESC
   `
 
 export const createTask = async (sql: Sql, userId: number, title: string): Promise<Task> => {

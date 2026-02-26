@@ -7,4 +7,5 @@ export interface Task {
   deadline: string | null
   createdAt: string
   updatedAt: string
+  labels: { id: number; name: string }[]
 }

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
-import { useToggleTask, useUpdateTask, useDeleteTask } from '../hooks/useTasks'
+import { useLabels } from '../hooks/useLabels'
+import { useAttachLabel, useToggleTask, useUpdateTask, useDeleteTask, useRemoveLabel } from '../hooks/useTasks'
 import type { Task } from '../types/tasks'
 
 interface TaskRowProps {
@@ -10,6 +11,8 @@ export function TaskRow({ task }: TaskRowProps) {
   const toggleTask = useToggleTask()
   const updateTask = useUpdateTask()
   const deleteTask = useDeleteTask()
+  const attachLabel = useAttachLabel()
+  const removeLabel = useRemoveLabel()
 
   // Toggle error state
   const [toggleError, setToggleError] = useState<string | null>(null)
@@ -24,6 +27,12 @@ export function TaskRow({ task }: TaskRowProps) {
   // Delete state
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  // Label state
+  const [isAddingLabel, setIsAddingLabel] = useState(false)
+  const [labelInput, setLabelInput] = useState('')
+  const [labelError, setLabelError] = useState<string | null>(null)
+  const { data: allLabels = [] } = useLabels(isAddingLabel)
 
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -119,9 +128,75 @@ export function TaskRow({ task }: TaskRowProps) {
     setIsEditing(true)
   }
 
+  const handleRemoveLabel = (labelId: number) => {
+    setLabelError(null)
+    removeLabel.mutate(
+      { taskId: task.id, labelId },
+      {
+        onError: () => {
+          setLabelError('Failed to remove label. Please try again.')
+        },
+      },
+    )
+  }
+
+  const submitLabel = () => {
+    const trimmed = labelInput.trim()
+    if (trimmed.length === 0) {
+      setLabelError('Label must not be empty')
+      return
+    }
+
+    setLabelError(null)
+    attachLabel.mutate(
+      { taskId: task.id, name: trimmed },
+      {
+        onSuccess: () => {
+          setLabelInput('')
+          setIsAddingLabel(false)
+        },
+        onError: () => {
+          setLabelError('Failed to attach label. Please try again.')
+        },
+      },
+    )
+  }
+
+  const handleLabelInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      submitLabel()
+      return
+    }
+
+    if (e.key === 'Escape') {
+      e.preventDefault()
+      setLabelInput('')
+      setLabelError(null)
+      setIsAddingLabel(false)
+    }
+  }
+
   const ariaLabel = task.isCompleted
     ? `Mark ${task.title} as not done`
     : `Mark ${task.title} as done`
+
+  const suggestionOptions = allLabels.filter(label => {
+    const alreadyAttached = task.labels.some(taskLabel => taskLabel.id === label.id)
+    const input = labelInput.trim().toLowerCase()
+
+    if (alreadyAttached) {
+      return false
+    }
+
+    if (input.length === 0) {
+      return true
+    }
+
+    return label.name.toLowerCase().includes(input)
+  })
+
+  const labelDatalistId = `task-${task.id}-labels`
 
   return (
     <li
@@ -206,6 +281,64 @@ export function TaskRow({ task }: TaskRowProps) {
         )}
       </div>
 
+      <div className="mt-2 ml-6 flex flex-wrap items-center gap-2">
+        {task.labels.map(label => (
+          <span
+            key={label.id}
+            aria-label={`Label: ${label.name}`}
+            className="inline-flex items-center gap-1 rounded border border-[#2a2a2a] px-2 py-0.5 text-[11px]"
+          >
+            {label.name}
+            <button
+              type="button"
+              onClick={() => handleRemoveLabel(label.id)}
+              aria-label={`Remove label ${label.name}`}
+              className="text-[#888] hover:text-red-400"
+            >
+              ✕
+            </button>
+          </span>
+        ))}
+
+        {!isAddingLabel ? (
+          <button
+            type="button"
+            aria-label="Add label"
+            onClick={() => {
+              setLabelError(null)
+              setIsAddingLabel(true)
+            }}
+            className="text-[11px] text-[#888] underline hover:text-[#f0f0f0]"
+          >
+            + Label
+          </button>
+        ) : (
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={labelInput}
+              onChange={e => setLabelInput(e.target.value)}
+              onKeyDown={handleLabelInputKeyDown}
+              aria-label="Add label"
+              list={labelDatalistId}
+              className="w-36 border border-[#2a2a2a] bg-[#1c1c1c] px-1 py-0.5 text-[11px] text-[#f0f0f0] outline-none focus:border-[#00ff88]"
+            />
+            <datalist id={labelDatalistId}>
+              {suggestionOptions.map(label => (
+                <option key={label.id} value={label.name} />
+              ))}
+            </datalist>
+            <button
+              type="button"
+              onClick={submitLabel}
+              className="text-[11px] text-[#888] underline hover:text-[#f0f0f0]"
+            >
+              Add
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* Edit validation / error */}
       {editError && (
         <div role="alert" className="mt-1 ml-6 text-[11px] text-red-400 flex items-center gap-2">
@@ -254,6 +387,12 @@ export function TaskRow({ task }: TaskRowProps) {
           >
             Dismiss
           </button>
+        </div>
+      )}
+
+      {labelError && (
+        <div role="alert" className="mt-1 ml-6 text-[11px] text-red-400">
+          {labelError}
         </div>
       )}
     </li>

@@ -9,6 +9,7 @@ export const TaskSchema = Type.Object({
   deadline:    Type.Union([Type.String(), Type.Null()]),
   createdAt:   Type.String(),
   updatedAt:   Type.String(),
+  labels:      Type.Array(Type.Object({ id: Type.Integer(), name: Type.String() }), { default: [] }),
 })
 
 export type Task = Static<typeof TaskSchema>
