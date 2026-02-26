@@ -71,8 +71,8 @@ development_status:
   epic-4-retrospective: optional
 
   # ─── Epic 5: Resilience & Accessibility ────────────────────────────────────
-  epic-5: backlog
-  5-1-inline-error-feedback-retry: backlog
+  epic-5: in-progress
+  5-1-inline-error-feedback-retry: done
   5-2-performance-sub-second-state-reflection: backlog
   5-3-full-keyboard-navigation: backlog
   5-4-wcag-2-1-aa-compliance-prefers-reduced-motion: backlog

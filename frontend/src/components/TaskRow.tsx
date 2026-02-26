@@ -486,7 +486,7 @@ export function TaskRow({ task }: TaskRowProps) {
             <button
               onClick={handleRetryEdit}
               className="underline hover:text-red-300"
-              aria-label="Retry edit"
+              aria-label={`Retry saving ${task.title}`}
             >
               Retry
             </button>
@@ -515,7 +515,7 @@ export function TaskRow({ task }: TaskRowProps) {
           <button
             onClick={handleToggleRetry}
             className="underline hover:text-red-300"
-            aria-label="Retry"
+            aria-label={`Retry saving ${task.title}`}
           >
             Retry
           </button>
@@ -535,7 +535,7 @@ export function TaskRow({ task }: TaskRowProps) {
           <button
             type="button"
             onClick={handleRetryLabel}
-            aria-label="Retry label action"
+            aria-label={`Retry saving ${task.title}`}
             className="underline hover:text-red-300"
           >
             Retry
@@ -550,7 +550,7 @@ export function TaskRow({ task }: TaskRowProps) {
           <button
             type="button"
             onClick={handleRetryDeadline}
-            aria-label="Retry deadline action"
+            aria-label={`Retry saving ${task.title}`}
             className="underline hover:text-red-300"
           >
             Retry

@@ -213,7 +213,7 @@ describe('TaskRow — inline edit mode (Story 2.4)', () => {
     await userEvent.type(input, 'Failed attempt')
     await userEvent.keyboard('{Enter}')
     await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument())
-    expect(screen.getByRole('button', { name: /retry edit/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /retry saving task to edit/i })).toBeInTheDocument()
   })
 
   it('Retry re-opens edit mode with the failed title pre-populated (AC4)', async () => {
@@ -226,8 +226,8 @@ describe('TaskRow — inline edit mode (Story 2.4)', () => {
     await userEvent.clear(input)
     await userEvent.type(input, 'Attempted title')
     await userEvent.keyboard('{Enter}')
-    await waitFor(() => screen.getByRole('button', { name: /retry edit/i }))
-    await userEvent.click(screen.getByRole('button', { name: /retry edit/i }))
+    await waitFor(() => screen.getByRole('button', { name: /retry saving task/i }))
+    await userEvent.click(screen.getByRole('button', { name: /retry saving task/i }))
     // Edit mode re-opened with failed title
     const retryInput = screen.getByRole('textbox')
     expect((retryInput as HTMLInputElement).value).toBe('Attempted title')
@@ -472,7 +472,7 @@ describe('Story 3.1 — label management', () => {
     await userEvent.keyboard('{Enter}')
 
     await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument())
-    expect(screen.getByRole('button', { name: 'Retry label action' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Retry saving Test task' })).toBeInTheDocument()
   })
 
   it('retry on failed attach attempts the same attach again', async () => {
@@ -490,8 +490,8 @@ describe('Story 3.1 — label management', () => {
     await userEvent.type(input, 'Urgent')
     await userEvent.keyboard('{Enter}')
 
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Retry label action' })).toBeInTheDocument())
-    await userEvent.click(screen.getByRole('button', { name: 'Retry label action' }))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Retry saving Test task' })).toBeInTheDocument())
+    await userEvent.click(screen.getByRole('button', { name: 'Retry saving Test task' }))
 
     expect(postSpy).toHaveBeenCalledTimes(2)
     expect(postSpy).toHaveBeenNthCalledWith(1, '/tasks/86/labels', { name: 'Urgent' })
@@ -512,9 +512,9 @@ describe('Story 3.1 — label management', () => {
     renderWithQuery(<TaskRow task={task} />, [task])
 
     await userEvent.click(screen.getByRole('button', { name: /remove label client/i }))
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Retry label action' })).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Retry saving Test task' })).toBeInTheDocument())
 
-    await userEvent.click(screen.getByRole('button', { name: 'Retry label action' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Retry saving Test task' }))
 
     expect(delSpy).toHaveBeenCalledTimes(2)
     expect(delSpy).toHaveBeenNthCalledWith(1, '/tasks/87/labels/12')
@@ -592,8 +592,8 @@ describe('Story 3.2 — deadline management', () => {
       .mockResolvedValueOnce({ ...task, deadline: null, labels: [] })
     renderWithQuery(<TaskRow task={task} />, [task])
     await userEvent.click(screen.getByRole('button', { name: 'Remove deadline' }))
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Retry deadline action' })).toBeInTheDocument())
-    await userEvent.click(screen.getByRole('button', { name: 'Retry deadline action' }))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Retry saving Test task' })).toBeInTheDocument())
+    await userEvent.click(screen.getByRole('button', { name: 'Retry saving Test task' }))
     expect(spy).toHaveBeenCalledTimes(2)
   })
 })
