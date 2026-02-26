@@ -1,6 +1,6 @@
 # Story 3.2: Deadline — Set and Remove
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -51,15 +51,15 @@ so that I can track time-sensitive work at a glance.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Backend — Extend `UpdateTaskBodySchema` to accept `deadline`** (AC: AC5, AC1, AC2)
-  - [ ] Modify `UpdateTaskBodySchema` in `backend/src/types/tasks.ts`:
+- [x] **Task 1: Backend — Extend `UpdateTaskBodySchema` to accept `deadline`** (AC: AC5, AC1, AC2)
+  - [x] Modify `UpdateTaskBodySchema` in `backend/src/types/tasks.ts`:
     - Change from `Type.Object({ title: Type.String({ minLength: 1 }) })` to a `Type.Partial(...)` object that accepts both `title` (optional) and `deadline` (optional, `Type.Union([Type.String(), Type.Null()])`)
     - Export updated `UpdateTaskBody = Static<typeof UpdateTaskBodySchema>`
-  - [ ] **CRITICAL:** The existing `useUpdateTask` frontend hook sends `{ title }` to `PATCH /api/tasks/:id` — after making the schema partial, this must still validate and work (title is still optional via Partial, but the route handler validates its presence when title is given)
-  - [ ] Ensure Ajv coercion is not stripping `null` values — explicitly allow `additionalProperties: false` on the partial schema to prevent surprises
+  - [x] **CRITICAL:** The existing `useUpdateTask` frontend hook sends `{ title }` to `PATCH /api/tasks/:id` — after making the schema partial, this must still validate and work (title is still optional via Partial, but the route handler validates its presence when title is given)
+  - [x] Ensure Ajv coercion is not stripping `null` values — explicitly allow `additionalProperties: false` on the partial schema to prevent surprises
 
-- [ ] **Task 2: Backend — Add `updateTaskDeadline` query function** (AC: AC1, AC2)
-  - [ ] Add to `backend/src/db/queries/tasks.ts`:
+- [x] **Task 2: Backend — Add `updateTaskDeadline` query function** (AC: AC1, AC2)
+  - [x] Add to `backend/src/db/queries/tasks.ts`:
     ```typescript
     export const updateTaskDeadline = async (
       sql: Sql,
@@ -84,11 +84,11 @@ so that I can track time-sensitive work at a glance.
       return rows[0]
     }
     ```
-  - [ ] **Important:** Do NOT include the labels LEFT JOIN in this query — mutation responses intentionally exclude labels (pattern established in Story 3.1: only `getTasks` includes labels); the frontend cache merges labels from the optimistic snapshot via `onSuccess`
-  - [ ] Import `updateTaskDeadline` in `backend/src/routes/tasks.ts`
+  - [x] **Important:** Do NOT include the labels LEFT JOIN in this query — mutation responses intentionally exclude labels (pattern established in Story 3.1: only `getTasks` includes labels); the frontend cache merges labels from the optimistic snapshot via `onSuccess`
+  - [x] Import `updateTaskDeadline` in `backend/src/routes/tasks.ts`
 
-- [ ] **Task 3: Backend — Extend `PATCH /api/tasks/:id` route handler** (AC: AC1, AC2, AC5)
-  - [ ] In `backend/src/routes/tasks.ts`, update the `PATCH /api/tasks/:id` handler to branch on which fields are present in `req.body`:
+- [x] **Task 3: Backend — Extend `PATCH /api/tasks/:id` route handler** (AC: AC1, AC2, AC5)
+  - [x] In `backend/src/routes/tasks.ts`, update the `PATCH /api/tasks/:id` handler to branch on which fields are present in `req.body`:
     ```typescript
     async (req, reply) => {
       const userId = (req.user as { id: number }).id
@@ -116,10 +116,10 @@ so that I can track time-sensitive work at a glance.
       return reply.status(200).send(task)
     }
     ```
-  - [ ] **Note on `'deadline' in req.body` check:** TypeBox+Ajv will pass `null` values through (TypeBox Partial makes the key optional but allows null when the union is `Type.Union([Type.String(), Type.Null()])`). Use `'deadline' in req.body` (not `req.body.deadline !== undefined`) to correctly distinguish "field not sent" from "field sent as null"
+  - [x] **Note on `'deadline' in req.body` check:** TypeBox+Ajv will pass `null` values through (TypeBox Partial makes the key optional but allows null when the union is `Type.Union([Type.String(), Type.Null()])`). Use `'deadline' in req.body` (not `req.body.deadline !== undefined`) to correctly distinguish "field not sent" from "field sent as null"
 
-- [ ] **Task 4: Frontend — `useSetDeadline` mutation hook** (AC: AC1, AC2, AC4)
-  - [ ] Add to `frontend/src/hooks/useTasks.ts`:
+- [x] **Task 4: Frontend — `useSetDeadline` mutation hook** (AC: AC1, AC2, AC4)
+  - [x] Add to `frontend/src/hooks/useTasks.ts`:
     ```typescript
     type SetDeadlineContext = { previous: Task[] | undefined }
 
@@ -158,7 +158,7 @@ so that I can track time-sensitive work at a glance.
       })
     }
     ```
-  - [ ] Follow established pattern from `useUpdateTask` and `useToggleTask` — no `invalidateQueries` on success (avoids extra GET)
+  - [x] Follow established pattern from `useUpdateTask` and `useToggleTask` — no `invalidateQueries` on success (avoids extra GET)
 
 - [ ] **Task 5: Frontend — Extend `TaskRow.tsx` with deadline display + inline date input** (AC: AC1, AC2, AC3, AC4)
   - [ ] **`TaskRow.tsx` was created in Story 2.3 and extended in Stories 2.4, 2.5, and 3.1 — EXTEND IT, DO NOT re-create**

@@ -20,8 +20,12 @@ export const CreateTaskBodySchema = Type.Object({
 
 export type CreateTaskBody = Static<typeof CreateTaskBodySchema>
 
-export const UpdateTaskBodySchema = Type.Object({
-  title: Type.String({ minLength: 1 }),
-})
+export const UpdateTaskBodySchema = Type.Partial(
+  Type.Object({
+    title:    Type.String({ minLength: 1 }),
+    deadline: Type.Union([Type.String(), Type.Null()]),
+  }),
+  { additionalProperties: false },
+)
 
 export type UpdateTaskBody = Static<typeof UpdateTaskBodySchema>

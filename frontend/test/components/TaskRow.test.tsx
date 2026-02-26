@@ -521,3 +521,65 @@ describe('Story 3.1 — label management', () => {
     expect(delSpy).toHaveBeenNthCalledWith(2, '/tasks/87/labels/12')
   })
 })
+
+// ---------------------------------------------------------------------------
+// Story 3.2 — deadline management
+// ---------------------------------------------------------------------------
+
+describe('Story 3.2 — deadline management', () => {
+  beforeEach(() => vi.restoreAllMocks())
+
+  it('displays a formatted deadline when task.deadline is set (AC3)', () => {
+    const task = makeTask({ id: 90, deadline: '2026-03-15' })
+    renderWithQuery(<TaskRow task={task} />, [task])
+    // '15 Mar 2026' format (en-GB)
+    expect(screen.getByText(/15 Mar 2026/i)).toBeInTheDocument()
+  })
+
+  it('clicking the × button calls useSetDeadline with { id, deadline: null } (AC2)', async () => {
+    const task = makeTask({ id: 91, deadline: '2026-03-15' })
+    const spy = vi.spyOn(apiModule.api, 'patch').mockResolvedValue({ ...task, deadline: null, labels: [] })
+    renderWithQuery(<TaskRow task={task} />, [task])
+    await userEvent.click(screen.getByRole('button', { name: 'Remove deadline' }))
+    await waitFor(() => expect(spy).toHaveBeenCalledWith('/tasks/91', { deadline: null }))
+  })
+
+  it('renders the 📅 trigger button when task has no deadline (AC1)', () => {
+    const task = makeTask({ id: 92, deadline: null })
+    renderWithQuery(<TaskRow task={task} />, [task])
+    expect(screen.getByRole('button', { name: /set deadline for/i })).toBeInTheDocument()
+  })
+
+  it('clicking 📅 trigger shows a date input (AC1)', async () => {
+    const task = makeTask({ id: 93, deadline: null })
+    renderWithQuery(<TaskRow task={task} />, [task])
+    await userEvent.click(screen.getByRole('button', { name: /set deadline for/i }))
+    // In jsdom, input[type="date"] does not get role "textbox" — query directly
+    expect(document.querySelector('input[type="date"]')).toBeInTheDocument()
+  })
+
+  it('pressing Escape on date input closes picker without mutation (AC1)', async () => {
+    const task = makeTask({ id: 94, deadline: null })
+    const spy = vi.spyOn(apiModule.api, 'patch')
+    renderWithQuery(<TaskRow task={task} />, [task])
+    await userEvent.click(screen.getByRole('button', { name: /set deadline for/i }))
+    const dateInput = document.querySelector('input[type="date"]') as HTMLElement
+    expect(dateInput).toBeInTheDocument()
+    await userEvent.type(dateInput, '{Escape}')
+    expect(spy).not.toHaveBeenCalled()
+    // Date input should be gone after Escape
+    expect(document.querySelector('input[type="date"]')).not.toBeInTheDocument()
+  })
+
+  it('retry affordance renders when deadline mutation fails; clicking retry re-calls mutation (AC4)', async () => {
+    const task = makeTask({ id: 95, deadline: '2026-04-01' })
+    const spy = vi.spyOn(apiModule.api, 'patch')
+      .mockRejectedValueOnce(new Error('fail'))
+      .mockResolvedValueOnce({ ...task, deadline: null, labels: [] })
+    renderWithQuery(<TaskRow task={task} />, [task])
+    await userEvent.click(screen.getByRole('button', { name: 'Remove deadline' }))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Retry deadline action' })).toBeInTheDocument())
+    await userEvent.click(screen.getByRole('button', { name: 'Retry deadline action' }))
+    expect(spy).toHaveBeenCalledTimes(2)
+  })
+})

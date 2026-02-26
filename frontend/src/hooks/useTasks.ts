@@ -276,3 +276,41 @@ export function useDeleteTask() {
     },
   })
 }
+
+type SetDeadlineContext = { previous: Task[] | undefined }
+
+export function useSetDeadline() {
+  const queryClient = useQueryClient()
+
+  return useMutation<TaskMutationResponse, Error, { id: number; deadline: string | null }, SetDeadlineContext>({
+    mutationFn: ({ id, deadline }) => api.patch<TaskMutationResponse>(`/tasks/${id}`, { deadline }),
+
+    onMutate: async ({ id, deadline }) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] })
+      const previous = queryClient.getQueryData<Task[]>(['tasks'])
+      queryClient.setQueryData<Task[]>(['tasks'], old =>
+        old?.map(t => (t.id === id ? { ...t, deadline } : t)) ?? [],
+      )
+      return { previous }
+    },
+
+    onError: (_err, _vars, context) => {
+      if (context?.previous !== undefined) {
+        queryClient.setQueryData<Task[]>(['tasks'], context.previous)
+      }
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+    },
+
+    onSuccess: (serverTask) => {
+      // Update cache with server-confirmed task — merge labels from existing cache entry
+      // No invalidateQueries on success — avoids extra GET (established pattern)
+      queryClient.setQueryData<Task[]>(['tasks'], old =>
+        old?.map(t =>
+          t.id === serverTask.id
+            ? { ...serverTask, labels: serverTask.labels ?? t.labels }
+            : t,
+        ) ?? [],
+      )
+    },
+  })
+}

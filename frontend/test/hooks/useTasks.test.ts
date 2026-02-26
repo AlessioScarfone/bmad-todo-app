@@ -2,7 +2,7 @@ import { renderHook, act, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import React from 'react'
-import { useToggleTask, useCreateTask, useUpdateTask, useDeleteTask, useAttachLabel, useRemoveLabel } from '../../src/hooks/useTasks'
+import { useToggleTask, useCreateTask, useUpdateTask, useDeleteTask, useAttachLabel, useRemoveLabel, useSetDeadline } from '../../src/hooks/useTasks'
 import * as apiModule from '../../src/lib/api'
 import type { Task } from '../../src/types/tasks'
 
@@ -490,5 +490,86 @@ describe('useRemoveLabel', () => {
 
     const rolledBack = queryClient.getQueryData<Task[]>(['tasks'])
     expect(rolledBack?.[0].labels).toHaveLength(2)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// useSetDeadline (Story 3.2)
+// ---------------------------------------------------------------------------
+
+describe('useSetDeadline', () => {
+  let queryClient: QueryClient
+
+  beforeEach(() => {
+    vi.restoreAllMocks()
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    })
+  })
+
+  it('onMutate optimistically sets deadline on the target task in the cache', async () => {
+    const task = makeTask({ id: 50, deadline: null })
+    queryClient.setQueryData(['tasks'], [task])
+    let resolveApi!: (v: Task) => void
+    const pending = new Promise<Task>(r => { resolveApi = r })
+    vi.spyOn(apiModule.api, 'patch').mockReturnValue(pending)
+
+    const { result } = renderHook(() => useSetDeadline(), { wrapper: createWrapper(queryClient) })
+    act(() => { result.current.mutate({ id: 50, deadline: '2026-03-15' }) })
+
+    await waitFor(() => {
+      const cached = queryClient.getQueryData<Task[]>(['tasks'])
+      expect(cached?.[0].deadline).toBe('2026-03-15')
+    })
+
+    resolveApi({ ...task, deadline: '2026-03-15', labels: [] })
+  })
+
+  it('onMutate optimistically sets deadline to null when clearing', async () => {
+    const task = makeTask({ id: 51, deadline: '2026-03-15' })
+    queryClient.setQueryData(['tasks'], [task])
+    let resolveApi!: (v: Task) => void
+    const pending = new Promise<Task>(r => { resolveApi = r })
+    vi.spyOn(apiModule.api, 'patch').mockReturnValue(pending)
+
+    const { result } = renderHook(() => useSetDeadline(), { wrapper: createWrapper(queryClient) })
+    act(() => { result.current.mutate({ id: 51, deadline: null }) })
+
+    await waitFor(() => {
+      const cached = queryClient.getQueryData<Task[]>(['tasks'])
+      expect(cached?.[0].deadline).toBeNull()
+    })
+
+    resolveApi({ ...task, deadline: null, labels: [] })
+  })
+
+  it('onError restores previous cache state', async () => {
+    const task = makeTask({ id: 52, deadline: null })
+    queryClient.setQueryData(['tasks'], [task])
+    vi.spyOn(apiModule.api, 'patch').mockRejectedValue(new Error('fail'))
+    vi.spyOn(apiModule.api, 'get').mockResolvedValue([task])
+
+    const { result } = renderHook(() => useSetDeadline(), { wrapper: createWrapper(queryClient) })
+    await act(async () => { result.current.mutate({ id: 52, deadline: '2026-06-01' }) })
+    await waitFor(() => expect(result.current.isError).toBe(true))
+
+    const cached = queryClient.getQueryData<Task[]>(['tasks'])
+    expect(cached?.[0].deadline).toBeNull()
+  })
+
+  it('onSuccess updates cache with server-confirmed deadline, preserving labels', async () => {
+    const existingLabels = [{ id: 5, name: 'Feature' }]
+    const task = makeTask({ id: 53, deadline: null, labels: existingLabels })
+    queryClient.setQueryData(['tasks'], [task])
+    const serverResponse = { ...task, deadline: '2026-07-04', labels: undefined }
+    vi.spyOn(apiModule.api, 'patch').mockResolvedValue(serverResponse)
+
+    const { result } = renderHook(() => useSetDeadline(), { wrapper: createWrapper(queryClient) })
+    await act(async () => { result.current.mutate({ id: 53, deadline: '2026-07-04' }) })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+
+    const cached = queryClient.getQueryData<Task[]>(['tasks'])
+    expect(cached?.[0].deadline).toBe('2026-07-04')
+    expect(cached?.[0].labels).toEqual(existingLabels)
   })
 })

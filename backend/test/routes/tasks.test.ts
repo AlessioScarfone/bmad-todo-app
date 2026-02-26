@@ -734,3 +734,170 @@ describe('DELETE /api/tasks/:id (delete task)', () => {
     expect(rows).toHaveLength(1)
   })
 })
+describe('PATCH /api/tasks/:id \u2014 deadline extension (Story 3.2)', () => {
+  let ctx: Awaited<ReturnType<typeof createTestDb>>
+  let app: ReturnType<typeof buildServer>
+
+  beforeAll(async () => {
+    ctx = await createTestDb()
+    app = buildServer('test-secret', ctx.sql)
+    await app.ready()
+  }, 60_000)
+
+  afterAll(async () => {
+    await app.close()
+    await ctx.sql.end()
+    await ctx.container.stop()
+  })
+
+  async function registerAndLogin(email: string) {
+    const passwordHash = await bcrypt.hash('password123', 12)
+    await ctx.sql`INSERT INTO users (email, password_hash) VALUES (${email}, ${passwordHash})`
+    const loginRes = await app.inject({
+      method: 'POST',
+      url: '/api/auth/login',
+      payload: { email, password: 'password123' },
+    })
+    const setCookie = loginRes.headers['set-cookie'] as string
+    return setCookie.split(';')[0]
+  }
+
+  async function createTask(cookie: string, title: string) {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/tasks',
+      headers: { cookie },
+      payload: { title },
+    })
+    return res.json() as { id: number; title: string; deadline: string | null }
+  }
+
+  it('returns 401 when not authenticated (deadline body)', async () => {
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/api/tasks/1',
+      payload: { deadline: '2026-03-15' },
+    })
+    expect(res.statusCode).toBe(401)
+  })
+
+  it('sets deadline: returns 200 with deadline field populated (AC1/AC5)', async () => {
+    const cookie = await registerAndLogin('deadline-set@test.com')
+    const task = await createTask(cookie, 'Task with deadline')
+    const res = await app.inject({
+      method: 'PATCH',
+      url: `/api/tasks/${task.id}`,
+      headers: { cookie },
+      payload: { deadline: '2026-03-15' },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(body.deadline).toBe('2026-03-15')
+  })
+
+  it('clears deadline: returns 200 with deadline null (AC2)', async () => {
+    const cookie = await registerAndLogin('deadline-clear@test.com')
+    const task = await createTask(cookie, 'Task to clear deadline')
+    // First set deadline
+    await app.inject({
+      method: 'PATCH',
+      url: `/api/tasks/${task.id}`,
+      headers: { cookie },
+      payload: { deadline: '2026-04-01' },
+    })
+    // Now clear it
+    const res = await app.inject({
+      method: 'PATCH',
+      url: `/api/tasks/${task.id}`,
+      headers: { cookie },
+      payload: { deadline: null },
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.json().deadline).toBeNull()
+  })
+
+  it('returns 404 on non-existent task', async () => {
+    const cookie = await registerAndLogin('deadline-notfound@test.com')
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/api/tasks/999999999',
+      headers: { cookie },
+      payload: { deadline: '2026-03-15' },
+    })
+    expect(res.statusCode).toBe(404)
+    expect(res.json()).toMatchObject({ statusCode: 404, error: 'NOT_FOUND' })
+  })
+
+  it('returns 404 for a task belonging to another user', async () => {
+    const ownerCookie = await registerAndLogin('deadline-owner@test.com')
+    const task = await createTask(ownerCookie, 'Owner task')
+    const otherCookie = await registerAndLogin('deadline-intruder@test.com')
+    const res = await app.inject({
+      method: 'PATCH',
+      url: `/api/tasks/${task.id}`,
+      headers: { cookie: otherCookie },
+      payload: { deadline: '2026-03-15' },
+    })
+    expect(res.statusCode).toBe(404)
+  })
+
+  it('regression: { title } only still updates title, deadline unchanged (AC5)', async () => {
+    const cookie = await registerAndLogin('deadline-reg-title@test.com')
+    const task = await createTask(cookie, 'Original title')
+    // Set deadline
+    await app.inject({
+      method: 'PATCH',
+      url: `/api/tasks/${task.id}`,
+      headers: { cookie },
+      payload: { deadline: '2026-05-10' },
+    })
+    // Now update only title
+    const res = await app.inject({
+      method: 'PATCH',
+      url: `/api/tasks/${task.id}`,
+      headers: { cookie },
+      payload: { title: 'Updated title' },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(body.title).toBe('Updated title')
+    // deadline should be unaffected — verify via GET
+    const getRes = await app.inject({ method: 'GET', url: '/api/tasks', headers: { cookie } })
+    const tasks = getRes.json() as { id: number; title: string; deadline: string | null }[]
+    const updated = tasks.find(t => t.id === task.id)
+    expect(updated?.deadline).toBe('2026-05-10')
+  })
+
+  it('regression: both title and deadline in same body — both updated (AC5)', async () => {
+    const cookie = await registerAndLogin('deadline-both@test.com')
+    const task = await createTask(cookie, 'Original')
+    const res = await app.inject({
+      method: 'PATCH',
+      url: `/api/tasks/${task.id}`,
+      headers: { cookie },
+      payload: { title: 'New title', deadline: '2026-06-20' },
+    })
+    expect(res.statusCode).toBe(200)
+    // When both are provided, deadline is the last update so response shows deadline
+    const body = res.json()
+    expect(body.deadline).toBe('2026-06-20')
+    // title updated — verify via GET
+    const getRes = await app.inject({ method: 'GET', url: '/api/tasks', headers: { cookie } })
+    const tasks = getRes.json() as { id: number; title: string; deadline: string | null }[]
+    const updated = tasks.find(t => t.id === task.id)
+    expect(updated?.title).toBe('New title')
+  })
+
+  it('returns 400 when body is empty \u2014 no updatable fields (AC5)', async () => {
+    const cookie = await registerAndLogin('deadline-empty@test.com')
+    const task = await createTask(cookie, 'Empty body task')
+    const res = await app.inject({
+      method: 'PATCH',
+      url: `/api/tasks/${task.id}`,
+      headers: { cookie },
+      payload: {},
+    })
+    expect(res.statusCode).toBe(400)
+    expect(res.json()).toMatchObject({ statusCode: 400, error: 'Bad Request' })
+  })
+})

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createTestDb } from '../../helpers/db.js'
-import { getTasks, createTask, completeTask, uncompleteTask, updateTaskTitle, deleteTask } from '../../../src/db/queries/tasks.js'
+import { getTasks, createTask, completeTask, uncompleteTask, updateTaskTitle, updateTaskDeadline, deleteTask } from '../../../src/db/queries/tasks.js'
 
 describe('tasks schema + query', () => {
   let ctx: Awaited<ReturnType<typeof createTestDb>>
@@ -315,5 +315,64 @@ describe('deleteTask query', () => {
     // Task must still exist in DB
     const rows = await ctx.sql<{ id: number }[]>`SELECT id FROM tasks WHERE id = ${task.id}`
     expect(rows).toHaveLength(1)
+  })
+})
+
+describe('updateTaskDeadline query', () => {
+  let ctx: Awaited<ReturnType<typeof createTestDb>>
+
+  beforeAll(async () => {
+    ctx = await createTestDb()
+  }, 60_000)
+
+  afterAll(async () => {
+    await ctx.sql.end()
+    await ctx.container.stop()
+  })
+
+  async function createUserAndTask(emailSuffix: string, title = 'Deadline task') {
+    const [u] = await ctx.sql<{ id: number }[]>`
+      INSERT INTO users (email, password_hash)
+      VALUES (${`deadline-${emailSuffix}@test.com`}, 'hash')
+      RETURNING id
+    `
+    const task = await createTask(ctx.sql, u.id, title)
+    return { userId: u.id, task }
+  }
+
+  it('sets a valid DATE string on a task and returns it', async () => {
+    const { userId, task } = await createUserAndTask('set-1')
+    const result = await updateTaskDeadline(ctx.sql, task.id, userId, '2026-03-15')
+    expect(result).toBeDefined()
+    expect(result!.deadline).toBe('2026-03-15')
+  })
+
+  it('clears deadline to null and returns the task with null deadline', async () => {
+    const { userId, task } = await createUserAndTask('clear-1')
+    // First set it
+    await updateTaskDeadline(ctx.sql, task.id, userId, '2026-04-01')
+    // Then clear it
+    const result = await updateTaskDeadline(ctx.sql, task.id, userId, null)
+    expect(result).toBeDefined()
+    expect(result!.deadline).toBeNull()
+  })
+
+  it('returns undefined for a task belonging to another user — ownership enforced', async () => {
+    const { task } = await createUserAndTask('owner-1')
+    const [other] = await ctx.sql<{ id: number }[]>`
+      INSERT INTO users (email, password_hash) VALUES ('deadline-other-1@test.com', 'hash') RETURNING id
+    `
+    const result = await updateTaskDeadline(ctx.sql, task.id, other.id, '2026-05-01')
+    expect(result).toBeUndefined()
+  })
+
+  it('preserves all other task fields when updating deadline', async () => {
+    const { userId, task } = await createUserAndTask('preserve-1', 'My Important Task')
+    const result = await updateTaskDeadline(ctx.sql, task.id, userId, '2026-06-15')
+    expect(result).toBeDefined()
+    expect(result!.title).toBe('My Important Task')
+    expect(result!.isCompleted).toBe(false)
+    expect(result!.completedAt).toBeNull()
+    expect(result!.userId).toBe(userId)
   })
 })
