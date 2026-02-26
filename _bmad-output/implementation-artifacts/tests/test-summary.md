@@ -1,6 +1,6 @@
 # Test Automation Summary
 
-**Last Updated**: 2026-02-26 (Story 5.1 — Inline Error Feedback & Retry)
+**Last Updated**: 2026-02-26 (Story 5.2 — Performance & Sub-second State Reflection)
 **Project**: bmad-todo-app  
 **Workflow**: QA — Generate E2E / Automated Tests  
 **Frameworks**: Playwright (E2E), Vitest + React Testing Library (frontend), Vitest + Testcontainers (backend)
@@ -9,7 +9,14 @@
 
 ## Generated Tests
 
-### E2E Tests — Story 5.1 (inline error feedback & retry)
+### E2E Tests — Story 5.2 (performance & skeleton loading)
+
+- [x] [e2e/tests/performance.spec.ts](../../../e2e/tests/performance.spec.ts) — Skeleton rows during load (AC4), optimistic create no-spinner (AC1), optimistic toggle + count (AC1+AC2), count decrement on uncomplete (AC2), page load < 3s (AC3), skeleton replaced after load (AC4) — 6 tests
+
+### Frontend Component Tests — Story 5.2 (skeleton + TaskListPage states)
+
+- [x] [frontend/test/components/SkeletonTaskRow.test.tsx](../../../frontend/test/components/SkeletonTaskRow.test.tsx) — renders without crash, li element, two placeholder blocks, aria-hidden, animate-pulse, bg-[#333] styling — 6 tests, ✅ all pass
+- [x] [frontend/test/pages/TaskListPage.test.tsx](../../../frontend/test/pages/TaskListPage.test.tsx) — skeleton rows when loading (AC4), EmptyState when empty, task list when loaded, no skeleton after load, task count from cache (AC2) — 5 tests, ✅ all pass
 
 - [x] [e2e/tests/errors.spec.ts](../../../e2e/tests/errors.spec.ts) — Toggle error (AC1+AC2), edit error (AC1+AC2), successful retry dismisses error (AC3), delete aria-label edge case (AC2) — 4 tests
 
@@ -70,7 +77,7 @@
 
 ---
 
-## E2E Feature Coverage (Epics 1–3)
+## E2E Feature Coverage (Epics 1–5)
 
 | Feature | E2E |
 |---|---|
@@ -85,6 +92,11 @@
 | Subtasks add / complete / delete | ✅ subtasks.spec.ts |
 | Filters (label, status, deadline) | ✅ **filters.spec.ts** *(new 2026-02-26 Story 4.1)* |
 | Sorting | ✅ **filters.spec.ts** *(Story 4.2 — 4 sort tests: label, deadline, status via API, combined filter+sort)* |
+| Inline error feedback & retry | ✅ **errors.spec.ts** *(Story 5.1)* |
+| Skeleton loading state (4 rows) | ✅ **performance.spec.ts** *(new Story 5.2)* |
+| Optimistic UI (create/toggle, no spinner) | ✅ **performance.spec.ts** *(new Story 5.2)* |
+| Task count < 500ms (cache-derived) | ✅ **performance.spec.ts** *(new Story 5.2)* |
+| Initial page load < 3s | ✅ **performance.spec.ts** *(new Story 5.2)* |
 
 ## Frontend Unit Coverage
 
@@ -103,6 +115,8 @@
 | `FilterBar` | ✅ **FilterBar.test.tsx** *(new 2026-02-26 Story 4.1)* |
 | `TaskRow` | ✅ TaskRow.test.tsx (7 retry aria-label tests updated for AC2) |
 | `ErrorBoundary` | ✅ **ErrorBoundary.test.tsx** *(new 2026-02-26 Story 5.1)* |
+| `SkeletonTaskRow` | ✅ **SkeletonTaskRow.test.tsx** *(new Story 5.2)* |
+| `TaskListPage` | ✅ **TaskListPage.test.tsx** *(new Story 5.2 — loading/empty/data states)* |
 | `LoginPage` | ✅ LoginPage.test.tsx |
 | `RegisterPage` | ✅ RegisterPage.test.tsx |
 
@@ -140,6 +154,7 @@ cd frontend && npm test
 cd backend && npm test
 ```
 
+**2026-02-26 Story 5.2 result**: 11 new tests — all pass ✅ (6 E2E in performance.spec.ts [requires docker-compose stack] + 6 SkeletonTaskRow unit + 5 TaskListPage unit) | Frontend: 177 tests across 17 test files, zero regressions
 **2026-02-26 Story 5.1 result**: 10 new/updated tests — all pass ✅ (6 ErrorBoundary unit + 7 TaskRow retry updated + 4 E2E in errors.spec.ts [E2E requires docker-compose stack])
 **2026-02-26 Story 4.2 result (post code-review)**: 12 new tests — all pass ✅ (4 E2E sort/combined + 8 SortDropdown unit) | E2E: 50 passing, 4 pre-existing skipped
 **2026-02-26 result**: 11 new tests — all pass ✅ (6 E2E + 5 unit)
@@ -150,4 +165,3 @@ cd backend && npm test
 
 - Add E2E tests for keyboard navigation (Story 5.3)
 - Add WCAG axe-core automated audit coverage (Story 5.4)
-- Consider `vitest --coverage` reporting once feature set stabilises

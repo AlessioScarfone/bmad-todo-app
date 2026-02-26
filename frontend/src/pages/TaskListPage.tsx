@@ -5,6 +5,7 @@ import { useTasks } from '../hooks/useTasks'
 import { EmptyState } from '../components/EmptyState'
 import { InlineTaskInput } from '../components/InlineTaskInput'
 import { TaskRow } from '../components/TaskRow'
+import { SkeletonTaskRow } from '../components/SkeletonTaskRow'
 import { FilterBar } from '../components/FilterBar'
 import { SortDropdown, type SortOption } from '../components/SortDropdown'
 
@@ -84,8 +85,14 @@ export default function TaskListPage() {
           <SortDropdown activeSortOption={sortOption} onSortChange={setSortOption} />
         </div>
 
-        {/* Task list, filtered empty state, or no-tasks empty state */}
-        {isLoading ? null : tasks.length === 0 ? (
+        {/* Task list, skeleton loading state, filtered empty state, or no-tasks empty state */}
+        {isLoading ? (
+          <ul className="mt-4 space-y-1" aria-label="Loading tasks" aria-busy="true">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <SkeletonTaskRow key={i} />
+            ))}
+          </ul>
+        ) : tasks.length === 0 ? (
           <EmptyState />
         ) : filteredTasks.length === 0 ? (
           <div
