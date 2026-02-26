@@ -331,4 +331,49 @@ describe('TaskRow — delete with confirmation (Story 2.5)', () => {
     const input = screen.getByRole('textbox', { name: /edit task title: edit me/i })
     expect(input).toBeInTheDocument()
   })
+
+  it('Cancel clears deleteError so error does not persist after cancel (AC3 regression)', async () => {
+    const task = makeTask({ id: 67 })
+    vi.spyOn(apiModule.api, 'delete').mockRejectedValue(new Error('fail'))
+    vi.spyOn(apiModule.api, 'get').mockResolvedValue([task])
+    renderWithQuery(<TaskRow task={task} />, [task])
+
+    // Step 1: trigger error
+    await userEvent.click(screen.getByRole('button', { name: /delete task/i }))
+    await userEvent.click(screen.getByRole('button', { name: /confirm delete/i }))
+    await waitFor(() => screen.getByRole('button', { name: /retry delete/i }))
+
+    // Step 2: click Retry → re-enters confirm state
+    await userEvent.click(screen.getByRole('button', { name: /retry delete/i }))
+    expect(screen.getByRole('button', { name: /cancel delete/i })).toBeInTheDocument()
+
+    // Step 3: click Cancel → confirm strip gone AND error cleared
+    await userEvent.click(screen.getByRole('button', { name: /cancel delete/i }))
+    expect(screen.queryByRole('button', { name: /cancel delete/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    // Delete icon is back
+    expect(screen.getByRole('button', { name: /delete task/i })).toBeInTheDocument()
+  })
+
+  it('Enter on focused row does NOT enter edit mode when in confirm-delete state (H1 regression)', async () => {
+    const task = makeTask({ id: 68, title: 'Keyboard test' })
+    const spy = vi.spyOn(apiModule.api, 'patch')
+    renderWithQuery(<TaskRow task={task} />, [task])
+
+    // Enter confirm-delete state
+    await userEvent.click(screen.getByRole('button', { name: /delete task/i }))
+    expect(screen.getByRole('button', { name: /confirm delete/i })).toBeInTheDocument()
+
+    // Press Enter on the row — should NOT open edit mode
+    const row = screen.getByRole('listitem')
+    row.focus()
+    await userEvent.keyboard('{Enter}')
+
+    // No textbox (edit mode) should appear
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
+    // Confirm strip still showing
+    expect(screen.getByRole('button', { name: /confirm delete/i })).toBeInTheDocument()
+    // No patch call (not in edit mode)
+    expect(spy).not.toHaveBeenCalled()
+  })
 })

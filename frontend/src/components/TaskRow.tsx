@@ -35,12 +35,9 @@ export function TaskRow({ task }: TaskRowProps) {
   }, [isEditing])
 
   // Keep editValue in sync if task.title changes externally (e.g. server reconciliation)
-  useEffect(() => {
-    if (!isEditing) {
-      setEditValue(task.title)
-    }
-  }, [task.title, isEditing])
-
+  // No effect needed: editValue is initialized from task.title and is reset in enterEditMode,
+  // so it will reflect the latest title when editing starts.
+  
   // ---------- toggle handlers ----------
   const handleToggle = () => {
     setLastTask(task)
@@ -108,8 +105,8 @@ export function TaskRow({ task }: TaskRowProps) {
   }
 
   const handleRowKeyDown = (e: React.KeyboardEvent<HTMLLIElement>) => {
-    // Enter on the row (not in edit mode) enters edit mode
-    if (e.key === 'Enter' && !isEditing && e.target === e.currentTarget) {
+    // Enter on the row (not in edit mode, not in confirm-delete mode) enters edit mode
+    if (e.key === 'Enter' && !isEditing && !isConfirmingDelete && e.target === e.currentTarget) {
       e.preventDefault()
       enterEditMode()
     }
@@ -199,7 +196,7 @@ export function TaskRow({ task }: TaskRowProps) {
               Confirm
             </button>
             <button
-              onClick={() => setIsConfirmingDelete(false)}
+              onClick={() => { setIsConfirmingDelete(false); setDeleteError(null) }}
               aria-label="Cancel delete"
               className="text-[11px] text-[#888] underline hover:text-[#f0f0f0]"
             >

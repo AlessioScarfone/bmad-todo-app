@@ -181,13 +181,126 @@ test.describe('Mark task complete / un-complete', () => {
 })
 
 test.describe('Edit task title', () => {
-  test.skip('edits a task title inline (Story 2.4 — ready-for-dev)', async ({ page: _page }) => {
-    // Will be enabled when Story 2.4 is implemented
+  test('edits a task title inline (Story 2.4)', async ({ page }) => {
+    const email = uniqueEmail()
+    await registerAndLogin(page, email)
+
+    // Create a task first
+    const input = page.getByLabel('New task title')
+    await input.fill('Original title')
+    await input.press('Enter')
+
+    const taskList = page.getByRole('list', { name: 'Task list' })
+    await expect(taskList).toContainText('Original title')
+
+    // Hover over the task row to reveal the edit button
+    const taskRow = taskList.locator('li').filter({ hasText: 'Original title' })
+    await taskRow.hover()
+
+    // Click the edit icon (opacity-0 until hover — dispatchEvent bypasses all visibility checks)
+    const editBtn = taskRow.locator('[aria-label="Edit task title"]')
+    await editBtn.waitFor({ state: 'attached' })
+    await editBtn.dispatchEvent('click')
+
+    // Edit input should appear with current title
+    const editInput = page.getByRole('textbox', { name: /edit task title/i })
+    await expect(editInput).toBeVisible()
+    await editInput.clear()
+    await editInput.fill('Updated title')
+    await editInput.press('Enter')
+
+    // Updated title should appear in the list
+    await expect(taskList).toContainText('Updated title')
+    await expect(taskList).not.toContainText('Original title')
   })
 })
 
 test.describe('Delete task', () => {
-  test.skip('deletes a task (Story 2.5 — backlog)', async ({ page: _page }) => {
-    // Will be enabled when Story 2.5 is implemented
+  test('deletes a task via two-step confirmation (Story 2.5 — AC1, AC2, AC3)', async ({ page }) => {
+    const email = uniqueEmail()
+    await registerAndLogin(page, email)
+
+    // Create a task first
+    const input = page.getByLabel('New task title')
+    await input.fill('Task to delete')
+    await input.press('Enter')
+
+    const taskList = page.getByRole('list', { name: 'Task list' })
+    await expect(taskList).toContainText('Task to delete')
+
+    // Locate the specific task row
+    const taskRow = taskList.locator('li').filter({ hasText: 'Task to delete' })
+    await taskRow.hover()
+
+    // Step 1: click delete icon — button is opacity-0 until CSS group-hover activates.
+    // dispatchEvent('click') fires the React onClick directly with no actionability checks.
+    const deleteBtn = taskRow.locator('[aria-label="Delete task"]')
+    await deleteBtn.waitFor({ state: 'attached' })
+    await deleteBtn.dispatchEvent('click')
+
+    // Confirmation strip should appear (AC1)
+    await expect(page.getByRole('button', { name: /confirm delete/i })).toBeVisible()
+    await expect(page.getByRole('button', { name: /cancel delete/i })).toBeVisible()
+
+    // Step 2: click Confirm — task is removed (AC2, optimistic)
+    await page.getByRole('button', { name: /confirm delete/i }).click()
+    // The list becomes empty (<ul> is replaced by <EmptyState>) — check text not visible anywhere
+    await expect(page.getByText('Task to delete')).not.toBeVisible()
+  })
+
+  test('Cancel aborts deletion — task remains (Story 2.5 — AC3)', async ({ page }) => {
+    const email = uniqueEmail()
+    await registerAndLogin(page, email)
+
+    const input = page.getByLabel('New task title')
+    await input.fill('Task to keep')
+    await input.press('Enter')
+
+    const taskList = page.getByRole('list', { name: 'Task list' })
+    await expect(taskList).toContainText('Task to keep')
+
+    // Locate the specific task row and hover
+    const taskRow = taskList.locator('li').filter({ hasText: 'Task to keep' })
+    await taskRow.hover()
+
+    // Enter confirm state — dispatchEvent bypasses opacity-0 visibility restriction
+    const deleteBtn = taskRow.locator('[aria-label="Delete task"]')
+    await deleteBtn.waitFor({ state: 'attached' })
+    await deleteBtn.dispatchEvent('click')
+    await expect(page.getByRole('button', { name: /cancel delete/i })).toBeVisible()
+
+    // Click Cancel — task must remain (AC3)
+    await page.getByRole('button', { name: /cancel delete/i }).click()
+    await expect(page.getByRole('button', { name: /cancel delete/i })).not.toBeVisible()
+    await expect(taskList).toContainText('Task to keep')
+  })
+
+  test('task count updates after deletion (Story 2.5 — AC5)', async ({ page }) => {
+    const email = uniqueEmail()
+    await registerAndLogin(page, email)
+
+    const input = page.getByLabel('New task title')
+    await input.fill('Count task 1')
+    await input.press('Enter')
+    await expect(page.getByLabel('New task title')).toHaveValue('')
+    await input.fill('Count task 2')
+    await input.press('Enter')
+    await expect(page.getByLabel('New task title')).toHaveValue('')
+
+    const taskList = page.getByRole('list', { name: 'Task list' })
+    await expect(taskList).toContainText('Count task 1')
+    await expect(taskList).toContainText('Count task 2')
+
+    // Hover and delete 'Count task 2' (force click past opacity-0 delete button)
+    const taskRow = taskList.locator('li').filter({ hasText: 'Count task 2' }).last()
+    await taskRow.hover()
+    const deleteBtn = taskRow.locator('[aria-label="Delete task"]')
+    await deleteBtn.waitFor({ state: 'attached' })
+    await deleteBtn.dispatchEvent('click')
+    await page.getByRole('button', { name: /confirm delete/i }).click()
+
+    // Task 2 gone, task 1 remains
+    await expect(taskList).not.toContainText('Count task 2')
+    await expect(taskList).toContainText('Count task 1')
   })
 })

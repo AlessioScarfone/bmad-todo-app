@@ -1,6 +1,6 @@
 # Story 2.5: Delete Task
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -70,7 +70,7 @@ so that my list stays clean and relevant.
   - [x] Add `deleteTask` to the existing import from `../db/queries/tasks.js`
 
 - [x] **Task 3: Frontend — `useDeleteTask` mutation hook** (AC: AC2, AC4, AC5)
-  - [ ] Add `useDeleteTask()` to `frontend/src/hooks/useTasks.ts`
+  - [x] Add `useDeleteTask()` to `frontend/src/hooks/useTasks.ts`
   - [x] `mutationFn`: `api.delete<void>('/tasks/${id}')` — `api.delete` already exists in `frontend/src/lib/api.ts`
   - [x] `onMutate`: cancel `['tasks']` queries, snapshot `previous`, remove the task from cache (`old?.filter(t => t.id !== id) ?? []`), return `{ previous }`
   - [x] `onError`: rollback to `context.previous`; then `queryClient.invalidateQueries({ queryKey: ['tasks'] })` to re-sync
