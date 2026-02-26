@@ -6,6 +6,7 @@ import { EmptyState } from '../components/EmptyState'
 import { InlineTaskInput } from '../components/InlineTaskInput'
 import { TaskRow } from '../components/TaskRow'
 import { FilterBar } from '../components/FilterBar'
+import { SortDropdown, type SortOption } from '../components/SortDropdown'
 
 export default function TaskListPage() {
   const { user } = useAuth()
@@ -15,6 +16,9 @@ export default function TaskListPage() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'done'>('all')
   const [deadlineFilter, setDeadlineFilter] = useState(false)
   const [labelFilter, setLabelFilter] = useState<string | null>(null)
+
+  // Sort state — UI-only, session-only, never persisted (AC8 / Story 4.2)
+  const [sortOption, setSortOption] = useState<SortOption>('none')
 
   // Task count derived from the FULL (unfiltered) task list — header always reflects total (architecture rule)
   const completedTasks = tasks.filter(t => t.isCompleted).length
@@ -32,6 +36,29 @@ export default function TaskListPage() {
     .filter(t => !deadlineFilter || t.deadline !== null)
     .filter(t => labelFilter === null || t.labels.some(l => l.name === labelFilter))
 
+  // Apply sort AFTER filters — spread to avoid mutating the TanStack Query cache array
+  const sortedFilteredTasks = [...filteredTasks].sort((a, b) => {
+    switch (sortOption) {
+      case 'label-asc': {
+        // Tasks with no labels sort to the bottom (\uffff is > any printable char)
+        const aLabel = a.labels.map(l => l.name).sort()[0] ?? '\uffff'
+        const bLabel = b.labels.map(l => l.name).sort()[0] ?? '\uffff'
+        return aLabel.localeCompare(bLabel)
+      }
+      case 'deadline-asc': {
+        if (!a.deadline && !b.deadline) return 0
+        if (!a.deadline) return 1
+        if (!b.deadline) return -1
+        return new Date(a.deadline).getTime() - new Date(b.deadline).getTime()
+      }
+      case 'status-incomplete-first':
+        // false (0) sorts before true (1) — incomplete tasks appear first
+        return Number(a.isCompleted) - Number(b.isCompleted)
+      default:
+        return 0 // 'none' — preserve server order (created_at DESC)
+    }
+  })
+
   return (
     <div className="min-h-screen bg-[#0f0f0f]">
       <AppHeader
@@ -43,16 +70,19 @@ export default function TaskListPage() {
         {/* Inline creation row — always visible at top (AC1 / UX spec) */}
         <InlineTaskInput />
 
-        {/* Filter bar — always visible, zero interaction cost (UX spec / Story 4.1 AC1) */}
-        <FilterBar
-          tasks={tasks}
-          activeStatusFilter={statusFilter}
-          activeDeadlineFilter={deadlineFilter}
-          activeLabelFilter={labelFilter}
-          onStatusChange={setStatusFilter}
-          onDeadlineChange={setDeadlineFilter}
-          onLabelChange={setLabelFilter}
-        />
+        {/* Filter and sort bar — always visible, zero interaction cost (UX spec / Story 4.1 AC1 + Story 4.2 AC1) */}
+        <div className="flex items-start justify-between flex-wrap gap-2">
+          <FilterBar
+            tasks={tasks}
+            activeStatusFilter={statusFilter}
+            activeDeadlineFilter={deadlineFilter}
+            activeLabelFilter={labelFilter}
+            onStatusChange={setStatusFilter}
+            onDeadlineChange={setDeadlineFilter}
+            onLabelChange={setLabelFilter}
+          />
+          <SortDropdown activeSortOption={sortOption} onSortChange={setSortOption} />
+        </div>
 
         {/* Task list, filtered empty state, or no-tasks empty state */}
         {isLoading ? null : tasks.length === 0 ? (
@@ -69,7 +99,7 @@ export default function TaskListPage() {
           </div>
         ) : (
           <ul className="mt-4 space-y-1" aria-label="Task list">
-            {filteredTasks.map(task => (
+            {sortedFilteredTasks.map(task => (
               <TaskRow key={task.id} task={task} />
             ))}
           </ul>

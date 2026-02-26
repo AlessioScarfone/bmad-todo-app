@@ -21,11 +21,11 @@ test.describe('Labels', () => {
     await page.getByRole('button', { name: /add label/i }).click()
 
     // Type a label name and submit
-    await page.getByLabel('Add label').fill('Bug')
-    await page.getByLabel('Add label').press('Enter')
+    await page.getByRole('combobox', { name: 'Add label' }).fill('Bug')
+    await page.getByRole('combobox', { name: 'Add label' }).press('Enter')
 
     // Verify the label badge appears
-    await expect(page.getByLabel('Label: Bug')).toBeVisible()
+    await expect(page.getByLabel('Label: Bug', { exact: true })).toBeVisible()
   })
 
   test('removes a label from a task', async ({ page }) => {
@@ -39,15 +39,15 @@ test.describe('Labels', () => {
 
     // Attach a label
     await page.getByRole('button', { name: /add label/i }).click()
-    await page.getByLabel('Add label').fill('Feature')
-    await page.getByLabel('Add label').press('Enter')
-    await expect(page.getByLabel('Label: Feature')).toBeVisible()
+    await page.getByRole('combobox', { name: 'Add label' }).fill('Feature')
+    await page.getByRole('combobox', { name: 'Add label' }).press('Enter')
+    await expect(page.getByLabel('Label: Feature', { exact: true })).toBeVisible()
 
     // Remove the label
     await page.getByRole('button', { name: 'Remove label Feature' }).click()
 
     // Verify the label badge is gone
-    await expect(page.getByLabel('Label: Feature')).not.toBeVisible()
+    await expect(page.getByLabel('Label: Feature', { exact: true })).not.toBeVisible()
   })
 
   test('attaches multiple labels to a task', async ({ page }) => {
@@ -61,18 +61,18 @@ test.describe('Labels', () => {
 
     // Attach first label
     await page.getByRole('button', { name: /add label/i }).click()
-    await page.getByLabel('Add label').fill('Backend')
-    await page.getByLabel('Add label').press('Enter')
-    await expect(page.getByLabel('Label: Backend')).toBeVisible()
+    await page.getByRole('combobox', { name: 'Add label' }).fill('Backend')
+    await page.getByRole('combobox', { name: 'Add label' }).press('Enter')
+    await expect(page.getByLabel('Label: Backend', { exact: true })).toBeVisible()
 
     // Attach second label
     await page.getByRole('button', { name: /add label/i }).click()
-    await page.getByLabel('Add label').fill('Frontend')
-    await page.getByLabel('Add label').press('Enter')
-    await expect(page.getByLabel('Label: Frontend')).toBeVisible()
+    await page.getByRole('combobox', { name: 'Add label' }).fill('Frontend')
+    await page.getByRole('combobox', { name: 'Add label' }).press('Enter')
+    await expect(page.getByLabel('Label: Frontend', { exact: true })).toBeVisible()
 
     // Both labels should be visible simultaneously
-    await expect(page.getByLabel('Label: Backend')).toBeVisible()
-    await expect(page.getByLabel('Label: Frontend')).toBeVisible()
+    await expect(page.getByLabel('Label: Backend', { exact: true })).toBeVisible()
+    await expect(page.getByLabel('Label: Frontend', { exact: true })).toBeVisible()
   })
 })

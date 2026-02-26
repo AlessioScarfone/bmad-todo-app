@@ -1,6 +1,6 @@
 # Test Automation Summary
 
-**Last Updated**: 2026-02-26 (Story 4.1 update)  
+**Last Updated**: 2026-02-26 (Story 4.2 code review update)  
 **Project**: bmad-todo-app  
 **Workflow**: QA — Generate E2E / Automated Tests  
 **Frameworks**: Playwright (E2E), Vitest + React Testing Library (frontend), Vitest + Testcontainers (backend)
@@ -11,7 +11,11 @@
 
 ### E2E Tests — Story 4.1 (filters)
 
-- [x] [e2e/tests/filters.spec.ts](../../../e2e/tests/filters.spec.ts) — Filter by label, status, deadline, reset on reload (Story 4.1) — 4 tests
+- [x] [e2e/tests/filters.spec.ts](../../../e2e/tests/filters.spec.ts) — Filter by label, status, deadline, reset on reload (Story 4.1) + Sort by label, deadline, status + combined filter+sort (Story 4.2) — 8 tests
+
+### Frontend Component Tests — Story 4.2 (sort)
+
+- [x] [frontend/test/components/SortDropdown.test.tsx](../../../frontend/test/components/SortDropdown.test.tsx) — SortDropdown renders, reflects active option, calls onSortChange with correct value for all options — 8 tests, ✅ all pass
 
 ### Frontend Component Tests — Story 4.1 (filters)
 
@@ -71,7 +75,7 @@
 | Deadline set / remove / persist | ✅ **deadlines.spec.ts** *(new 2026-02-26)* |
 | Subtasks add / complete / delete | ✅ subtasks.spec.ts |
 | Filters (label, status, deadline) | ✅ **filters.spec.ts** *(new 2026-02-26 Story 4.1)* |
-| Sorting | ⏭ skipped (Epic 4, Story 4.2 — backlog) |
+| Sorting | ✅ **filters.spec.ts** *(Story 4.2 — 4 sort tests: label, deadline, status via API, combined filter+sort)* |
 
 ## Frontend Unit Coverage
 
@@ -86,6 +90,7 @@
 | `ProtectedRoute` | ✅ ProtectedRoute.test.tsx |
 | `SubtaskPanel` | ✅ SubtaskPanel.test.tsx |
 | `TaskCountDisplay` | ✅ TaskCountDisplay.test.tsx |
+| `SortDropdown` | ✅ **SortDropdown.test.tsx** *(new 2026-02-26 Story 4.2)* |
 | `FilterBar` | ✅ **FilterBar.test.tsx** *(new 2026-02-26 Story 4.1)* |
 | `TaskRow` | ✅ TaskRow.test.tsx |
 | `LoginPage` | ✅ LoginPage.test.tsx |
@@ -125,13 +130,12 @@ cd frontend && npm test
 cd backend && npm test
 ```
 
+**2026-02-26 Story 4.2 result (post code-review)**: 12 new tests — all pass ✅ (4 E2E sort/combined + 8 SortDropdown unit) | E2E: 50 passing, 4 pre-existing skipped  
 **2026-02-26 result**: 11 new tests — all pass ✅ (6 E2E + 5 unit)
 
 ---
 
 ## Next Steps
 
-- Enable skipped tests in `e2e/tests/filters.spec.ts` when Epic 4 stories ship
-- Add E2E tests for task sorting (Story 4.2)
 - Add E2E tests for inline error / retry feedback (Story 5.1)
 - Consider `vitest --coverage` reporting once feature set stabilises

@@ -65,9 +65,9 @@ development_status:
   epic-3-retrospective: optional
 
   # ─── Epic 4: Task Filtering & Sorting ──────────────────────────────────────
-  epic-4: in-progress
+  epic-4: done
   4-1-filter-task-list-by-label-status-and-deadline: done
-  4-2-sort-task-list: backlog
+  4-2-sort-task-list: done
   epic-4-retrospective: optional
 
   # ─── Epic 5: Resilience & Accessibility ────────────────────────────────────
