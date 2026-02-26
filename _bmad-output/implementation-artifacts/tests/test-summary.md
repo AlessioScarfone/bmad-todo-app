@@ -1,83 +1,127 @@
 # Test Automation Summary
 
-**Generated**: 2026-02-25  
+**Last Updated**: 2026-02-26  
 **Project**: bmad-todo-app  
 **Workflow**: QA — Generate E2E / Automated Tests  
-**Framework**: Vitest + React Testing Library (frontend), Vitest + Testcontainers (backend)
+**Frameworks**: Playwright (E2E), Vitest + React Testing Library (frontend), Vitest + Testcontainers (backend)
 
 ---
 
 ## Generated Tests
 
-### Frontend Component Tests (new)
+### E2E Tests — 2026-02-26 (new)
+
+- [x] [e2e/tests/labels.spec.ts](../../../e2e/tests/labels.spec.ts) — Label attach and remove user workflows (Story 3.1) — 3 tests, ✅ all pass
+- [x] [e2e/tests/deadlines.spec.ts](../../../e2e/tests/deadlines.spec.ts) — Deadline set, remove, and persistence (Story 3.2) — 3 tests, ✅ all pass
+
+### Frontend Hook Tests — 2026-02-26 (new)
+
+- [x] [test/hooks/useAuth.test.ts](../../../frontend/test/hooks/useAuth.test.ts) — `useAuth` hook: loading state, authenticated, 401 silent, non-401 propagation, endpoint — 5 tests, ✅ all pass
+
+### Frontend Component Tests — 2026-02-25
 
 - [x] [test/components/TaskCountDisplay.test.tsx](../../../frontend/test/components/TaskCountDisplay.test.tsx) — renders completed/total counts, aria-label, aria-live (4 tests)
 - [x] [test/components/EmptyState.test.tsx](../../../frontend/test/components/EmptyState.test.tsx) — no-tasks message, instruction text, aria-live (3 tests)
 - [x] [test/components/ProtectedRoute.test.tsx](../../../frontend/test/components/ProtectedRoute.test.tsx) — loading state, error state, unauthenticated redirect, authenticated render (4 tests)
 - [x] [test/components/AppHeader.test.tsx](../../../frontend/test/components/AppHeader.test.tsx) — email display, task count display, logout API call, localStorage clear, in-flight disabled state, missing email (7 tests)
 
-### Frontend Page Tests (new)
+### Frontend Page Tests — 2026-02-25
 
 - [x] [test/pages/LoginPage.test.tsx](../../../frontend/test/pages/LoginPage.test.tsx) — field rendering, email pre-fill from localStorage, email/password validation, API call, saveEmail, 401 error, generic error (10 tests)
 - [x] [test/pages/RegisterPage.test.tsx](../../../frontend/test/pages/RegisterPage.test.tsx) — field rendering, email format validation, password min-length, API call with trimmed email, 409 duplicate error, generic error (10 tests)
 
 ### Previously Existing Tests
 
+- [x] [e2e/tests/auth.spec.ts](../../../e2e/tests/auth.spec.ts) — registration, login, session, email pre-fill (E2E)
+- [x] [e2e/tests/tasks.spec.ts](../../../e2e/tests/tasks.spec.ts) — task CRUD (E2E)
+- [x] [e2e/tests/count.spec.ts](../../../e2e/tests/count.spec.ts) — live task count (E2E)
+- [x] [e2e/tests/subtasks.spec.ts](../../../e2e/tests/subtasks.spec.ts) — subtask add, complete, delete (E2E)
 - [x] [test/components/InlineTaskInput.test.tsx](../../../frontend/test/components/InlineTaskInput.test.tsx) — inline creation, validation, optimistic update, retry/dismiss, task count (10 tests)
-- [x] [test/routes/auth.test.ts](../../../backend/test/routes/auth.test.ts) — register, login, me, logout (all status codes and edge cases) (backend)
-- [x] [test/routes/tasks.test.ts](../../../backend/test/routes/tasks.test.ts) — GET /tasks, POST /tasks, auth guards, user scoping (backend)
+- [x] [test/hooks/useLabels.test.ts](../../../frontend/test/hooks/useLabels.test.ts) — useLabels, useDeleteLabel (2 tests)
+- [x] [test/hooks/useTasks.test.ts](../../../frontend/test/hooks/useTasks.test.ts) — useToggleTask, useCreateTask, useUpdateTask, useDeleteTask, useAttachLabel, useRemoveLabel, useSetDeadline
+- [x] [test/components/SubtaskPanel.test.tsx](../../../frontend/test/components/SubtaskPanel.test.tsx) — subtask list, add, complete, delete
+- [x] [test/components/TaskRow.test.tsx](../../../frontend/test/components/TaskRow.test.tsx) — task row interactions
+- [x] [test/routes/auth.test.ts](../../../backend/test/routes/auth.test.ts) — register, login, me, logout (backend)
+- [x] [test/routes/tasks.test.ts](../../../backend/test/routes/tasks.test.ts) — task CRUD + deadline extension (backend)
+- [x] [test/routes/labels.test.ts](../../../backend/test/routes/labels.test.ts) — label attach/remove/delete (backend)
+- [x] [test/routes/subtasks.test.ts](../../../backend/test/routes/subtasks.test.ts) — subtask CRUD (backend)
 - [x] [test/db/migrate.test.ts](../../../backend/test/db/migrate.test.ts) — database migration (backend)
 
 ---
 
-## Final Coverage
+## E2E Feature Coverage (Epics 1–3)
 
-| Area | Files | Tests |
-|---|---|---|
-| Frontend — components & pages | 7 | 48 |
-| Backend — API routes + DB | 3+ | ~30 |
-
-### Frontend Component Coverage
-
-| Component / Page | Status |
+| Feature | E2E |
 |---|---|
-| `TaskCountDisplay` | ✅ Covered |
-| `EmptyState` | ✅ Covered |
-| `ProtectedRoute` | ✅ Covered |
-| `AppHeader` | ✅ Covered |
-| `InlineTaskInput` | ✅ Covered (existing) |
-| `LoginPage` | ✅ Covered |
-| `RegisterPage` | ✅ Covered |
+| Registration | ✅ auth.spec.ts |
+| Login / session | ✅ auth.spec.ts |
+| Email pre-fill on logout | ✅ auth.spec.ts |
+| Task CRUD (create, edit, delete) | ✅ tasks.spec.ts |
+| Mark complete / uncomplete | ✅ tasks.spec.ts |
+| Live task count | ✅ count.spec.ts |
+| Labels attach / remove | ✅ **labels.spec.ts** *(new 2026-02-26)* |
+| Deadline set / remove / persist | ✅ **deadlines.spec.ts** *(new 2026-02-26)* |
+| Subtasks add / complete / delete | ✅ subtasks.spec.ts |
+| Filters & sorting | ⏭ skipped (Epic 4 — backlog) |
 
-### Backend API Coverage
+## Frontend Unit Coverage
+
+| Unit | Status |
+|---|---|
+| `useAuth` | ✅ **useAuth.test.ts** *(new 2026-02-26)* |
+| `useLabels`, `useDeleteLabel` | ✅ useLabels.test.ts |
+| `useToggleTask`, `useCreateTask`, `useUpdateTask`, `useDeleteTask`, `useAttachLabel`, `useRemoveLabel`, `useSetDeadline` | ✅ useTasks.test.ts |
+| `AppHeader` | ✅ AppHeader.test.tsx |
+| `EmptyState` | ✅ EmptyState.test.tsx |
+| `InlineTaskInput` | ✅ InlineTaskInput.test.tsx |
+| `ProtectedRoute` | ✅ ProtectedRoute.test.tsx |
+| `SubtaskPanel` | ✅ SubtaskPanel.test.tsx |
+| `TaskCountDisplay` | ✅ TaskCountDisplay.test.tsx |
+| `TaskRow` | ✅ TaskRow.test.tsx |
+| `LoginPage` | ✅ LoginPage.test.tsx |
+| `RegisterPage` | ✅ RegisterPage.test.tsx |
+
+## Backend API Coverage
 
 | Endpoint | Status |
 |---|---|
-| `POST /api/auth/register` | ✅ Covered (existing) |
-| `POST /api/auth/login` | ✅ Covered (existing) |
-| `GET /api/auth/me` | ✅ Covered (existing) |
-| `POST /api/auth/logout` | ✅ Covered (existing) |
-| `GET /api/tasks` | ✅ Covered (existing) |
-| `POST /api/tasks` | ✅ Covered (existing) |
+| `POST /api/auth/register` | ✅ |
+| `POST /api/auth/login` | ✅ |
+| `GET /api/auth/me` | ✅ |
+| `POST /api/auth/logout` | ✅ |
+| `GET /api/tasks` | ✅ |
+| `POST /api/tasks` | ✅ |
+| `PATCH /api/tasks/:id/complete` | ✅ |
+| `PATCH /api/tasks/:id/uncomplete` | ✅ |
+| `PATCH /api/tasks/:id` (title + deadline) | ✅ |
+| `DELETE /api/tasks/:id` | ✅ |
+| `GET /api/labels` | ✅ |
+| `POST /api/tasks/:id/labels` | ✅ |
+| `DELETE /api/tasks/:id/labels/:labelId` | ✅ |
+| Subtask routes | ✅ |
 
 ---
 
 ## Test Commands
 
 ```bash
-# Frontend
+# E2E tests (requires docker-compose up)
+cd e2e && npx playwright test
+
+# Frontend unit tests
 cd frontend && npm test
 
-# Backend (requires Docker / Colima for Testcontainers)
+# Backend unit tests (requires Docker for Testcontainers)
 cd backend && npm test
 ```
 
-**Result**: All 48 frontend tests pass ✅
+**2026-02-26 result**: 11 new tests — all pass ✅ (6 E2E + 5 unit)
 
 ---
 
 ## Next Steps
 
-- Add tests for Story 2-3 (`PATCH /api/tasks/:id` — complete/un-complete) once implemented
-- Add tests for `TaskListPage` (full page rendering with mocked task list)
-- Consider coverage reporting (`vitest --coverage`) once feature set stabilises
+- Enable skipped tests in `e2e/tests/filters.spec.ts` when Epic 4 stories ship
+- Add E2E tests for task sorting (Story 4.2)
+- Add E2E tests for inline error / retry feedback (Story 5.1)
+- Consider `vitest --coverage` reporting once feature set stabilises
