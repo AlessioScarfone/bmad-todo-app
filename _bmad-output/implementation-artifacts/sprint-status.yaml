@@ -78,9 +78,4 @@ development_status:
   5-4-wcag-2-1-aa-compliance-prefers-reduced-motion: done
   epic-5-retrospective: optional
 
-  # ─── Epic 6: Project Documentation ─────────────────────────────────────────
-  # use /bmad-bmm-create-story to create these stories
-  epic-6: backlog
-  6-1-project-readme: backlog
-  6-2-developer-reference-docs: backlog
-  epic-6-retrospective: optional
+
