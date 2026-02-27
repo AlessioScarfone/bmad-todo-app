@@ -47,9 +47,10 @@ export function SubtaskPanel({ taskId }: SubtaskPanelProps) {
   }
 
   return (
-    <div className="pl-8 pt-2 pb-3 space-y-1" role="list" aria-label="Subtasks">
-      {subtasks.map(subtask => (
-        <div key={subtask.id} role="listitem" className="space-y-0.5">
+    <div className="pl-8 pt-2 pb-3 space-y-1">
+      <div role="list" aria-label="Subtasks" className="space-y-1">
+        {subtasks.map(subtask => (
+          <div key={subtask.id} role="listitem" className="space-y-0.5">
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -153,10 +154,12 @@ export function SubtaskPanel({ taskId }: SubtaskPanelProps) {
           )}
         </div>
       ))}
-
-      {subtasks.length === 0 && (
-        <p className="text-[11px] text-[#888] italic font-mono">No subtasks yet</p>
-      )}
+        {subtasks.length === 0 && (
+          <div role="listitem">
+            <p className="text-[11px] text-[#888] italic font-mono">No subtasks yet</p>
+          </div>
+        )}
+      </div>
 
       {/* New subtask input — no expand control on subtask rows (AC7 / FR19) */}
       <div className="flex items-center gap-2 pt-1">

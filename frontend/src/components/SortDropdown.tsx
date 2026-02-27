@@ -8,7 +8,7 @@ interface SortDropdownProps {
 export function SortDropdown({ activeSortOption, onSortChange }: SortDropdownProps) {
   return (
     <div className="flex items-center gap-1">
-      <span aria-hidden="true" className="font-mono text-[9px] text-[#444] uppercase tracking-widest">
+      <span aria-hidden="true" className="font-mono text-[9px] text-[#888] uppercase tracking-widest">
         Sort:
       </span>
       <select

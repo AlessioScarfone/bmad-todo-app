@@ -78,7 +78,7 @@ export function FilterBar({
     <nav aria-label="Task filters" className="mt-3 mb-2 flex flex-wrap items-center gap-x-4 gap-y-2">
       {/* Status group */}
       <div className="flex items-center gap-1">
-        <span className="font-mono text-[9px] text-[#444] mr-1 uppercase tracking-widest">
+        <span className="font-mono text-[9px] text-[#888] mr-1 uppercase tracking-widest">
           Status:
         </span>
         {STATUS_OPTIONS.map(opt => (
@@ -94,7 +94,7 @@ export function FilterBar({
 
       {/* Deadline group */}
       <div className="flex items-center gap-1">
-        <span className="font-mono text-[9px] text-[#444] mr-1 uppercase tracking-widest">
+        <span className="font-mono text-[9px] text-[#888] mr-1 uppercase tracking-widest">
           Deadline:
         </span>
         <FilterButton
@@ -108,7 +108,7 @@ export function FilterBar({
       {/* Labels group — only rendered when at least one task has a label */}
       {uniqueLabels.length > 0 && (
         <div className="flex items-center gap-1 flex-wrap">
-          <span className="font-mono text-[9px] text-[#444] mr-1 uppercase tracking-widest">
+          <span className="font-mono text-[9px] text-[#888] mr-1 uppercase tracking-widest">
             Labels:
           </span>
           {uniqueLabels.map(name => (

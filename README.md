@@ -2,6 +2,9 @@
 
 A full-stack task management web application built with React, Fastify, and PostgreSQL. All services run in Docker containers and are orchestrated with Docker Compose.
 
+> [!NOTE]  
+> This project was built as a hands-on test of the [BMAD Method](https://docs.bmad-method.org/) — a Spec-Driven Development (SDD) framework. The entire product lifecycle was followed end-to-end: Product Brief → PRD → UX Design → Architecture → Epics & Stories → Implementation, using BMAD agents and workflows throughout. The codebase reflects what can be produced when AI-assisted development is guided by structured, spec-first methodology.
+
 ## Features
 
 - **Authentication** — User registration and login with long-lived sessions via JWT cookies

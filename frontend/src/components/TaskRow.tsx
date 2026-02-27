@@ -299,7 +299,7 @@ export function TaskRow({ task }: TaskRowProps) {
       ref={rowRef}
       // tabIndex={0} makes the row focusable so Enter-on-row (AC1) is reachable via keyboard
       tabIndex={0}
-      className="group px-3 py-2 border-l-2 border-[#2a2a2a] bg-[#1c1c1c] hover:border-l-[#00ff88] font-mono text-[13px] text-[#f0f0f0] motion-safe:transition-colors focus:outline-none focus:border-l-[#00ff88]"
+      className="group px-3 py-2 border-l-2 border-[#2a2a2a] bg-[#1c1c1c] hover:border-l-[#00ff88] font-mono text-[13px] text-[#f0f0f0] motion-safe:transition-colors motion-reduce:transition-none focus:outline-none focus:border-l-[#00ff88]"
       onKeyDown={handleRowKeyDown}
     >
       <div className="flex items-start gap-2">

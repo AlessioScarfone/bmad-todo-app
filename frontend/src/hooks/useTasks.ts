@@ -11,8 +11,6 @@ interface TaskMutationResponse extends Omit<Task, 'labels'> {
   labels?: Label[]
 }
 
-type DeleteTaskContext = { previous: Task[] | undefined }
-
 export function useTasks() {
   return useQuery<Task[]>({
     queryKey: ['tasks'],
@@ -251,28 +249,22 @@ export function useRemoveLabel() {
 export function useDeleteTask() {
   const queryClient = useQueryClient()
 
-  return useMutation<void, Error, number, DeleteTaskContext>({
+  return useMutation<void, Error, number>({
     mutationFn: (id: number) => api.delete<void>(`/tasks/${id}`),
 
-    onMutate: async (id: number) => {
-      await queryClient.cancelQueries({ queryKey: ['tasks'] })
-      const previous = queryClient.getQueryData<Task[]>(['tasks'])
-      queryClient.setQueryData<Task[]>(['tasks'], old =>
-        old?.filter(t => t.id !== id) ?? [],
-      )
-      return { previous }
-    },
+    // No optimistic removal — the TaskRow must stay mounted so that
+    // component-level onError callbacks can set local error state (e.g. deleteError).
+    // Optimistic removal would unmount the row, discarding the stale setState call.
 
-    onError: (_err, _id, context) => {
-      if (context?.previous !== undefined) {
-        queryClient.setQueryData<Task[]>(['tasks'], context.previous)
-      }
+    onError: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] })
     },
 
-    onSuccess: () => {
-      // Task already removed optimistically — no cache update needed
-      // Do NOT call invalidateQueries on success (established pattern — avoids extra GET)
+    onSuccess: (_data, id) => {
+      // Remove the deleted task from cache immediately on success
+      queryClient.setQueryData<Task[]>(['tasks'], old =>
+        old?.filter(t => t.id !== id) ?? [],
+      )
     },
   })
 }

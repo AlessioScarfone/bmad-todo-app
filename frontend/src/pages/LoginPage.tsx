@@ -167,7 +167,7 @@ export default function LoginPage() {
 
         <p className="mt-6 font-mono text-[11px] text-[#888]">
           Don&apos;t have an account?{' '}
-          <Link to="/register" className="text-[#00ff88] hover:underline">
+          <Link to="/register" className="text-[#00ff88] underline">
             Register
           </Link>
         </p>
