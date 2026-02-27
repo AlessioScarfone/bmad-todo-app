@@ -100,7 +100,7 @@ export default function TaskListPage() {
             aria-live="polite"
             className="mt-12 text-center"
           >
-            <p className="font-pixel text-[8px] text-[#555] leading-loose">
+            <p className="font-pixel text-[8px] text-[#888] leading-loose">
               No tasks match this filter.
             </p>
           </div>

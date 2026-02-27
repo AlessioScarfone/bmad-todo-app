@@ -123,7 +123,7 @@ export default function RegisterPage() {
               aria-invalid={Boolean(passwordError)}
               aria-describedby={`password-hint${passwordError ? ' password-error' : ''}`}
             />
-            <p id="password-hint" className="mt-1 font-mono text-[11px] text-[#555]">
+            <p id="password-hint" className="mt-1 font-mono text-[11px] text-[#888]">
               Minimum 8 characters.
             </p>
             {passwordError && (
@@ -140,7 +140,7 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full mt-2 bg-[#00ff88] text-[#0f0f0f] border-2 border-[#e0e0e0] shadow-[4px_4px_0px_#e0e0e0] font-pixel text-[8px] uppercase tracking-widest py-3 px-4 cursor-pointer hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-[transform,box-shadow] duration-75 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[4px_4px_0px_#e0e0e0]"
+            className="w-full mt-2 bg-[#00ff88] text-[#0f0f0f] border-2 border-[#e0e0e0] shadow-[4px_4px_0px_#e0e0e0] font-pixel text-[8px] uppercase tracking-widest py-3 px-4 cursor-pointer hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-[transform,box-shadow] duration-75 motion-reduce:transition-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[4px_4px_0px_#e0e0e0]"
           >
             {isLoading ? 'CREATING...' : 'CREATE ACCOUNT'}
           </button>

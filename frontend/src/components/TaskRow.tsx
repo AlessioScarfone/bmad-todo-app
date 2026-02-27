@@ -446,7 +446,7 @@ export function TaskRow({ task }: TaskRowProps) {
               aria-label="Remove deadline"
               onClick={() => handleSetDeadline(null)}
               disabled={setDeadline.isPending}
-              className="text-[#666] hover:text-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="text-[#888] hover:text-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               ×
             </button>
@@ -458,7 +458,7 @@ export function TaskRow({ task }: TaskRowProps) {
             aria-label={`Set deadline for ${task.title}`}
             onClick={() => setShowDeadlinePicker(true)}
             disabled={setDeadline.isPending}
-            className="text-[#666] hover:text-[#f0f0f0] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="text-[#888] hover:text-[#f0f0f0] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             📅
           </button>
@@ -575,7 +575,7 @@ export function TaskRow({ task }: TaskRowProps) {
           onClick={() => setSubtasksOpen(open => !open)}
           aria-expanded={subtasksOpen}
           aria-label={`${subtasksOpen ? 'Collapse' : 'Expand'} subtasks for "${task.title}"`}
-          className="text-[11px] text-[#555] hover:text-[#00ff88] font-mono"
+          className="text-[11px] text-[#888] hover:text-[#00ff88] font-mono"
         >
           {subtasksOpen ? '▲ Subtasks' : '▼ Subtasks'}
         </button>

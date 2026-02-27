@@ -73,7 +73,7 @@ export function SubtaskPanel({ taskId }: SubtaskPanelProps) {
             <span
               className={
                 subtask.isCompleted
-                  ? 'line-through text-[#666] text-[12px] font-mono'
+                  ? 'line-through text-[#888] text-[12px] font-mono'
                   : 'text-[12px] font-mono text-[#d0d0d0]'
               }
             >
@@ -94,7 +94,7 @@ export function SubtaskPanel({ taskId }: SubtaskPanelProps) {
                 )
               }}
               aria-label={`Delete subtask "${subtask.title}"`}
-              className="ml-auto text-[#555] hover:text-red-400 text-xs"
+              className="ml-auto text-[#888] hover:text-red-400 text-xs"
             >
               ×
             </button>
@@ -155,7 +155,7 @@ export function SubtaskPanel({ taskId }: SubtaskPanelProps) {
       ))}
 
       {subtasks.length === 0 && (
-        <p className="text-[11px] text-[#555] italic font-mono">No subtasks yet</p>
+        <p className="text-[11px] text-[#888] italic font-mono">No subtasks yet</p>
       )}
 
       {/* New subtask input — no expand control on subtask rows (AC7 / FR19) */}

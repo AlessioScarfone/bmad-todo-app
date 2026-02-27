@@ -37,7 +37,7 @@ function FilterButton({
         'px-2 py-0.5 font-mono text-[10px] border motion-safe:transition-colors focus:outline focus:outline-1 focus:outline-[#00ff88]',
         isActive
           ? 'border-[#00ff88] text-[#00ff88] bg-[#0a2a1a]'
-          : 'border-[#333] text-[#666] hover:border-[#555] hover:text-[#aaa]',
+          : 'border-[#666] text-[#888] hover:border-[#888] hover:text-[#ccc]',
       ].join(' ')}
     >
       {label}

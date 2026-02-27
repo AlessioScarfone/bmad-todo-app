@@ -4,7 +4,7 @@ export function EmptyState() {
       className="mt-12 text-center"
       aria-live="polite"
     >
-      <p className="font-pixel text-[8px] text-[#555] leading-loose">
+      <p className="font-pixel text-[8px] text-[#888] leading-loose">
         No tasks yet.<br />Type above and press Enter.
       </p>
     </div>
