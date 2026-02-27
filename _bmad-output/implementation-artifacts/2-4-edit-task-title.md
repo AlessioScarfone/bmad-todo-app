@@ -92,7 +92,7 @@ so that I can correct mistakes or reword work items.
   - [x] **Empty title attempt**: show inline validation text "Title must not be empty" — do not call API
   - [x] **Mutation failure**: `useUpdateTask`'s `onError` rolls back the cache; `TaskRow` should also show an inline error message and a Retry button that re-enters edit mode with the failed title pre-populated
   - [x] **Do NOT break Story 2.3 features**: checkbox toggle, Space-key completion, ARIA checkbox label, inline error on completion failure — all must remain intact
-  - [x] Edit icon button: small accessible icon (can use `✎` character or an SVG) with `aria-label="Edit task title"`, visible on hover of the row
+  - [x] Edit icon button: small accessible icon (can use `✎` character or an SVG) with `aria-label="Edit task title"`, permanently visible on the right side of the row (no hover-reveal)
   - [x] `aria-label` on the edit input: `"Edit task title: [current title]"`
 
 - [x] **Task 6: Tests** (AC: AC1–AC5)

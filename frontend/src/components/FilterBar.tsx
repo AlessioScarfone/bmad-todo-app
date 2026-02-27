@@ -1,13 +1,16 @@
 import type { Task } from '../types/tasks'
+import { SortDropdown, type SortOption } from './SortDropdown'
 
 interface FilterBarProps {
   tasks: Task[]
   activeStatusFilter: 'all' | 'active' | 'done'
   activeDeadlineFilter: boolean
   activeLabelFilter: string | null
+  activeSortOption: SortOption
   onStatusChange: (status: 'all' | 'active' | 'done') => void
   onDeadlineChange: (active: boolean) => void
   onLabelChange: (label: string | null) => void
+  onSortChange: (option: SortOption) => void
 }
 
 const STATUS_OPTIONS: { value: 'all' | 'active' | 'done'; label: string }[] = [
@@ -50,9 +53,11 @@ export function FilterBar({
   activeStatusFilter,
   activeDeadlineFilter,
   activeLabelFilter,
+  activeSortOption,
   onStatusChange,
   onDeadlineChange,
   onLabelChange,
+  onSortChange,
 }: FilterBarProps) {
   // Derive unique label names from the full task list — no extra API call
   const uniqueLabels = Array.from(
@@ -117,6 +122,7 @@ export function FilterBar({
           ))}
         </div>
       )}
-    </nav>
+      {/* Sort group — inline with filters (UX alignment) */}
+      <SortDropdown activeSortOption={activeSortOption} onSortChange={onSortChange} />    </nav>
   )
 }

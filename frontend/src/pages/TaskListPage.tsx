@@ -7,7 +7,7 @@ import { InlineTaskInput } from '../components/InlineTaskInput'
 import { TaskRow } from '../components/TaskRow'
 import { SkeletonTaskRow } from '../components/SkeletonTaskRow'
 import { FilterBar } from '../components/FilterBar'
-import { SortDropdown, type SortOption } from '../components/SortDropdown'
+import type { SortOption } from '../components/SortDropdown'
 
 export default function TaskListPage() {
   const { user } = useAuth()
@@ -67,23 +67,22 @@ export default function TaskListPage() {
         completedTasks={completedTasks}
         totalTasks={totalTasks}
       />
-      <main className="max-w-2xl mx-auto px-4 py-8">
+      <main className="max-w-4xl mx-auto px-4 py-8">
         {/* Inline creation row — always visible at top (AC1 / UX spec) */}
         <InlineTaskInput />
 
         {/* Filter and sort bar — always visible, zero interaction cost (UX spec / Story 4.1 AC1 + Story 4.2 AC1) */}
-        <div className="flex items-start justify-between flex-wrap gap-2">
-          <FilterBar
-            tasks={tasks}
-            activeStatusFilter={statusFilter}
-            activeDeadlineFilter={deadlineFilter}
-            activeLabelFilter={labelFilter}
-            onStatusChange={setStatusFilter}
-            onDeadlineChange={setDeadlineFilter}
-            onLabelChange={setLabelFilter}
-          />
-          <SortDropdown activeSortOption={sortOption} onSortChange={setSortOption} />
-        </div>
+        <FilterBar
+          tasks={tasks}
+          activeStatusFilter={statusFilter}
+          activeDeadlineFilter={deadlineFilter}
+          activeLabelFilter={labelFilter}
+          activeSortOption={sortOption}
+          onStatusChange={setStatusFilter}
+          onDeadlineChange={setDeadlineFilter}
+          onLabelChange={setLabelFilter}
+          onSortChange={setSortOption}
+        />
 
         {/* Task list, skeleton loading state, filtered empty state, or no-tasks empty state */}
         {isLoading ? (

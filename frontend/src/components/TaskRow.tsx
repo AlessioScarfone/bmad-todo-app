@@ -13,8 +13,10 @@ type FailedLabelAction
   | { type: 'remove'; labelId: number }
 
 function formatDeadline(isoDate: string): string {
-  // Append T12:00:00 to avoid UTC/local timezone boundary issues
-  return new Date(`${isoDate}T12:00:00`).toLocaleDateString('en-GB', {
+  // Extract YYYY-MM-DD from any ISO format (e.g. "2026-02-27T00:00:00.000Z" or "2026-02-27")
+  // then append T12:00:00 to avoid UTC/local timezone boundary issues
+  const dateOnly = isoDate.split('T')[0]
+  return new Date(`${dateOnly}T12:00:00`).toLocaleDateString('en-GB', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
@@ -300,14 +302,14 @@ export function TaskRow({ task }: TaskRowProps) {
       className="group px-3 py-2 border-l-2 border-[#2a2a2a] bg-[#1c1c1c] hover:border-l-[#00ff88] font-mono text-[13px] text-[#f0f0f0] motion-safe:transition-colors focus:outline-none focus:border-l-[#00ff88]"
       onKeyDown={handleRowKeyDown}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-start gap-2">
         <input
           type="checkbox"
           checked={task.isCompleted}
           onChange={handleToggle}
           disabled={toggleTask.isPending}
           aria-label={ariaLabel}
-          className="accent-[#00ff88] motion-safe:transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          className="accent-[#00ff88] motion-safe:transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed mt-0.5"
         />
 
         {isEditing ? (
@@ -328,55 +330,108 @@ export function TaskRow({ task }: TaskRowProps) {
           </span>
         )}
 
-        {!isEditing && (
-          <button
-            onClick={enterEditMode}
-            aria-label="Edit task title"
-            className="opacity-0 group-hover:opacity-100 focus:opacity-100 text-[#888] hover:text-[#f0f0f0] motion-safe:transition-opacity px-1"
-          >
-            ✎
-          </button>
-        )}
-
-        {/* Delete icon — shown on hover, hidden during edit or confirm state */}
-        {!isEditing && !isConfirmingDelete && (
-          <button
-            onClick={() => { setDeleteError(null); setIsConfirmingDelete(true) }}
-            aria-label="Delete task"
-            className="opacity-0 group-hover:opacity-100 focus:opacity-100 text-[#888] hover:text-red-400 motion-safe:transition-opacity px-1"
-          >
-            ✕
-          </button>
-        )}
-
-        {/* Confirm delete strip */}
-        {isConfirmingDelete && (
-          <span className="flex items-center gap-2 ml-auto">
-            <span className="text-[11px] text-red-400">Delete?</span>
+        {/* Right: edit/delete buttons */}
+        <div className="flex items-center shrink-0">
+          {!isEditing && (
             <button
-              onClick={() => {
-                setIsConfirmingDelete(false)
-                deleteTask.mutate(task.id, {
-                  onError: () => setDeleteError('Failed to delete task. Please try again.'),
-                })
-              }}
-              aria-label="Confirm delete task"
-              className="text-[11px] text-red-400 underline hover:text-red-300"
+              onClick={enterEditMode}
+              aria-label="Edit task title"
+              className="text-[22px] leading-none text-[#888] hover:text-[#f0f0f0] px-2 py-1 cursor-pointer"
             >
-              Confirm
+              ✎
             </button>
+          )}
+
+          {/* Delete icon — permanently visible */}
+          {!isEditing && !isConfirmingDelete && (
             <button
-              onClick={() => { setIsConfirmingDelete(false); setDeleteError(null) }}
-              aria-label="Cancel delete"
-              className="text-[11px] text-[#888] underline hover:text-[#f0f0f0]"
+              onClick={() => { setDeleteError(null); setIsConfirmingDelete(true) }}
+              aria-label="Delete task"
+              className="text-[22px] leading-none text-[#888] hover:text-red-400 px-2 py-1 cursor-pointer"
             >
-              Cancel
+              ✕
             </button>
-          </span>
-        )}
+          )}
+
+          {/* Confirm delete strip */}
+          {isConfirmingDelete && (
+            <span className="flex items-center gap-2">
+              <span className="text-[11px] text-red-400">Delete?</span>
+              <button
+                onClick={() => {
+                  setIsConfirmingDelete(false)
+                  deleteTask.mutate(task.id, {
+                    onError: () => setDeleteError('Failed to delete task. Please try again.'),
+                  })
+                }}
+                aria-label="Confirm delete task"
+                className="text-[11px] text-red-400 underline hover:text-red-300"
+              >
+                Confirm
+              </button>
+              <button
+                onClick={() => { setIsConfirmingDelete(false); setDeleteError(null) }}
+                aria-label="Cancel delete"
+                className="text-[11px] text-[#888] underline hover:text-[#f0f0f0]"
+              >
+                Cancel
+              </button>
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="mt-2 ml-6 flex flex-wrap items-center gap-2">
+        {/* Deadline — same row as labels */}
+        {task.deadline && (
+          <div className="flex items-center gap-1 text-[11px] text-red-400">
+            <span aria-label={`Deadline: ${formatDeadline(task.deadline)}`}>
+              📅 {formatDeadline(task.deadline)}
+            </span>
+            <button
+              type="button"
+              aria-label="Remove deadline"
+              onClick={() => handleSetDeadline(null)}
+              disabled={setDeadline.isPending}
+              className="text-red-400 hover:text-red-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              ×
+            </button>
+          </div>
+        )}
+        {!task.deadline && !showDeadlinePicker && (
+          <button
+            type="button"
+            aria-label={`Set deadline for ${task.title}`}
+            onClick={() => setShowDeadlinePicker(true)}
+            disabled={setDeadline.isPending}
+            className="text-[13px] text-[#888] hover:text-[#f0f0f0] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            📅
+          </button>
+        )}
+        {showDeadlinePicker && (
+          <input
+            type="date"
+            aria-label={`Set deadline for ${task.title}`}
+            autoFocus
+            className="border border-[#2a2a2a] bg-[#1c1c1c] px-1 py-0.5 text-[11px] text-[#f0f0f0] outline-none focus:border-[#00ff88]"
+            onChange={e => {
+              if (e.target.value) {
+                handleSetDeadline(e.target.value)
+              }
+              setShowDeadlinePicker(false)
+            }}
+            onKeyDown={e => {
+              if (e.key === 'Escape') {
+                e.preventDefault()
+                setShowDeadlinePicker(false)
+              }
+            }}
+            onBlur={() => setShowDeadlinePicker(false)}
+          />
+        )}
+
         {task.labels.map(label => (
           <span
             key={label.id}
@@ -434,59 +489,7 @@ export function TaskRow({ task }: TaskRowProps) {
         )}
       </div>
 
-      {/* Deadline section */}
-      <div className="mt-1 ml-6 flex flex-wrap items-center gap-2 text-[11px]">
-        {task.deadline && (
-          <div className="flex items-center gap-1 text-[#aaa]">
-            <span aria-label={`Deadline: ${formatDeadline(task.deadline)}`}>
-              📅 {formatDeadline(task.deadline)}
-            </span>
-            <button
-              type="button"
-              aria-label="Remove deadline"
-              onClick={() => handleSetDeadline(null)}
-              disabled={setDeadline.isPending}
-              className="text-[#888] hover:text-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              ×
-            </button>
-          </div>
-        )}
-        {!task.deadline && !showDeadlinePicker && (
-          <button
-            type="button"
-            aria-label={`Set deadline for ${task.title}`}
-            onClick={() => setShowDeadlinePicker(true)}
-            disabled={setDeadline.isPending}
-            className="text-[#888] hover:text-[#f0f0f0] disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            📅
-          </button>
-        )}
-        {showDeadlinePicker && (
-          <input
-            type="date"
-            aria-label={`Set deadline for ${task.title}`}
-            autoFocus
-            className="border border-[#2a2a2a] bg-[#1c1c1c] px-1 py-0.5 text-[11px] text-[#f0f0f0] outline-none focus:border-[#00ff88]"
-            onChange={e => {
-              if (e.target.value) {
-                handleSetDeadline(e.target.value)
-              }
-              // Close picker on any change event (including clear): avoids picker staying
-              // open indefinitely when the user clears the input via keyboard (M3 fix)
-              setShowDeadlinePicker(false)
-            }}
-            onKeyDown={e => {
-              if (e.key === 'Escape') {
-                e.preventDefault()
-                setShowDeadlinePicker(false)
-              }
-            }}
-            onBlur={() => setShowDeadlinePicker(false)}
-          />
-        )}
-      </div>
+
 
       {/* Edit validation / error */}
       {editError && (

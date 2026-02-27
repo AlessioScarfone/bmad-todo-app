@@ -24,9 +24,11 @@ const defaultProps = {
   activeStatusFilter: 'all' as const,
   activeDeadlineFilter: false,
   activeLabelFilter: null,
+  activeSortOption: 'none' as const,
   onStatusChange: vi.fn(),
   onDeadlineChange: vi.fn(),
   onLabelChange: vi.fn(),
+  onSortChange: vi.fn(),
 }
 
 describe('FilterBar', () => {

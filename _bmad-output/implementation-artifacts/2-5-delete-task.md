@@ -12,10 +12,9 @@ so that my list stays clean and relevant.
 
 ## Acceptance Criteria
 
-**AC1 — Two-step delete confirmation (hover-reveal):**
+**AC1 — Two-step delete confirmation (permanent button):**
 - **Given** I have a task in my list
-- **When** I hover over the task row
-- **Then** a delete icon button becomes visible (same `group-hover:` Tailwind pattern as the edit icon added in Story 2.4)
+- **Then** a delete icon button (✕) is permanently visible on the right side of the task row — no hover required (works on both desktop and mobile)
 - **And** clicking the delete icon does NOT immediately delete the task — it transitions the row into a "confirm delete" state
 
 **AC2 — Confirm deletion (optimistic):**
