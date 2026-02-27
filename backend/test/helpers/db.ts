@@ -17,6 +17,14 @@ export async function createTestDb(): Promise<TestDb> {
     username: container.getUsername(),
     password: container.getPassword(),
     max: 5,
+    types: {
+      date: {
+        to: 1082,
+        from: [1082],
+        serialize: (x: string) => x,
+        parse: (x: string) => x,
+      },
+    },
   })
 
   await runMigrations(sql)

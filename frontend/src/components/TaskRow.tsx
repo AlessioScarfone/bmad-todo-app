@@ -336,7 +336,7 @@ export function TaskRow({ task }: TaskRowProps) {
             <button
               onClick={enterEditMode}
               aria-label="Edit task title"
-              className="text-[22px] leading-none text-[#888] hover:text-[#f0f0f0] px-2 py-1 cursor-pointer"
+              className="text-[22px] leading-none text-[#888] hover:text-[#f0f0f0] px-2 py-1 cursor-pointer focus:opacity-100"
             >
               ✎
             </button>
@@ -347,7 +347,7 @@ export function TaskRow({ task }: TaskRowProps) {
             <button
               onClick={() => { setDeleteError(null); setIsConfirmingDelete(true) }}
               aria-label="Delete task"
-              className="text-[22px] leading-none text-[#888] hover:text-red-400 px-2 py-1 cursor-pointer"
+              className="text-[22px] leading-none text-[#888] hover:text-red-400 px-2 py-1 cursor-pointer focus:opacity-100"
             >
               ✕
             </button>

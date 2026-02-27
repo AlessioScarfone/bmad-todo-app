@@ -5,6 +5,14 @@ function createSqlClient(databaseUrl: string): Sql {
     max: 10,
     idle_timeout: 30,
     connect_timeout: 10,
+    types: {
+      date: {
+        to: 1082,
+        from: [1082],
+        serialize: (x: string) => x,
+        parse: (x: string) => x,
+      },
+    },
   })
 }
 
