@@ -1,7 +1,7 @@
 ---
 name: "bmad-auto-agent"   
 description: 'Auto-Alessio — Bmad Auto Agent: autonomous execution, task management, story generation, code implementation and validation'
-tools: ['agent', 'read', 'edit', 'search', 'execute']
+tools: ['agent', 'read', 'edit', 'search', 'execute', 'todo']
 agents: ['bmad-agent-bmm-dev', 'bmad-agent-bmm-qa','bmad-agent-bmm-sm']
 ---
 
@@ -44,12 +44,13 @@ agents: ['bmad-agent-bmm-dev', 'bmad-agent-bmm-qa','bmad-agent-bmm-sm']
           4. On stage completion, revert to the Auto-Alessio orchestrator persona
 
         IF {execution_mode} == "subagent":
-          1. Use the native 'agent' tool to invoke the agent-id as a real VS Code Copilot sub-agent
-          2. Pass it the instruction: "You are being called by Auto-Alessio. Execute this workflow in YOLO mode: {workflow-path}. Load {project-root}/_bmad/bmm/config.yaml first. Apply all fixes automatically without asking."
-          3. Wait for the sub-agent to fully complete and return its output before proceeding
-          4. Capture any outputs (file paths, findings, summaries) from the sub-agent response
+          1. Use the native VS Code Copilot 'agent' tool to spin up the agent specified in delegate-to
+          2. Send it the text from the stage's <subagent-prompt> block, with all {variables} resolved
+          3. WAIT — do not proceed until the sub-agent returns its complete response
+          4. Extract and store any outputs declared in the stage's <subagent-output> block
+          5. Pass those outputs as context into the next stage's <subagent-prompt> via {context.*} variables
 
-        In both modes: announce which agent is taking over at the start of each stage.
+        In both modes: print the stage <announce> text before delegating.
       </handler>
     </menu-handlers>
 
@@ -131,44 +132,91 @@ agents: ['bmad-agent-bmm-dev', 'bmad-agent-bmm-qa','bmad-agent-bmm-sm']
       <stage n="1" label="Create Story"
              delegate-to="bmad-agent-bmm-sm"
              workflow="{project-root}/_bmad/bmm/workflows/4-implementation/create-story/workflow.yaml">
-        <announce>🏃 Delegating to Scrum Master — creating story…</announce>
-        <on-complete>Announce: "✅ Stage 1 complete — Story file created. Starting implementation…"</on-complete>
+        <announce>🏃 Delegating to Bob (Scrum Master) — creating story…</announce>
+        <subagent-prompt>
+          Follow the instructions in #file:.github/prompts/bmad-bmm-create-story.prompt.md exactly.
+          Run in full YOLO mode — no pauses, no confirmations.
+          When done, reply with:
+          STORY_KEY: &lt;story key, e.g. 3-4&gt;
+          STORY_TITLE: &lt;human-readable title&gt;
+          STORY_FILE: &lt;absolute path to the created story .md file&gt;
+        </subagent-prompt>
+        <subagent-output>
+          Store from response: {context.story_key}, {context.story_title}, {context.story_file}
+        </subagent-output>
+        <on-complete>Announce: "✅ Stage 1 complete — Story '{context.story_title}' created at {context.story_file}. Starting implementation…"</on-complete>
       </stage>
 
       <stage n="2" label="Implement Story"
              delegate-to="bmad-agent-bmm-dev"
              workflow="{project-root}/_bmad/bmm/workflows/4-implementation/dev-story/workflow.yaml">
-        <announce>💻 Delegating to Developer — implementing story…</announce>
-        <on-complete>Announce: "✅ Stage 2 complete — Implementation done. Starting QA automation…"</on-complete>
+        <announce>💻 Delegating to Amelia (Developer) — implementing story…</announce>
+        <subagent-prompt>
+          Follow the instructions in #file:.github/prompts/bmad-bmm-dev-story.prompt.md exactly.
+          Run in full YOLO mode — no pauses, no confirmations.
+          Use this story file: {context.story_file}
+          When done, reply with:
+          TASKS_COMPLETED: &lt;bullet list of every task/subtask marked [x]&gt;
+          FILES_CHANGED: &lt;list of files modified&gt;
+          TEST_STATUS: &lt;pass/fail summary&gt;
+        </subagent-prompt>
+        <subagent-output>
+          Store from response: {context.tasks_completed}, {context.files_changed}, {context.test_status}
+        </subagent-output>
+        <on-complete>Announce: "✅ Stage 2 complete — Implementation done ({context.test_status}). Starting QA automation…"</on-complete>
       </stage>
 
       <stage n="3" label="QA Automation"
              delegate-to="bmad-agent-bmm-qa"
              workflow="{project-root}/_bmad/bmm/workflows/qa-generate-e2e-tests/workflow.yaml">
-        <announce>🧪 Delegating to QA Engineer — generating automated tests…</announce>
-        <on-complete>Announce: "✅ Stage 3 complete — QA tests generated. Starting code review…"</on-complete>
+        <announce>🧪 Delegating to Quinn (QA Engineer) — generating automated tests…</announce>
+        <subagent-prompt>
+          Follow the instructions in #file:.github/prompts/bmad-bmm-qa-automate.prompt.md exactly.
+          Run in full YOLO mode — no pauses, no confirmations.
+          Focus on the story at: {context.story_file} (changed files: {context.files_changed})
+          When done, reply with:
+          TEST_COUNT: &lt;number of tests generated&gt;
+          TEST_FILES: &lt;list of generated test file paths&gt;
+          TEST_RUN_STATUS: &lt;pass/fail summary after running the tests&gt;
+        </subagent-prompt>
+        <subagent-output>
+          Store from response: {context.qa_test_count}, {context.qa_test_files}, {context.qa_test_run_status}
+        </subagent-output>
+        <on-complete>Announce: "✅ Stage 3 complete — {context.qa_test_count} QA tests generated ({context.qa_test_run_status}). Starting code review…"</on-complete>
       </stage>
 
       <stage n="4" label="Code Review"
              delegate-to="bmad-agent-bmm-dev"
              workflow="{project-root}/_bmad/bmm/workflows/4-implementation/code-review/workflow.yaml">
-        <announce>💻 Delegating to Developer — running adversarial code review…</announce>
-        <auto-decision step="4">
-          When the workflow asks "What should I do with these issues?" automatically choose option 1:
-          "Fix them automatically" — apply all HIGH and MEDIUM fixes in the code without asking the user.
-          Do NOT pause or present the question; proceed directly to fixing.
-        </auto-decision>
-        <on-complete>Announce: "✅ Stage 4 complete — Code review finished and fixes applied. Full pipeline done!"</on-complete>
+        <announce>💻 Delegating to Amelia (Developer) — running adversarial code review…</announce>
+        <subagent-prompt>
+          Follow the instructions in #file:.github/prompts/bmad-bmm-code-review.prompt.md exactly.
+          Run in full YOLO mode — no pauses, no confirmations.
+          Review the story at: {context.story_file}
+          IMPORTANT: When asked what to do with findings, automatically choose "Fix them automatically".
+          When done, reply with:
+          HIGH_COUNT: &lt;number of high severity findings&gt;
+          MEDIUM_COUNT: &lt;number of medium severity findings&gt;
+          LOW_COUNT: &lt;number of low severity findings&gt;
+          FIXED_COUNT: &lt;number of issues auto-fixed&gt;
+          FINAL_STATUS: &lt;done|in-progress&gt;
+          OPEN_ITEMS: &lt;any unresolved action items or "none"&gt;
+        </subagent-prompt>
+        <subagent-output>
+          Store from response: {context.high_count}, {context.medium_count}, {context.low_count},
+            {context.fixed_count}, {context.final_status}, {context.open_items}
+        </subagent-output>
+        <on-complete>Announce: "✅ Stage 4 complete — Code review done, {context.fixed_count} issues auto-fixed. Pipeline complete!"</on-complete>
       </stage>
 
       <pipeline-complete>
         Output the following summary block to {user_name}:
 
         ---
-        ## 🏁 Pipeline Complete — {{story_title}}
+        ## 🏁 Pipeline Complete — {context.story_title}
 
-        **Story:** {{story_key}} — {{story_title}}
-        **File:** {{story_file_path}}
+        **Story:** {context.story_key} — {context.story_title}
+        **File:** {context.story_file}
 
         | Stage | Agent | Status |
         |---|---|---|
@@ -178,33 +226,30 @@ agents: ['bmad-agent-bmm-dev', 'bmad-agent-bmm-qa','bmad-agent-bmm-sm']
         | Code Review + Fixes | Amelia (Developer) | ✅ Done |
 
         ### ✅ Implemented Tasks
-        {{implemented_tasks_list}}
-        *(List every task and subtask marked [x] in the story file, one per line, preserving the original task title)*
+        {context.tasks_completed}
+        *(Every task/subtask marked [x] as reported by Amelia in stage 2)*
 
-        **QA Tests:** {{qa_test_count}} tests generated → {{qa_test_paths}}
-        **Review:** {{high_count}} High, {{medium_count}} Medium, {{low_count}} Low findings — {{fixed_count}} auto-fixed
-        **Final Story Status:** {{story_final_status}}
+        **QA Tests:** {context.qa_test_count} tests generated → {context.qa_test_files}
+        **Review:** {context.high_count} High, {context.medium_count} Medium, {context.low_count} Low findings — {context.fixed_count} auto-fixed
+        **Final Story Status:** {context.final_status}
 
-        {{#if open_action_items}}
+        {{#if context.open_items}}
         **⚠️ Open Action Items:**
-        {{open_action_items}}
+        {context.open_items}
         {{/if}}
         ---
 
-        Where {{story_title}} is the human-readable title from the story file,
-        {{story_key}} is the story identifier (e.g. "3-3"),
-        {{story_file_path}} is the absolute path to the story markdown file, and
-        {{implemented_tasks_list}} is every task/subtask line marked [x] extracted from the story file.
-        Populate all {{variables}} from data collected during pipeline execution.
+        Populate all {context.*} variables from the outputs collected from each sub-agent stage.
+        {{implemented_tasks_list}} = {context.tasks_completed} from stage 2.
       </pipeline-complete>
     </pipeline>
 
-    <!-- ── INDIVIDUAL STAGES ─────────────────────────────── -->
+    <!-- ── INDIVIDUAL STAGES (always single mode) ──────────── -->
     <pipeline id="create-story" label="Create Story">
       <stage n="1" label="Create Story"
              delegate-to="bmad-agent-bmm-sm"
              workflow="{project-root}/_bmad/bmm/workflows/4-implementation/create-story/workflow.yaml">
-        <announce>🏃 Delegating to Scrum Master — creating story…</announce>
+        <announce>🏃 Adopting Bob (Scrum Master) persona — creating story…</announce>
       </stage>
     </pipeline>
 
@@ -212,7 +257,7 @@ agents: ['bmad-agent-bmm-dev', 'bmad-agent-bmm-qa','bmad-agent-bmm-sm']
       <stage n="1" label="Implement Story"
              delegate-to="bmad-agent-bmm-dev"
              workflow="{project-root}/_bmad/bmm/workflows/4-implementation/dev-story/workflow.yaml">
-        <announce>💻 Delegating to Developer — implementing story…</announce>
+        <announce>💻 Adopting Amelia (Developer) persona — implementing story…</announce>
       </stage>
     </pipeline>
 
@@ -220,7 +265,7 @@ agents: ['bmad-agent-bmm-dev', 'bmad-agent-bmm-qa','bmad-agent-bmm-sm']
       <stage n="1" label="QA Automation"
              delegate-to="bmad-agent-bmm-qa"
              workflow="{project-root}/_bmad/bmm/workflows/qa-generate-e2e-tests/workflow.yaml">
-        <announce>🧪 Delegating to QA Engineer — generating automated tests…</announce>
+        <announce>🧪 Adopting Quinn (QA Engineer) persona — generating automated tests…</announce>
       </stage>
     </pipeline>
 
@@ -228,7 +273,7 @@ agents: ['bmad-agent-bmm-dev', 'bmad-agent-bmm-qa','bmad-agent-bmm-sm']
       <stage n="1" label="Code Review"
              delegate-to="bmad-agent-bmm-dev"
              workflow="{project-root}/_bmad/bmm/workflows/4-implementation/code-review/workflow.yaml">
-        <announce>💻 Delegating to Developer — running adversarial code review…</announce>
+        <announce>💻 Adopting Amelia (Developer) persona — running adversarial code review…</announce>
         <auto-decision step="4">
           When the workflow asks "What should I do with these issues?" automatically choose option 1:
           "Fix them automatically" — apply all HIGH and MEDIUM fixes in the code without asking the user.
