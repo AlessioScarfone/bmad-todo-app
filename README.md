@@ -5,7 +5,10 @@ A full-stack task management web application built with React, Fastify, and Post
 > [!NOTE]  
 > This project was built as a hands-on test of the [BMAD Method](https://docs.bmad-method.org/) — a Spec-Driven Development (SDD) framework. The entire product lifecycle was followed end-to-end: Product Brief → PRD → UX Design → Architecture → Epics & Stories → Implementation, using BMAD agents and workflows throughout. The codebase reflects what can be produced when AI-assisted development is guided by structured, spec-first methodology.
 >
-> See [notes.md](notes.md) for a full retrospective on the process: what worked for me, what slowed me down, and some of my observations
+> **See [notes.md](notes.md) for a retrospective on the process: what worked for me, what slowed me down, and some of my observations.**
+>
+> A [custom Copilot agent](.github/agents/bmad-auto-agent.agent.md) (`bmad-auto-agent`) was built to automate the 4 main pipeline stages: story creation → implementation → QA → code review.  
+> See [notes.md — Automating the pipeline with `bmad-auto-agent`](notes.md#automating-the-pipeline-with-bmad-auto-agent) for details on how it works.
 
 ## Features
 

@@ -64,7 +64,10 @@ The agent, [Auto-Alessio](.github/agents/bmad-auto-agent.agent.md), is defined a
 | QA | `bmad-agent-bmm-qa` | Quinn, QA Engineer |
 | Code review | `bmad-agent-bmm-dev` | Amelia, Developer |
 
-The agent supports two modes. In single-process mode it adopts each agent's persona within the same conversation, which is faster and avoids context switching. In sub-agent mode, each stage runs in a separate Copilot subagent instance with its own context. I ran it both ways. Single-process increases the chances of reaching the limits of the context.
+The agent supports two modes. In **single-process** mode it adopts each agent's persona within the same conversation. In **sub-agent** mode, each stage runs in a separate Copilot subagent instance with its own context. I ran it both ways. 
+
+> [!WARNING] 
+> **"Single-process"** increases the chances of reaching the limits of the context.
 
 The pipeline runs without confirmation prompts or pauses between stages ("YOLO mode"). When the code review stage asks what to do with findings, it always auto-fixes. The orchestrator passes outputs from each stage as structured context variables into the next one, and generates a summary report at the end.
 
