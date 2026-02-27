@@ -1,6 +1,6 @@
 # Integration Architecture
 
-> Generated: 2026-02-27 | Scan: Quick
+> Generated: 2026-02-27 (rescan) | Scan: Quick (read from source)
 
 ---
 
@@ -25,11 +25,11 @@
 | **From** | `web` (frontend React SPA) |
 | **To** | `api` (backend Fastify) |
 | **Protocol** | HTTP/1.1, JSON |
-| **Dev URL** | `http://localhost:3001` |
-| **Prod URL** | `http://api:3001` (Docker internal network) |
+| **Dev API path** | `/api/*` (relative — Vite proxy forwards to `http://localhost:3001` in dev) |
+| **Prod API path** | `/api/*` (relative — Nginx `web` container proxies to `http://api:3001`) |
 | **Auth** | HttpOnly cookie `token` (JWT HS256) sent automatically |
 | **CORS** | `@fastify/cors` with `origin: true, credentials: true` |
-| **Transport** | `fetch()` with `credentials: 'include'` |
+| **Transport** | `fetch()` with `credentials: 'include'` (via `lib/api.ts` wrapper) |
 
 The frontend never reads the JWT token directly — it's an opaque HttpOnly cookie managed entirely by the browser and the backend.
 

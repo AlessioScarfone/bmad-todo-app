@@ -1,6 +1,6 @@
 # Source Tree Analysis
 
-> Generated: 2026-02-27 | Scan: Quick
+> Generated: 2026-02-27 (rescan) | Scan: Quick (read from source)
 
 ---
 
@@ -78,10 +78,12 @@ frontend/
 │   │   └── useLabels.ts                # Labels: list, create, delete, attach/detach from task
 │   │
 │   ├── lib/                            # Shared utilities
-│   │   └── (API client fetch wrapper, cn() utility, helpers)
+│   │   ├── api.ts                      # Typed fetch wrapper — BASE='/api', credentials:'include'
+│   │   └── auth.ts                     # Email pre-fill helpers — localStorage key 'bmad_todo_email'
 │   │
 │   ├── types/                          # TypeScript types & interfaces
-│   │   └── (Task, Label, Subtask, User, ApiError)
+│   │   ├── tasks.ts                    # Task, Subtask interfaces (camelCase, matches API JSON)
+│   │   └── auth.ts                     # User interface
 │   │
 │   └── assets/                         # Bundled assets (SVG, images)
 │

@@ -1,6 +1,6 @@
 # Architecture — Backend (API)
 
-> Part: `backend` | Type: REST API | Generated: 2026-02-27 | Scan: Quick
+> Part: `backend` | Type: REST API | Generated: 2026-02-27 (rescan) | Scan: Quick (read from source)
 
 ---
 
@@ -19,12 +19,14 @@ The backend is a **Fastify 5 REST API** written in TypeScript. It uses a **plugi
 | Runtime | Node.js | (LTS) | `tsx` for dev, compiled JS for prod |
 | Database | PostgreSQL | 16 | |
 | DB driver | postgres (pg3) | ^3.4.8 | Tagged-template SQL, connection pooling |
-| Auth (JWT) | @fastify/jwt | ^10.0.0 | HS256, stored in HttpOnly cookie |
+| Auth (JWT) | @fastify/jwt | ^10.0.0 | HS256, 30-day expiry, stored in HttpOnly cookie |
 | Auth (cookie) | @fastify/cookie | ^11.0.2 | |
 | CORS | @fastify/cors | ^11.2.0 | `credentials: true` |
 | Schema validation | @sinclair/typebox | ^0.34.48 | + @fastify/type-provider-typebox |
 | Load management | @fastify/under-pressure | ^9.0.3 | Exposes `/health` route |
-| Password hashing | bcrypt | ^6.0.0 | |
+| OpenAPI docs | @fastify/swagger | ^9.7.0 | OpenAPI 3.x spec generation |
+| Swagger UI | @fastify/swagger-ui | ^5.2.5 | Interactive docs at `/docs` |
+| Password hashing | bcrypt | ^6.0.0 | Cost factor: **12** |
 | Logging | Pino | ^10.3.1 | via Fastify built-in |
 | Unit/integration testing | Vitest | ^4.0.18 | |
 | DB in tests | @testcontainers/postgresql | ^11.12.0 | Spins up a real Postgres in Docker |
@@ -38,17 +40,22 @@ The backend is a **Fastify 5 REST API** written in TypeScript. It uses a **plugi
 ```
 server.ts (buildServer factory)
     ├─ Plugins (registered first)
-    │   ├─ @fastify/cors        — Cross-origin policy
-    │   ├─ @fastify/cookie      — Cookie parsing
-    │   ├─ @fastify/jwt         — JWT verification
-    │   ├─ @fastify/under-pressure — Health check + back-pressure
-    │   └─ db.plugin (custom)   — Decorates fastify.sql with Postgres client
+    │   ├─ @fastify/swagger        — OpenAPI 3.x schema generation
+    │   ├─ @fastify/swagger-ui     — Interactive docs at GET /docs
+    │   ├─ @fastify/cors           — Cross-origin policy (origin: true, credentials: true)
+    │   ├─ @fastify/cookie         — Cookie parsing
+    │   ├─ @fastify/jwt            — JWT verification (cookie: 'token')
+    │   ├─ @fastify/under-pressure — Health check + back-pressure (GET /health)
+    │   └─ db.plugin (custom)      — Decorates fastify.sql with Postgres client
     │
-    └─ Routes (registered after plugins)
-        ├─ /auth/**     → routes/auth.ts
-        ├─ /tasks/**    → routes/tasks.ts
-        ├─ /labels/**   → routes/labels.ts
-        └─ /*/subtasks/ → routes/subtasks.ts
+    ├─ Decorators
+    │   └─ fastify.authenticate     — preHandler that calls request.jwtVerify()
+    │
+    └─ Routes (all under /api prefix)
+        ├─ /api/auth/**        → routes/auth.ts
+        ├─ /api/tasks/**       → routes/tasks.ts
+        ├─ /api/labels/**      → routes/labels.ts
+        └─ /api/tasks/*/subtasks → routes/subtasks.ts
 ```
 
 The `buildServer(jwtSecret, sqlOverride?)` factory function allows tests to inject a test-scoped database connection.
@@ -123,11 +130,14 @@ Migrations run automatically at startup via `runMigrations()` (called in `main()
 | Strategy | JWT (HS256) stored in HttpOnly cookie named `token` |
 | Library | `@fastify/jwt` + `@fastify/cookie` |
 | Secret | `JWT_SECRET` environment variable |
-| Verification | `fastify.authenticate` decorator (added in `routes/auth.ts` or globally) |
-| Password hashing | bcrypt (cost factor default = 10) |
-| Registration | `POST /auth/register` — validates email + password, hashes, inserts user |
-| Login | `POST /auth/login` — verifies hash, signs JWT, sets cookie |
-| Logout | `POST /auth/logout` — clears cookie |
+| Expiry | **30 days** (`expiresIn: '30d'`, `maxAge: 2592000`) |
+| Cookie flags | `httpOnly: true`, `sameSite: 'strict'`, `secure: true` (production only), `path: '/'` |
+| Verification | `fastify.authenticate` decorator — calls `request.jwtVerify()` |
+| Password hashing | bcrypt, **cost factor 12** |
+| Registration | `POST /api/auth/register` — hashes password, inserts user, **auto-logs in** (sets JWT cookie on 201) |
+| Login | `POST /api/auth/login` — verifies hash, signs JWT, sets cookie |
+| Current user | `GET /api/auth/me` — returns `{ id, email }` from JWT payload |
+| Logout | `POST /api/auth/logout` — clears cookie (idempotent; succeeds even with absent/expired cookie) |
 
 Protected routes call `request.jwtVerify()` (or a preHandler hook) to authenticate.
 
@@ -151,6 +161,16 @@ All route schemas (request params, body, querystring, response) are declared usi
 | Event loop utilisation | 98% |
 
 Docker Compose uses `wget -qO- http://127.0.0.1:3001/health` as the health check.
+
+---
+
+## OpenAPI Documentation
+
+`@fastify/swagger` generates an OpenAPI 3.x schema from all TypeBox route schemas.
+`@fastify/swagger-ui` serves an interactive Swagger UI at **`GET /docs`**.
+
+API tags: `Auth`, `Tasks`, `Labels`, `Subtasks`.
+Security scheme: `cookieAuth` (`apiKey` in cookie `token`).
 
 ---
 

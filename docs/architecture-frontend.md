@@ -1,6 +1,6 @@
 # Architecture — Frontend (web)
 
-> Part: `frontend` | Type: Web SPA | Generated: 2026-02-27 | Scan: Quick
+> Part: `frontend` | Type: Web SPA | Generated: 2026-02-27 (rescan) | Scan: Quick (read from source)
 
 ---
 
@@ -34,20 +34,17 @@ The frontend is a **React 19 Single Page Application** built with Vite. It follo
 **Component-based SPA with server-state management (TanStack Query):**
 
 ```
-main.tsx (entry)
-  └─ App.tsx (providers: QueryClient, Router)
-       ├─ /login         → LoginPage.tsx
-       ├─ /register      → RegisterPage.tsx
-       └─ / (protected)  → TaskListPage.tsx
-            ├─ AppHeader
-            ├─ FilterBar
-            ├─ SortDropdown
-            ├─ TaskCountDisplay
-            ├─ InlineTaskInput (create)
-            ├─ TaskRow (× n)
-            │    └─ SubtaskPanel (expandable)
-            ├─ EmptyState (conditional)
-            └─ SkeletonTaskRow (loading state)
+main.tsx (entry — providers + router root)
+  ├─ StrictMode
+  └─ ErrorBoundary
+       └─ QueryClientProvider
+            └─ BrowserRouter
+                 └─ Routes
+                      ├─ /          → ProtectedRoute → TaskListPage
+                      ├─ /login     → LoginPage
+                      └─ /register  → RegisterPage
+
+App.tsx   ← NOTE: currently the default Vite template (unused)
 ```
 
 ---
@@ -132,10 +129,24 @@ Mutations (create task, toggle complete, edit title, delete) use TanStack Query'
 
 ## API Communication
 
-- **Base URL:** `http://localhost:3001` (dev) / auto-detected from same origin via proxy or env var (prod)
-- **Protocol:** REST over HTTP (JSON body)
-- **Credentials:** `fetch` calls use `credentials: 'include'` so cookies are sent
-- **Error handling:** TanStack Query's `onError` + toast notifications (Radix UI Toast)
+- **API client:** `frontend/src/lib/api.ts` — typed `fetch` wrapper with methods `get`, `post`, `patch`, `put`, `delete`
+- **Base path:** `/api` (relative — Nginx proxies `/api/*` to the backend in production; works without CORS issues)
+- **Dev:** Vite dev server may require a proxy config for `/api` to forward to `http://localhost:3001`
+- **Credentials:** `credentials: 'include'` on all requests (cookie sent automatically)
+- **Error handling:** Errors parsed from JSON response body (`{ message }`) and thrown as `Error` with `.statusCode`; TanStack Query's `onError` + Radix UI Toast for user feedback
+- **204 / empty bodies:** Handled transparently (returns `undefined as T`)
+
+## Auth Utilities
+
+`frontend/src/lib/auth.ts` provides localStorage helpers for the email pre-fill feature:
+
+```typescript
+saveEmail(email)      // stores under key 'bmad_todo_email'
+getSavedEmail()       // retrieves stored email
+clearSavedEmail()     // removes from localStorage
+```
+
+Email is saved on login/register and pre-filled on the login form after logout.
 
 ---
 

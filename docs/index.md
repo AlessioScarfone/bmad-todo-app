@@ -1,6 +1,6 @@
 # Project Documentation Index — bmad-todo-app
 
-> Generated: 2026-02-27 | Scan: Quick (initial_scan)
+> Generated: 2026-02-27 | Scan: Quick (rescan — verified from source)
 > Primary entry point for AI-assisted development
 
 ---

@@ -29,13 +29,14 @@ No ORM is used. All queries are plain SQL via the `postgres` (pg3) tagged-templa
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID / SERIAL | PK | User identifier |
-| `email` | TEXT | NOT NULL, UNIQUE | Login credential |
-| `password_hash` | TEXT | NOT NULL | bcrypt hash |
-| `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | Registration timestamp |
+| `id` | `SERIAL` | PRIMARY KEY | User identifier (integer) |
+| `email` | `TEXT` | NOT NULL, UNIQUE | Login credential |
+| `password_hash` | `TEXT` | NOT NULL | bcrypt hash (cost factor: 12) |
+| `created_at` | `TIMESTAMPTZ` | NOT NULL, DEFAULT NOW() | Registration timestamp |
 
 **Relationships:**
-- One user → many tasks (one-to-many via `tasks.user_id`)
+- One user → many tasks (one-to-many via `tasks.user_id` CASCADE DELETE)
+- One user → many labels (one-to-many via `labels.user_id` CASCADE DELETE)
 
 ---
 
@@ -44,15 +45,22 @@ No ORM is used. All queries are plain SQL via the `postgres` (pg3) tagged-templa
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID / SERIAL | PK | Task identifier |
-| `user_id` | UUID / INTEGER | NOT NULL, FK → users.id | Task owner |
-| `title` | TEXT | NOT NULL | Task title (editable) |
-| `completed` | BOOLEAN | NOT NULL, DEFAULT false | Completion state |
-| `deadline` | TIMESTAMPTZ / DATE | NULLABLE | Optional deadline |
-| `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | Creation timestamp |
+| `id` | `SERIAL` | PRIMARY KEY | Task identifier (integer) |
+| `user_id` | `INTEGER` | NOT NULL, FK → users.id ON DELETE CASCADE | Task owner |
+| `title` | `TEXT` | NOT NULL | Task title (editable) |
+| `is_completed` | `BOOLEAN` | NOT NULL, DEFAULT FALSE | Completion state |
+| `completed_at` | `TIMESTAMPTZ` | NULLABLE | When task was completed (null if incomplete) |
+| `deadline` | `DATE` | NULLABLE | Optional due date |
+| `created_at` | `TIMESTAMPTZ` | NOT NULL, DEFAULT NOW() | Creation timestamp |
+| `updated_at` | `TIMESTAMPTZ` | NOT NULL, DEFAULT NOW() | Last update timestamp |
+
+**Indexes:**
+- `idx_tasks_user_id` on `(user_id)`
+- `idx_tasks_completed` on `(user_id)` WHERE `is_completed = TRUE` (partial)
+- `idx_tasks_deadline` on `(user_id, deadline)` WHERE `deadline IS NOT NULL` (partial)
 
 **Relationships:**
-- Many tasks → one user (many-to-one)
+- Many tasks → one user (CASCADE DELETE)
 - One task → many subtasks (one-to-many via `subtasks.task_id`)
 - One task → many labels (many-to-many via `task_labels`)
 
@@ -63,10 +71,13 @@ No ORM is used. All queries are plain SQL via the `postgres` (pg3) tagged-templa
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID / SERIAL | PK | Label identifier |
-| `user_id` | UUID / INTEGER | NOT NULL, FK → users.id | Label owner (labels are per-user) |
-| `name` | TEXT | NOT NULL | Label display name |
-| `color` | TEXT | NULLABLE | Hex color or CSS class |
+| `id` | `SERIAL` | PRIMARY KEY | Label identifier (integer) |
+| `user_id` | `INTEGER` | NOT NULL, FK → users.id ON DELETE CASCADE | Label owner |
+| `name` | `TEXT` | NOT NULL | Label display name |
+
+**Unique constraint:** `UNIQUE(user_id, name)` — label names are unique per user.
+
+> Note: No `color` column exists in the current schema (was in spec but not implemented).
 
 **Relationships:**
 - One user → many labels
@@ -79,8 +90,8 @@ No ORM is used. All queries are plain SQL via the `postgres` (pg3) tagged-templa
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `task_id` | UUID / INTEGER | NOT NULL, FK → tasks.id | Task reference |
-| `label_id` | UUID / INTEGER | NOT NULL, FK → labels.id | Label reference |
+| `task_id` | `INTEGER` | NOT NULL, FK → tasks.id ON DELETE CASCADE | Task reference |
+| `label_id` | `INTEGER` | NOT NULL, FK → labels.id ON DELETE CASCADE | Label reference |
 
 **Primary key:** composite `(task_id, label_id)`
 
@@ -91,24 +102,49 @@ No ORM is used. All queries are plain SQL via the `postgres` (pg3) tagged-templa
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
-| `id` | UUID / SERIAL | PK | Subtask identifier |
-| `task_id` | UUID / INTEGER | NOT NULL, FK → tasks.id | Parent task |
-| `title` | TEXT | NOT NULL | Subtask description |
-| `completed` | BOOLEAN | NOT NULL, DEFAULT false | Completion state |
-| `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | Creation timestamp |
+| `id` | `SERIAL` | PRIMARY KEY | Subtask identifier (integer) |
+| `task_id` | `INTEGER` | NOT NULL, FK → tasks.id ON DELETE CASCADE | Parent task |
+| `title` | `TEXT` | NOT NULL | Subtask description |
+| `is_completed` | `BOOLEAN` | NOT NULL, DEFAULT FALSE | Completion state |
+| `created_at` | `TIMESTAMPTZ` | NOT NULL, DEFAULT NOW() | Creation timestamp |
 
 **Relationships:**
-- Many subtasks → one task (many-to-one, CASCADE DELETE when parent task deleted)
+- Many subtasks → one task (CASCADE DELETE when parent task deleted)
 
 ---
 
 ## Entity Relationship Diagram
 
 ```
-users (1)─────────────(N) tasks (1)─────────────(N) subtasks
-  │                         │
-  │                         │
-  └──(1)──(N) labels        └──(N)──task_labels──(N)── labels
+users (1)────────────────────(N) tasks (1)──────────────────────────(N) subtasks
+  │                                │                                    (CASCADE)
+  │ (CASCADE)                      │
+  └──(1)──(N) labels               └──(N)──task_labels──(N)──────── labels
+              (UNIQUE user_id+name)         (CASCADE both sides)
+```
+
+**TypeScript types (camelCase, as returned in API responses):**
+
+```typescript
+interface Task {
+  id: number
+  userId: number
+  title: string
+  isCompleted: boolean
+  completedAt: string | null   // ISO 8601
+  deadline: string | null      // "YYYY-MM-DD" (DATE)
+  createdAt: string
+  updatedAt: string
+  labels: { id: number; name: string }[]
+}
+
+interface Subtask {
+  id: number
+  taskId: number
+  title: string
+  isCompleted: boolean
+  createdAt: string
+}
 ```
 
 ---
@@ -128,4 +164,4 @@ All SQL queries are co-located with their domain in `backend/src/db/queries/`:
 
 ## Notes
 
-> ⚠️ This schema was inferred from migration filenames and feature specification (PRD + stories). For authoritative column definitions, read the actual migration SQL files in `backend/src/db/migrations/`.
+> ✅ This schema was read directly from SQL migration files in `backend/src/db/migrations/`. TypeScript interface shapes were read from `frontend/src/types/tasks.ts`.

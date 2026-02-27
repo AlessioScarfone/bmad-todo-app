@@ -1,6 +1,6 @@
 # Project Overview — bmad-todo-app
 
-> Generated: 2026-02-27 | Scan: Quick | Mode: initial_scan
+> Generated: 2026-02-27 | Scan: Quick | Mode: rescan (read from source)
 
 ## Summary
 
@@ -54,6 +54,7 @@ The app was developed as a BMAD-method showcase project, following a complete pr
 | DB driver | postgres (pg3) | ^3.4.8 |
 | Auth | @fastify/jwt + @fastify/cookie | ^10 / ^11 |
 | Schema validation | @sinclair/typebox | ^0.34.48 |
+| API docs | @fastify/swagger + @fastify/swagger-ui | ^9.7.0 / ^5.2.5 |
 | Unit/integration testing | Vitest + Testcontainers | ^4.0.18 / ^11.12.0 |
 
 ### E2E (`e2e/`)
