@@ -74,7 +74,7 @@ development_status:
   epic-5: in-progress
   5-1-inline-error-feedback-retry: done
   5-2-performance-sub-second-state-reflection: done
-  5-3-full-keyboard-navigation: backlog
+  5-3-full-keyboard-navigation: done
   5-4-wcag-2-1-aa-compliance-prefers-reduced-motion: backlog
   epic-5-retrospective: optional
 

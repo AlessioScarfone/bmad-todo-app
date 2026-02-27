@@ -59,6 +59,7 @@ export function TaskRow({ task }: TaskRowProps) {
   const { data: allLabels = [] } = useLabels(isAddingLabel)
 
   const inputRef = useRef<HTMLInputElement>(null)
+  const rowRef = useRef<HTMLLIElement>(null)
 
   // Auto-focus input when entering edit mode
   useEffect(() => {
@@ -107,6 +108,8 @@ export function TaskRow({ task }: TaskRowProps) {
     setEditValue(task.title)
     setEditError(null)
     setIsEditing(false)
+    // AC3: return focus to the row so the user does not lose their position
+    rowRef.current?.focus()
   }
 
   const submitEdit = () => {
@@ -138,6 +141,12 @@ export function TaskRow({ task }: TaskRowProps) {
   }
 
   const handleRowKeyDown = (e: React.KeyboardEvent<HTMLLIElement>) => {
+    // Space on the row (not editing, not in confirm-delete) toggles the checkbox
+    if (e.key === ' ' && !isEditing && !isConfirmingDelete && e.target === e.currentTarget) {
+      e.preventDefault() // suppress page scroll
+      handleToggle()
+      return
+    }
     // Enter on the row (not in edit mode, not in confirm-delete mode) enters edit mode
     if (e.key === 'Enter' && !isEditing && !isConfirmingDelete && e.target === e.currentTarget) {
       e.preventDefault()
@@ -285,6 +294,7 @@ export function TaskRow({ task }: TaskRowProps) {
 
   return (
     <li
+      ref={rowRef}
       // tabIndex={0} makes the row focusable so Enter-on-row (AC1) is reachable via keyboard
       tabIndex={0}
       className="group px-3 py-2 border-l-2 border-[#2a2a2a] bg-[#1c1c1c] hover:border-l-[#00ff88] font-mono text-[13px] text-[#f0f0f0] motion-safe:transition-colors focus:outline-none focus:border-l-[#00ff88]"
@@ -322,7 +332,7 @@ export function TaskRow({ task }: TaskRowProps) {
           <button
             onClick={enterEditMode}
             aria-label="Edit task title"
-            className="opacity-0 group-hover:opacity-100 text-[#888] hover:text-[#f0f0f0] motion-safe:transition-opacity px-1"
+            className="opacity-0 group-hover:opacity-100 focus:opacity-100 text-[#888] hover:text-[#f0f0f0] motion-safe:transition-opacity px-1"
           >
             ✎
           </button>
@@ -333,7 +343,7 @@ export function TaskRow({ task }: TaskRowProps) {
           <button
             onClick={() => { setDeleteError(null); setIsConfirmingDelete(true) }}
             aria-label="Delete task"
-            className="opacity-0 group-hover:opacity-100 text-[#888] hover:text-red-400 motion-safe:transition-opacity px-1"
+            className="opacity-0 group-hover:opacity-100 focus:opacity-100 text-[#888] hover:text-red-400 motion-safe:transition-opacity px-1"
           >
             ✕
           </button>

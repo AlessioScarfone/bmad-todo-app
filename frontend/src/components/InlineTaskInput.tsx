@@ -69,7 +69,7 @@ export function InlineTaskInput() {
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           placeholder="Add a task..."
-          className="flex-1 font-mono text-[13px] text-[#f0f0f0] placeholder-[#555] outline-none bg-transparent"
+          className="flex-1 font-mono text-[13px] text-[#f0f0f0] placeholder-[#555] outline-none focus:bg-[#252525] bg-transparent"
           aria-label="New task title"
           aria-describedby={validationError ? 'task-title-error' : undefined}
           disabled={isPending}

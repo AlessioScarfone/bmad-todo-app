@@ -79,4 +79,11 @@ describe('AppHeader', () => {
     renderHeader({ userEmail: undefined })
     expect(screen.queryByLabelText(/logged in as/i)).not.toBeInTheDocument()
   })
+
+  it('logout button has explicit focus ring classes (AC5)', () => {
+    renderHeader()
+    const btn = screen.getByRole('button', { name: /log out/i })
+    expect(btn.className).toContain('focus:outline')
+    expect(btn.className).toContain('focus:outline-[#00ff88]')
+  })
 })

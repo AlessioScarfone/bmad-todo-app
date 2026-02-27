@@ -66,7 +66,7 @@ export function AppHeader({ userEmail, completedTasks, totalTasks }: AppHeaderPr
           onClick={handleLogout}
           disabled={isLoggingOut}
           aria-label="Log out"
-          className="font-pixel text-[8px] px-3 py-2 border-2 border-[#e0e0e0] bg-transparent text-[#f0f0f0] hover:border-[#00ff88] hover:text-[#00ff88] disabled:opacity-40 disabled:cursor-not-allowed motion-safe:transition-colors"
+          className="font-pixel text-[8px] px-3 py-2 border-2 border-[#e0e0e0] bg-transparent text-[#f0f0f0] hover:border-[#00ff88] hover:text-[#00ff88] focus:outline focus:outline-2 focus:outline-[#00ff88] disabled:opacity-40 disabled:cursor-not-allowed motion-safe:transition-colors"
         >
           {isLoggingOut ? '...' : 'Logout'}
         </button>

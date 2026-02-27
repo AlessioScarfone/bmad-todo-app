@@ -90,7 +90,7 @@ describe('TaskRow', () => {
     expect(spy).toHaveBeenCalledWith('/tasks/43/uncomplete')
   })
 
-  it('Space key on the row triggers toggle (keyboard-native, AC1)', async () => {
+  it('Space key on focused checkbox triggers toggle (native browser checkbox behavior)', async () => {
     const task = makeTask({ id: 44, isCompleted: false })
     const spy = vi.spyOn(apiModule.api, 'patch').mockResolvedValueOnce({ ...task, isCompleted: true })
     renderWithQuery(<TaskRow task={task} />, [task])
@@ -595,5 +595,62 @@ describe('Story 3.2 — deadline management', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: 'Retry saving Test task' })).toBeInTheDocument())
     await userEvent.click(screen.getByRole('button', { name: 'Retry saving Test task' }))
     expect(spy).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe('TaskRow — keyboard navigation (Story 5.3)', () => {
+  beforeEach(() => vi.restoreAllMocks())
+
+  it('Space on focused <li> row toggles task completion (AC2)', async () => {
+    const task = makeTask({ id: 100, isCompleted: false })
+    const spy = vi.spyOn(apiModule.api, 'patch').mockResolvedValueOnce({ ...task, isCompleted: true })
+    renderWithQuery(<TaskRow task={task} />, [task])
+    const row = screen.getByRole('listitem')
+    row.focus()
+    // Dispatch keydown with Space directly on the li (e.target === e.currentTarget)
+    fireEvent.keyDown(row, { key: ' ', code: 'Space', bubbles: true })
+    await waitFor(() => expect(spy).toHaveBeenCalledWith('/tasks/100/complete'))
+  })
+
+  it('Space on focused <li> row calls preventDefault to suppress scroll (AC2)', () => {
+    const task = makeTask({ id: 101, isCompleted: false })
+    vi.spyOn(apiModule.api, 'patch').mockResolvedValue({ ...task, isCompleted: true })
+    renderWithQuery(<TaskRow task={task} />, [task])
+    const row = screen.getByRole('listitem')
+    row.focus()
+    const event = new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true })
+    const preventDefaultSpy = vi.spyOn(event, 'preventDefault')
+    row.dispatchEvent(event)
+    expect(preventDefaultSpy).toHaveBeenCalled()
+  })
+
+  it('Escape in edit mode returns focus to the <li> row (AC3)', async () => {
+    const task = makeTask({ id: 102, title: 'Focus test' })
+    renderWithQuery(<TaskRow task={task} />, [task])
+    // Enter edit mode
+    await userEvent.click(screen.getByRole('button', { name: /edit task title/i }))
+    const input = screen.getByRole('textbox', { name: /edit task title: focus test/i })
+    expect(input).toBeInTheDocument()
+    // Press Escape to cancel
+    await userEvent.keyboard('{Escape}')
+    // Edit input should be gone
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
+    // Focus should be on the <li> row
+    const row = screen.getByRole('listitem')
+    expect(document.activeElement).toBe(row)
+  })
+
+  it('edit button has focus:opacity-100 class (AC5)', () => {
+    const task = makeTask()
+    renderWithQuery(<TaskRow task={task} />, [task])
+    const editBtn = screen.getByRole('button', { name: /edit task title/i })
+    expect(editBtn.className).toContain('focus:opacity-100')
+  })
+
+  it('delete button has focus:opacity-100 class (AC5)', () => {
+    const task = makeTask()
+    renderWithQuery(<TaskRow task={task} />, [task])
+    const deleteBtn = screen.getByRole('button', { name: /delete task/i })
+    expect(deleteBtn.className).toContain('focus:opacity-100')
   })
 })
