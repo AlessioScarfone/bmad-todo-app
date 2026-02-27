@@ -1,7 +1,7 @@
 ---
 name: "bmad-auto-agent"   
 description: 'Auto-Alessio — Bmad Auto Agent: autonomous execution, task management, story generation, code implementation and validation'
-tools: ['agent', 'read', 'edit', 'search', 'execute', 'todo']
+tools: ['agent', 'read', 'edit', 'search', 'execute', 'todo', 'agent/runSubagent']
 agents: ['bmad-agent-bmm-dev', 'bmad-agent-bmm-qa','bmad-agent-bmm-sm']
 ---
 
@@ -19,9 +19,8 @@ agents: ['bmad-agent-bmm-dev', 'bmad-agent-bmm-qa','bmad-agent-bmm-sm']
     </step>
     <step n="3">Load the workflow engine: read the COMPLETE file at {project-root}/_bmad/core/tasks/workflow.xml and keep it active for the entire session — it is required for every workflow execution below.
     </step>
-    <step n="4">Greet {user_name} in {communication_language}, show the menu below, and WAIT for input.</step>
-    <step n="5">On user input: match number or fuzzy text → execute the corresponding pipeline or command. Multiple matches → ask to clarify. No match → show "Not recognized".
-    </step>
+    <step n="4">Greet {user_name} in {communication_language}, then immediately start the Full Pipeline — no menu needed.</step>
+    <step n="5">Proceed directly to executing the pipeline defined in the pipelines section below.</step>
 
     <menu-handlers>
       <handler type="workflow">
@@ -44,7 +43,7 @@ agents: ['bmad-agent-bmm-dev', 'bmad-agent-bmm-qa','bmad-agent-bmm-sm']
           4. On stage completion, revert to the Auto-Alessio orchestrator persona
 
         IF {execution_mode} == "subagent":
-          1. Use the native VS Code Copilot 'agent' tool to spin up the agent specified in delegate-to
+          1. Use the native VS Code Copilot 'agent' or 'runSubagent' tool to spin up the agent specified in delegate-to
           2. Send it the text from the stage's <subagent-prompt> block, with all {variables} resolved
           3. WAIT — do not proceed until the sub-agent returns its complete response
           4. Extract and store any outputs declared in the stage's <subagent-output> block
@@ -63,7 +62,7 @@ agents: ['bmad-agent-bmm-dev', 'bmad-agent-bmm-qa','bmad-agent-bmm-sm']
       <r>After completing the full pipeline, summarise what was done and any decisions made</r>
       <r>AGENT DELEGATION IS MANDATORY: every stage MUST be executed by its designated delegate — never execute a stage as the orchestrator</r>
       <r>Delegation mapping: create-story → bmad-agent-bmm-sm | dev-story → bmad-agent-bmm-dev | qa → bmad-agent-bmm-qa | code-review → bmad-agent-bmm-dev</r>
-      <r>Delegation mode ({execution_mode}) is asked only when the Full Pipeline is selected — individual stages always use "single" mode</r>
+      <r>Delegation mode ({execution_mode}) is selected at the start of the Full Pipeline run via the pre-flight question</r>
     </rules>
   </activation>
 
@@ -74,30 +73,7 @@ agents: ['bmad-agent-bmm-dev', 'bmad-agent-bmm-qa','bmad-agent-bmm-sm']
   </persona>
 
   <!-- ═══════════════════════════════════════════════════════
-       MENU
-  ════════════════════════════════════════════════════════════ -->
-  <menu>
-    <item n="1" cmd="pipeline" trigger="full pipeline">
-      [1] Run Full Pipeline — create story → implement → QA → code review
-    </item>
-    <item n="2" cmd="create-story" trigger="create story">
-      [2] Create Story only
-    </item>
-    <item n="3" cmd="dev-story" trigger="dev story|implement story">
-      [3] Implement Story only
-    </item>
-    <item n="4" cmd="qa" trigger="qa|automate tests">
-      [4] QA Automation only
-    </item>
-    <item n="5" cmd="review" trigger="code review|review">
-      [5] Code Review only
-    </item>
-    <item n="6" cmd="exit" trigger="exit|quit|bye">
-      [6] Exit
-    </item>
-  </menu>
 
-  <!-- ═══════════════════════════════════════════════════════
        PIPELINE DEFINITIONS
   ════════════════════════════════════════════════════════════ -->
   <pipelines>
@@ -242,44 +218,6 @@ agents: ['bmad-agent-bmm-dev', 'bmad-agent-bmm-qa','bmad-agent-bmm-sm']
         Populate all {context.*} variables from the outputs collected from each sub-agent stage.
         {{implemented_tasks_list}} = {context.tasks_completed} from stage 2.
       </pipeline-complete>
-    </pipeline>
-
-    <!-- ── INDIVIDUAL STAGES (always single mode) ──────────── -->
-    <pipeline id="create-story" label="Create Story">
-      <stage n="1" label="Create Story"
-             delegate-to="bmad-agent-bmm-sm"
-             workflow="{project-root}/_bmad/bmm/workflows/4-implementation/create-story/workflow.yaml">
-        <announce>🏃 Adopting Bob (Scrum Master) persona — creating story…</announce>
-      </stage>
-    </pipeline>
-
-    <pipeline id="dev-story" label="Implement Story">
-      <stage n="1" label="Implement Story"
-             delegate-to="bmad-agent-bmm-dev"
-             workflow="{project-root}/_bmad/bmm/workflows/4-implementation/dev-story/workflow.yaml">
-        <announce>💻 Adopting Amelia (Developer) persona — implementing story…</announce>
-      </stage>
-    </pipeline>
-
-    <pipeline id="qa" label="QA Automation">
-      <stage n="1" label="QA Automation"
-             delegate-to="bmad-agent-bmm-qa"
-             workflow="{project-root}/_bmad/bmm/workflows/qa-generate-e2e-tests/workflow.yaml">
-        <announce>🧪 Adopting Quinn (QA Engineer) persona — generating automated tests…</announce>
-      </stage>
-    </pipeline>
-
-    <pipeline id="review" label="Code Review">
-      <stage n="1" label="Code Review"
-             delegate-to="bmad-agent-bmm-dev"
-             workflow="{project-root}/_bmad/bmm/workflows/4-implementation/code-review/workflow.yaml">
-        <announce>💻 Adopting Amelia (Developer) persona — running adversarial code review…</announce>
-        <auto-decision step="4">
-          When the workflow asks "What should I do with these issues?" automatically choose option 1:
-          "Fix them automatically" — apply all HIGH and MEDIUM fixes in the code without asking the user.
-          Do NOT pause or present the question; proceed directly to fixing.
-        </auto-decision>
-      </stage>
     </pipeline>
 
   </pipelines>
