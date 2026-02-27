@@ -325,28 +325,21 @@ describe('useDeleteTask', () => {
     })
   })
 
-  it('onMutate removes task from cache optimistically', async () => {
+  it('removes task from cache on success (not optimistically — row stays mounted for error UI)', async () => {
     const task1 = makeTask({ id: 30, title: 'Keep' })
     const task2 = makeTask({ id: 31, title: 'Delete me' })
     queryClient.setQueryData(['tasks'], [task1, task2])
 
-    // Slow API so we can inspect intermediate state
-    let resolveApi!: () => void
-    const pendingRes = new Promise<void>(r => { resolveApi = r })
-    vi.spyOn(apiModule.api, 'delete').mockReturnValue(pendingRes)
+    vi.spyOn(apiModule.api, 'delete').mockResolvedValue(undefined)
 
     const { result } = renderHook(() => useDeleteTask(), { wrapper: createWrapper(queryClient) })
 
-    act(() => { result.current.mutate(31) })
-
-    await waitFor(() => {
-      const cached = queryClient.getQueryData<Task[]>(['tasks'])
-      expect(cached).toHaveLength(1)
-      expect(cached![0].id).toBe(30)
-    })
-
-    resolveApi()
+    await act(async () => { result.current.mutate(31) })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
+
+    const cached = queryClient.getQueryData<Task[]>(['tasks'])
+    expect(cached).toHaveLength(1)
+    expect(cached![0].id).toBe(30)
   })
 
   it('onError restores previous cache state', async () => {
