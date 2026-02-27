@@ -1,9 +1,11 @@
 import fp from 'fastify-plugin'
 import type { FastifyPluginAsync } from 'fastify'
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
+import { Type } from '@sinclair/typebox'
 import bcrypt from 'bcrypt'
 import postgres from 'postgres'
-import { RegisterBodySchema, LoginBodySchema } from '../types/auth.js'
+import { RegisterBodySchema, LoginBodySchema, AuthUserSchema } from '../types/auth.js'
+import { ErrorSchema } from '../types/common.js'
 import { createUser, getUserByEmail } from '../db/queries/auth.js'
 
 const authRoutes: FastifyPluginAsync = async fastify => {
@@ -27,7 +29,12 @@ const authRoutes: FastifyPluginAsync = async fastify => {
     '/auth/register',
     {
       schema: {
+        tags: ['Auth'],
         body: RegisterBodySchema,
+        response: {
+          201: AuthUserSchema,
+          409: ErrorSchema,
+        },
       },
     },
     async (req, reply) => {
@@ -73,7 +80,12 @@ const authRoutes: FastifyPluginAsync = async fastify => {
     '/auth/login',
     {
       schema: {
+        tags: ['Auth'],
         body: LoginBodySchema,
+        response: {
+          200: AuthUserSchema,
+          401: ErrorSchema,
+        },
       },
     },
     async (req, reply) => {
@@ -120,6 +132,12 @@ const authRoutes: FastifyPluginAsync = async fastify => {
     '/auth/me',
     {
       preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['Auth'],
+        response: {
+          200: AuthUserSchema,
+        },
+      },
     },
     async (req) => {
       const { id, email } = req.user
@@ -129,7 +147,17 @@ const authRoutes: FastifyPluginAsync = async fastify => {
 
   // No authenticate preHandler — logout must succeed even with an
   // expired or absent cookie (idempotent per AC4).
-  f.post('/auth/logout', async (_req, reply) => {
+  f.post(
+    '/auth/logout',
+    {
+      schema: {
+        tags: ['Auth'],
+        response: {
+          200: Type.Object({ message: Type.String() }),
+        },
+      },
+    },
+    async (_req, reply) => {
     // clearCookie options MUST match setCookie options from POST /auth/login
     // (path, httpOnly, sameSite, secure) so the browser correctly identifies
     // and removes the cookie. In production NODE_ENV the cookie was set with
@@ -143,7 +171,8 @@ const authRoutes: FastifyPluginAsync = async fastify => {
       })
       .status(200)
       .send({ message: 'Logged out' })
-  })
+    },
+  )
 }
 
 export default fp(authRoutes, {

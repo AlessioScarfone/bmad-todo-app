@@ -4,6 +4,8 @@ import cors from '@fastify/cors'
 import cookie from '@fastify/cookie'
 import jwt from '@fastify/jwt'
 import underPressure from '@fastify/under-pressure'
+import swagger from '@fastify/swagger'
+import swaggerUi from '@fastify/swagger-ui'
 import type { Sql } from 'postgres'
 import { fileURLToPath } from 'url'
 import { getSqlClient } from './db/client.js'
@@ -27,6 +29,35 @@ export function buildServer(jwtSecret: string, sqlOverride?: Sql) {
   })
 
   // ─── Plugins ───────────────────────────────────────────────────────────────
+
+  fastify.register(swagger, {
+    openapi: {
+      info: {
+        title: 'BMAD Todo API',
+        description: 'REST API for the BMAD Todo application',
+        version: '1.0.0',
+      },
+      tags: [
+        { name: 'Auth', description: 'Authentication & session management' },
+        { name: 'Tasks', description: 'Task CRUD and status transitions' },
+        { name: 'Labels', description: 'Label management and task assignment' },
+        { name: 'Subtasks', description: 'Subtask management within tasks' },
+      ],
+      components: {
+        securitySchemes: {
+          cookieAuth: {
+            type: 'apiKey',
+            in: 'cookie',
+            name: 'token',
+          },
+        },
+      },
+    },
+  })
+
+  fastify.register(swaggerUi, {
+    routePrefix: '/docs'
+  })
 
   fastify.register(cors, {
     origin: true,

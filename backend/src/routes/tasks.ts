@@ -3,7 +3,8 @@ import type { FastifyPluginAsync } from 'fastify'
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { getTasks, createTask, completeTask, uncompleteTask, updateTaskTitle, updateTaskDeadline, updateTaskTitleAndDeadline, deleteTask } from '../db/queries/tasks.js'
-import { CreateTaskBodySchema, UpdateTaskBodySchema } from '../types/tasks.js'
+import { CreateTaskBodySchema, UpdateTaskBodySchema, TaskSchema } from '../types/tasks.js'
+import { ErrorSchema } from '../types/common.js'
 
 const taskRoutes: FastifyPluginAsync = async fastify => {
   const f = fastify.withTypeProvider<TypeBoxTypeProvider>()
@@ -13,6 +14,10 @@ const taskRoutes: FastifyPluginAsync = async fastify => {
     {
       preHandler: [fastify.authenticate],
       schema: {
+        tags: ['Tasks'],
+        response: {
+          200: Type.Array(TaskSchema),
+        },
         querystring: Type.Object({
           label: Type.Optional(Type.String()),
           status: Type.Optional(Type.String()),
@@ -33,7 +38,12 @@ const taskRoutes: FastifyPluginAsync = async fastify => {
     {
       preHandler: [fastify.authenticate],
       schema: {
+        tags: ['Tasks'],
         body: CreateTaskBodySchema,
+        response: {
+          201: TaskSchema,
+          400: ErrorSchema,
+        },
       },
     },
     async (req, reply) => {
@@ -58,8 +68,14 @@ const taskRoutes: FastifyPluginAsync = async fastify => {
     {
       preHandler: [fastify.authenticate],
       schema: {
+        tags: ['Tasks'],
         params: Type.Object({ id: Type.Integer({ minimum: 1 }) }),
         body: UpdateTaskBodySchema,
+        response: {
+          200: TaskSchema,
+          400: ErrorSchema,
+          404: ErrorSchema,
+        },
       },
     },
     async (req, reply) => {
@@ -104,7 +120,12 @@ const taskRoutes: FastifyPluginAsync = async fastify => {
     {
       preHandler: [fastify.authenticate],
       schema: {
+        tags: ['Tasks'],
         params: Type.Object({ id: Type.Integer({ minimum: 1 }) }),
+        response: {
+          200: TaskSchema,
+          404: ErrorSchema,
+        },
       },
     },
     async (req, reply) => {
@@ -123,7 +144,12 @@ const taskRoutes: FastifyPluginAsync = async fastify => {
     {
       preHandler: [fastify.authenticate],
       schema: {
+        tags: ['Tasks'],
         params: Type.Object({ id: Type.Integer({ minimum: 1 }) }),
+        response: {
+          204: Type.Null(),
+          404: ErrorSchema,
+        },
       },
     },
     async (req, reply) => {
@@ -133,7 +159,7 @@ const taskRoutes: FastifyPluginAsync = async fastify => {
       if (!deleted) {
         return reply.status(404).send({ statusCode: 404, error: 'NOT_FOUND', message: 'Task not found' })
       }
-      return reply.status(204).send()
+      return reply.status(204).send(null)
     },
   )
 
@@ -142,7 +168,12 @@ const taskRoutes: FastifyPluginAsync = async fastify => {
     {
       preHandler: [fastify.authenticate],
       schema: {
+        tags: ['Tasks'],
         params: Type.Object({ id: Type.Integer({ minimum: 1 }) }),
+        response: {
+          200: TaskSchema,
+          404: ErrorSchema,
+        },
       },
     },
     async (req, reply) => {

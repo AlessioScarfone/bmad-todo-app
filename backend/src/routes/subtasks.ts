@@ -8,7 +8,8 @@ import {
   updateSubtask,
   deleteSubtask,
 } from '../db/queries/subtasks.js'
-import { CreateSubtaskBodySchema, UpdateSubtaskBodySchema } from '../types/subtasks.js'
+import { CreateSubtaskBodySchema, UpdateSubtaskBodySchema, SubtaskSchema } from '../types/subtasks.js'
+import { ErrorSchema } from '../types/common.js'
 
 const subtaskRoutes: FastifyPluginAsync = async fastify => {
   const f = fastify.withTypeProvider<TypeBoxTypeProvider>()
@@ -24,7 +25,7 @@ const subtaskRoutes: FastifyPluginAsync = async fastify => {
     '/tasks/:id/subtasks',
     {
       preHandler: [fastify.authenticate],
-      schema: { params: taskParams },
+      schema: { tags: ['Subtasks'], params: taskParams, response: { 200: Type.Array(SubtaskSchema) } },
     },
     async (req, reply) => {
       const userId = (req.user as { id: number }).id
@@ -38,7 +39,7 @@ const subtaskRoutes: FastifyPluginAsync = async fastify => {
     '/tasks/:id/subtasks',
     {
       preHandler: [fastify.authenticate],
-      schema: { params: taskParams, body: CreateSubtaskBodySchema },
+      schema: { tags: ['Subtasks'], params: taskParams, body: CreateSubtaskBodySchema, response: { 201: SubtaskSchema, 400: ErrorSchema, 404: ErrorSchema } },
     },
     async (req, reply) => {
       const userId = (req.user as { id: number }).id
@@ -67,7 +68,7 @@ const subtaskRoutes: FastifyPluginAsync = async fastify => {
     '/tasks/:id/subtasks/:subId',
     {
       preHandler: [fastify.authenticate],
-      schema: { params: subtaskParams, body: UpdateSubtaskBodySchema },
+      schema: { tags: ['Subtasks'], params: subtaskParams, body: UpdateSubtaskBodySchema, response: { 200: SubtaskSchema, 404: ErrorSchema } },
     },
     async (req, reply) => {
       const userId = (req.user as { id: number }).id
@@ -94,7 +95,7 @@ const subtaskRoutes: FastifyPluginAsync = async fastify => {
     '/tasks/:id/subtasks/:subId',
     {
       preHandler: [fastify.authenticate],
-      schema: { params: subtaskParams },
+      schema: { tags: ['Subtasks'], params: subtaskParams, response: { 204: Type.Null(), 404: ErrorSchema } },
     },
     async (req, reply) => {
       const userId = (req.user as { id: number }).id
@@ -111,7 +112,7 @@ const subtaskRoutes: FastifyPluginAsync = async fastify => {
           message: 'Subtask not found',
         })
       }
-      return reply.status(204).send()
+      return reply.status(204).send(null)
     },
   )
 }

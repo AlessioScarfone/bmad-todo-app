@@ -3,12 +3,14 @@ import type { FastifyPluginAsync } from 'fastify'
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import {
-    attachLabelToTask,
-    deleteLabelByUser,
-    getLabelById,
-    getLabelsByUser,
-    removeLabelFromTask,
+  attachLabelToTask,
+  deleteLabelByUser,
+  getLabelById,
+  getLabelsByUser,
+  removeLabelFromTask,
 } from '../db/queries/labels.js'
+import { LabelSchema } from '../types/labels.js'
+import { ErrorSchema } from '../types/common.js'
 
 const labelRoutes: FastifyPluginAsync = async fastify => {
   const f = fastify.withTypeProvider<TypeBoxTypeProvider>()
@@ -17,6 +19,12 @@ const labelRoutes: FastifyPluginAsync = async fastify => {
     '/labels',
     {
       preHandler: [fastify.authenticate],
+      schema: {
+        tags: ['Labels'],
+        response: {
+          200: Type.Array(LabelSchema),
+        },
+      },
     },
     async (req, reply) => {
       const userId = (req.user as { id: number }).id
@@ -30,10 +38,17 @@ const labelRoutes: FastifyPluginAsync = async fastify => {
     {
       preHandler: [fastify.authenticate],
       schema: {
+        tags: ['Labels'],
         params: Type.Object({ id: Type.Integer({ minimum: 1 }) }),
         body: Type.Object({
           name: Type.String({ minLength: 1, maxLength: 64 }),
         }),
+        response: {
+          200: LabelSchema,
+          201: LabelSchema,
+          400: ErrorSchema,
+          404: ErrorSchema,
+        },
       },
     },
     async (req, reply) => {
@@ -74,10 +89,15 @@ const labelRoutes: FastifyPluginAsync = async fastify => {
     {
       preHandler: [fastify.authenticate],
       schema: {
+        tags: ['Labels'],
         params: Type.Object({
           id: Type.Integer({ minimum: 1 }),
           labelId: Type.Integer({ minimum: 1 }),
         }),
+        response: {
+          204: Type.Null(),
+          404: ErrorSchema,
+        },
       },
     },
     async (req, reply) => {
@@ -94,7 +114,7 @@ const labelRoutes: FastifyPluginAsync = async fastify => {
         })
       }
 
-      return reply.status(204).send()
+      return reply.status(204).send(null)
     },
   )
 
@@ -103,7 +123,13 @@ const labelRoutes: FastifyPluginAsync = async fastify => {
     {
       preHandler: [fastify.authenticate],
       schema: {
+        tags: ['Labels'],
         params: Type.Object({ id: Type.Integer({ minimum: 1 }) }),
+        response: {
+          204: Type.Null(),
+          403: ErrorSchema,
+          404: ErrorSchema,
+        },
       },
     },
     async (req, reply) => {
@@ -136,7 +162,7 @@ const labelRoutes: FastifyPluginAsync = async fastify => {
         })
       }
 
-      return reply.status(204).send()
+      return reply.status(204).send(null)
     },
   )
 }
