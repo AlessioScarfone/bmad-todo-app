@@ -12,6 +12,20 @@ A full-stack task management web application built with React, Fastify, and Post
 - **Filtering & sorting** — Filter tasks by label, completion status, and deadline; sort the task list
 - **Accessibility** — WCAG 2.1 AA compliance, full keyboard navigation
 
+## Screenshots
+
+| Login | Register |
+|-------|----------|
+| ![Login page](screenshots/01-login.png) | ![Register page](screenshots/02-register.png) |
+
+| Task list — empty | Task list — with tasks |
+|-------------------|------------------------|
+| ![Empty task list](screenshots/03-task-list-empty.png) | ![Task list with tasks](screenshots/04-task-list-with-tasks.png) |
+
+**Mixed task list** — completed tasks, active tasks with labels and deadlines:
+
+![Mixed task list](screenshots/05-mixed-task-list.png)
+
 ## Requirements
 
 - [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/)
@@ -106,6 +120,7 @@ Additional Playwright commands:
 npm run test:ui       # Playwright interactive UI
 npm run test:headed   # Run in a visible browser
 npm run test:report   # Open the last HTML report
+npm run screenshots   # Regenerate screenshots in screenshots/
 ```
 
 ## Tech Stack
@@ -117,9 +132,6 @@ npm run test:report   # Open the last HTML report
 | E2E tests | Playwright, axe-core                                |
 | Infra     | Docker, Docker Compose, Nginx                       |
 
-## Screenshots
-
-Application screenshots are stored in the [`screenshots/`](screenshots/) folder.
 
 ## API Documentation
 
