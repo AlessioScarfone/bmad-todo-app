@@ -68,6 +68,8 @@ The agent supports two modes. In single-process mode it adopts each agent's pers
 
 The pipeline runs without confirmation prompts or pauses between stages ("YOLO mode"). When the code review stage asks what to do with findings, it always auto-fixes. The orchestrator passes outputs from each stage as structured context variables into the next one, and generates a summary report at the end.
 
+![Custom Agent Execution](screenshots/custom-agent.png) 
+
 > [!CAUTION] 
 > For a study context this was worthwhile. I got to observe the full pipeline several times without the overhead of manually launching each stage. The obvious risk is that without human review gates, errors don't get caught. Stage 2 can silently inherit a bad story from Stage 1. For anything beyond exploration, I wouldn't run it this way.
 
